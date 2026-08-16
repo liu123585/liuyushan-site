@@ -1,0 +1,9 @@
+{
+  "name": "liuyushan-site-scf",
+  "version": "1.0.0",
+  "description": "liuyushan_site 后端接口，部署为腾讯云 CloudBase 普通云函数，使用腾讯云 COS 对象存储",
+  "main": "index.js",
+  "dependencies": {
+    "cos-nodejs-sdk-v5": "^2.15.4"
+  }
+}

@@ -1,0 +1,16 @@
+# 依赖（巨大，禁止上传）
+scf/node_modules/
+node_modules/
+**/node_modules/
+
+# npm 缓存（scf 残留垃圾，禁止上传）
+scf/clean/
+
+# 本地打包产物
+frontend.zip
+_zip.py
+
+# 系统 / 缓存
+.DS_Store
+*.pyc
+__pycache__/

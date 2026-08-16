@@ -1,0 +1,29 @@
+# ===== systemd 守护服务：liuyushan_site =====
+# 用法：
+#   1) 把本文件上传到 /etc/systemd/system/haust-site.service
+#   2) 执行：
+#      sudo systemctl daemon-reload
+#      sudo systemctl enable haust-site      # 开机自启
+#      sudo systemctl start haust-site
+#   3) 查看状态： sudo systemctl status haust-site
+#      看日志：   sudo journalctl -u haust-site -f
+#
+# 注意：ExecStart 里的 node 路径请用 `which node` 查到的真实路径替换
+#       （宝塔/面板装的 node 路径可能不同，常见是 /usr/bin/node 或 /usr/local/bin/node）
+# WorkingDirectory 改成你实际上传的 backend 目录
+
+[Unit]
+Description=liuyushan.top 新生导航站 (Node)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/liuyushan_site/backend
+ExecStart=/usr/bin/node /opt/liuyushan_site/backend/server.js
+Environment=PORT=3000
+User=www-data
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
