@@ -12,50 +12,26 @@
 // 返回格式：
 //   { isBase64Encoded, statusCode, headers, body }
 //
-// 数据层：腾讯云 COS 对象存储。弹幕与新生墙分别以 data/danmaku.json、data/wall.json
-// 两个 JSON 数组文件存放（覆盖写：读取全量 -> 修改 -> 写回，小站数据量无忧）。
-// 通过环境变量配置：COS_SECRET_ID / COS_SECRET_KEY / COS_BUCKET / COS_REGION。
+// 数据层：EdgeOne KV 存储。弹幕与新生墙分别以 wall 和 danmaku 两个 key 存放。
+// KV 绑定在函数配置中设置，运行时通过 context.env 访问。
 
-let _cos = global.__TEST_COS__ || null;
-function getCos() {
-  if (_cos) return _cos;
-  const COS = require('cos-nodejs-sdk-v5');
-  return new COS({ SecretId: process.env.COS_SECRET_ID, SecretKey: process.env.COS_SECRET_KEY });
-}
-
-function cosCfg() {
-  return { Bucket: process.env.COS_BUCKET, Region: process.env.COS_REGION };
-}
-
-// 读 COS 上的 JSON 数组；对象不存在（NoSuchKey）时返回空数组。
-async function readList(key) {
-  const cos = getCos();
+// 读 KV 中的 JSON 数组；key 不存在时返回空数组。
+async function readList(kv, key) {
   try {
-    const res = await cos.getObject(Object.assign({}, cosCfg(), { Key: key }));
-    const txt = res.Body.toString('utf8');
-    const arr = JSON.parse(txt);
-    return Array.isArray(arr) ? arr : [];
+    const val = await kv.get(key, { type: 'json' });
+    return Array.isArray(val) ? val : [];
   } catch (e) {
-    if (e && (e.statusCode === 404 || e.code === 'NoSuchKey' ||
-        (e.error && e.error.Code === 'NoSuchKey'))) {
-      return [];
-    }
-    throw e;
+    return [];
   }
 }
 
-// 写回 COS（覆盖整份 JSON）。
-async function writeList(key, arr) {
-  const cos = getCos();
-  await cos.putObject(Object.assign({}, cosCfg(), {
-    Key: key,
-    Body: JSON.stringify(arr, null, 2),
-    ContentType: 'application/json'
-  }));
+// 写入 KV（覆盖整份 JSON）。
+async function writeList(kv, key, arr) {
+  await kv.put(key, JSON.stringify(arr), { type: 'application/json' });
 }
 
-const WALL_KEY = 'data/wall.json';
-const DANMAKU_KEY = 'data/danmaku.json';
+const WALL_KEY = 'wall';
+const DANMAKU_KEY = 'danmaku';
 
 function corsHeaders() {
   return {
@@ -129,42 +105,42 @@ function cleanWallPayload(d) {
   };
 }
 
-async function getWall() {
-  const posts = await readList(WALL_KEY);
+async function getWall(kv) {
+  const posts = await readList(kv, WALL_KEY);
   return ok({ posts: posts });
 }
 
-async function postWall(event) {
+async function postWall(kv, event) {
   const d = parseBody(event);
   if (d === null) return fail(400, { error: 'bad json' });
   const post = cleanWallPayload(d);
   if (!post.nickname) return fail(400, { error: 'nickname required' });
   post.id = Date.now();
-  const posts = await readList(WALL_KEY);
+  const posts = await readList(kv, WALL_KEY);
   posts.unshift(post);
-  await writeList(WALL_KEY, posts.slice(0, 200)); // 只保留最新 200 条
+  await writeList(kv, WALL_KEY, posts.slice(0, 200)); // 只保留最新 200 条
   return ok({ post: post });
 }
 
-async function getDanmaku() {
-  const items = await readList(DANMAKU_KEY);
+async function getDanmaku(kv) {
+  const items = await readList(kv, DANMAKU_KEY);
   return ok({ items: items });
 }
 
-async function postDanmaku(event) {
+async function postDanmaku(kv, event) {
   const d = parseBody(event);
   if (d === null) return fail(400, { error: 'bad json' });
   const text = String(d.text || '').trim().slice(0, 40);
   if (!text) return fail(400, { error: 'empty' });
 
   const item = { id: Date.now(), text: text, ts: Date.now() };
-  const items = await readList(DANMAKU_KEY);
+  const items = await readList(kv, DANMAKU_KEY);
   items.unshift(item);
-  await writeList(DANMAKU_KEY, items.slice(0, 300)); // 只保留最新 300 条
+  await writeList(kv, DANMAKU_KEY, items.slice(0, 300)); // 只保留最新 300 条
   return ok({ item: item });
 }
 
-async function dispatch(rawEvent) {
+async function dispatch(kv, rawEvent) {
   const event = normalizeEvent(rawEvent);
   const method = event.method;
   if (method === 'OPTIONS') return preflight(); // 浏览器 CORS 预检
@@ -174,13 +150,13 @@ async function dispatch(rawEvent) {
 
   try {
     if (name === '/api/wall') {
-      if (method === 'GET') return await getWall();
-      if (method === 'POST') return await postWall(event);
+      if (method === 'GET') return await getWall(kv);
+      if (method === 'POST') return await postWall(kv, event);
       return fail(405, { error: 'method not allowed' });
     }
     // /api/danmaku
-    if (method === 'GET') return await getDanmaku();
-    if (method === 'POST') return await postDanmaku(event);
+    if (method === 'GET') return await getDanmaku(kv);
+    if (method === 'POST') return await postDanmaku(kv, event);
     return fail(405, { error: 'method not allowed' });
   } catch (e) {
     const detail = String((e && e.message) || e);
@@ -188,9 +164,14 @@ async function dispatch(rawEvent) {
   }
 }
 
-// 同时兼容 腾讯云 SCF（main_handler）与 CloudBase 云函数（main）入口。
+// EdgeOne SCF 入口：从 context.env 获取 KV 绑定
 async function main_handler(event, context) {
-  return await dispatch(event);
+  // EdgeOne KV 通过 context.env.KV 访问（需在函数配置中绑定 KV 命名空间）
+  const kv = context.env && context.env.KV;
+  if (!kv) {
+    return fail(500, { error: 'KV not configured', detail: '请在 EdgeOne 函数配置中绑定 KV 命名空间' });
+  }
+  return await dispatch(kv, event);
 }
 exports.main_handler = main_handler;
 exports.main = main_handler;
