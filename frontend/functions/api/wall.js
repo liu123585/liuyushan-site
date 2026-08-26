@@ -1,6 +1,5 @@
-// Cloudflare Pages Function: /api/wall
-// 替代原 backend/server.js 的 /api/wall，数据存 KV（绑定名 MY_KV，key = "wall"）
-// 前端 app.js 已用 fetch('/api/wall') 调用，无需改动。
+// EdgeOne 边缘函数: /api/wall
+// 数据存 KV（绑定名 KV，key = "wall"）
 
 function newId() {
   return Date.now() * 1000 + Math.floor(Math.random() * 1000);
@@ -11,7 +10,7 @@ export async function onRequest(context) {
   const method = request.method;
 
   if (method === 'GET') {
-    let raw = await env.MY_KV.get('wall');
+    let raw = await env.KV.get('wall');
     let posts = raw ? JSON.parse(raw) : [];
     posts = posts.slice(-60).reverse();
     return Response.json({ posts });
@@ -35,11 +34,11 @@ export async function onRequest(context) {
       ts: Date.now()
     };
     if (!post.nickname) return Response.json({ error: 'nickname required' }, { status: 400 });
-    let raw = await env.MY_KV.get('wall');
+    let raw = await env.KV.get('wall');
     let posts = raw ? JSON.parse(raw) : [];
     posts.push(post);
     if (posts.length > 500) posts = posts.slice(-500);
-    await env.MY_KV.put('wall', JSON.stringify(posts));
+    await env.KV.put('wall', JSON.stringify(posts));
     return Response.json({ post });
   }
 
