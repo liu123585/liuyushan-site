@@ -333,22 +333,75 @@ var API_BASE = window.__API_BASE__ || ''; // 部署到云函数后，在 api-con
   badge.addEventListener('click',function(e){e.stopPropagation();badge.classList.remove('badge-pop');void badge.offsetWidth;badge.classList.add('badge-pop');});
 })();
 
-// ===== BGM 播放器 =====
+// ===== BGM 播放器（多曲 + 歌词）=====
 (function(){
-  var player=document.getElementById('musicPlayer'),btn=document.getElementById('mpBtn'),audio=document.getElementById('bgmAudio');
+  var player=document.getElementById('musicPlayer'),btn=document.getElementById('mpBtn'),
+      audio=document.getElementById('bgmAudio'),titleEl=document.getElementById('mpTitle'),
+      subEl=document.getElementById('mpSub'),lyricsEl=document.getElementById('mpLyrics'),
+      prevBtn=document.getElementById('mpPrev'),nextBtn=document.getElementById('mpNext');
   if(!player||!audio)return;
-  var sub=player.querySelector('.mp-sub');var idle=sub.textContent;
-  function setState(p){player.classList.toggle('playing',p);btn.textContent=p?'⏸':'▶';sub.textContent=p?'正在播放 ♪':idle;}
+
+  // 歌单：把想加的歌（mp3 + 同名 .lrc 歌词）放进 bgm/ 目录，在这里加一项即可自动支持切歌与歌词
+  var playlist=[
+    {title:'吹着晚风想起你', artist:'苏星婕', src:'bgm/bgm.mp3', lrc:''},
+    {title:'星与海', artist:'山止川行', src:'bgm/song2.mp3', lrc:''},
+    {title:'瞬间', artist:'早八8AM', src:'bgm/song3.mp3', lrc:''},
+    {title:'喜欢开始 遗憾终止', artist:'余一', src:'bgm/song4.mp3', lrc:''},
+    {title:'星空裂痕', artist:'pro', src:'bgm/song5.mp3', lrc:''}
+  ];
+  var idx=0, lrcLines=[], lrcTimer=null, started=false;
+
+  function loadSong(i){
+    idx=(i+playlist.length)%playlist.length;
+    var s=playlist[idx];
+    audio.src=s.src;
+    if(titleEl)titleEl.textContent=s.title;
+    if(subEl)subEl.textContent=s.artist;
+    if(lyricsEl)lyricsEl.textContent='';
+    lrcLines=[];
+    if(s.lrc){ fetch(s.lrc).then(function(r){return r.text();}).then(parseLrc).catch(function(){}); }
+  }
+  function parseLrc(text){
+    lrcLines=[];
+    text.split(/\r?\n/).forEach(function(line){
+      var m=line.match(/\[(\d+):(\d+(?:\.\d+)?)\](.*)/);
+      if(m) lrcLines.push({t:parseInt(m[1],10)*60+parseFloat(m[2]), txt:m[3].trim()});
+    });
+    lrcLines.sort(function(a,b){return a.t-b.t;});
+  }
+  function updateLyrics(){
+    if(!lrcLines.length){ if(lyricsEl)lyricsEl.textContent=''; return; }
+    var t=audio.currentTime, cur=-1;
+    for(var i=0;i<lrcLines.length;i++){ if(lrcLines[i].t<=t) cur=i; else break; }
+    if(lyricsEl) lyricsEl.textContent = cur>=0 ? lrcLines[cur].txt : '';
+  }
+  function setState(p){
+    player.classList.toggle('playing',p);
+    if(btn)btn.textContent=p?'⏸':'▶';
+    if(!p&&lrcTimer){clearInterval(lrcTimer);lrcTimer=null;}
+    if(p&&lrcLines.length&&!lrcTimer) lrcTimer=setInterval(updateLyrics,300);
+  }
   function play(){audio.play().then(function(){setState(true);}).catch(function(){});}
   function pause(){audio.pause();setState(false);}
-  player.addEventListener('click',function(e){e.stopPropagation();audio.paused?play():pause();});
+  function jump(d){ loadSong(idx+d); if(player.classList.contains('playing')) play(); }
+
+  player.addEventListener('click',function(e){
+    if(e.target.closest('.mp-ctrl')||e.target.closest('.mp-lyrics')) return;
+    e.stopPropagation(); audio.paused?play():pause();
+  });
+  if(btn)btn.addEventListener('click',function(e){e.stopPropagation();audio.paused?play():pause();});
+  if(prevBtn)prevBtn.addEventListener('click',function(e){e.stopPropagation();jump(-1);});
+  if(nextBtn)nextBtn.addEventListener('click',function(e){e.stopPropagation();jump(1);});
+  audio.addEventListener('ended',function(){ jump(1); }); // 播完自动下一首
   audio.addEventListener('play',function(){setState(true);});
   audio.addEventListener('pause',function(){setState(false);});
-  var started=false;
+
   function tryAuto(){if(started)return;started=true;audio.play().then(function(){setState(true);}).catch(function(){});}
   window.addEventListener('click',tryAuto,{once:true});
   window.addEventListener('touchstart',tryAuto,{once:true});
   window.addEventListener('scroll',tryAuto,{once:true});
+
+  loadSong(0);
 })();
 
 
@@ -610,20 +663,21 @@ var API_BASE = window.__API_BASE__ || ''; // 部署到云函数后，在 api-con
   var fc=document.getElementById('filterCollege'),fh=document.getElementById('filterHometown'),fr=document.getElementById('filterReset');
   if(fc)fc.addEventListener('change',renderFeed);
   if(fh)fh.addEventListener('change',renderFeed);
-  if(fr)fr.addEventListener('click',function(){if(fc)fc.value='';if(fh)fh.value='';renderFeed();});
+  if(fr)fr.addEventListener('click',function(){if(fc)fc.value='';if(fh)fh.value='';load();});
   if(feed)feed.addEventListener('click',function(e){var t=e.target.closest?e.target.closest('.wc-like'):null;if(!t)return;var id=t.getAttribute('data-id');if(!id)return;likes[id]=!likes[id];try{localStorage.setItem('haust_likes',JSON.stringify(likes));}catch(_){}renderFeed();});
   load();
 })();
 
-// 新人引导浮层
+// 新人引导浮层（两个按钮效果不同：一个带你逛生活指南，一个放你自己去互动区）
 (function(){
   var g=document.getElementById('guide');
   if(!g)return;
   try{ if(localStorage.getItem('haust_guide_v1')){g.style.display='none';return;} }catch(e){}
   function close(){g.style.display='none';try{localStorage.setItem('haust_guide_v1','1');}catch(e){}}
+  function goTo(id){close();setTimeout(function(){var t=document.getElementById(id);if(t)t.scrollIntoView({behavior:'smooth',block:'start'});},80);}
   var s=document.getElementById('guideStart'),k=document.getElementById('guideSkip');
-  if(s)s.addEventListener('click',close);
-  if(k)k.addEventListener('click',close);
+  if(s)s.addEventListener('click',function(){goTo('life');});   // 好，我知道了 → 生活指南
+  if(k)k.addEventListener('click',function(){goTo('fun');});    // 不用教了 → 互动玩法自己逛
 })();
 
 // 卡片跳转：点一下在新标签打开跳转链接（如百度地图），不跳学校官网（免 VPN）
