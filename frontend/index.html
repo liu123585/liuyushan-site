@@ -647,23 +647,22 @@
 
 
 
-<script src="api-config.js"></script>
-<script src="app.js"></script>
 <!-- 新人引导浮层 -->
 <div id="guide" class="guide-mask">
   <div class="guide-card">
-    <div class="guide-emoji">👋</div>
-    <h2>欢迎来到 2026 级科大新生导航</h2>
-    <p class="guide-sub">这是学长用 vibe coding 给你做的一站式入学指南，几分钟就能看懂。</p>
-    <div class="guide-steps">
-      <div class="guide-step"><div class="gs-ico">🗺️</div><div><b>看攻略</b><span>校区、宿舍、食堂、交通，一篇搞定</span></div></div>
-      <div class="guide-step"><div class="gs-ico">📋</div><div><b>备入学</b><span>照着清单准备，开学不抓瞎</span></div></div>
-      <div class="guide-step"><div class="gs-ico">🎮</div><div><b>玩互动</b><span>抽运势、摇食堂、测鼎宝、投心愿</span></div></div>
-      <div class="guide-step"><div class="gs-ico">🧱</div><div><b>上墙认领</b><span>填身份卡，找同专业同乡的同学</span></div></div>
-    </div>
-    <button id="guideStart" class="guide-start">开始探索 →</button>
-    <div class="guide-skip" id="guideSkip">随便逛逛</div>
+    <h2>嗨，2026 级新生</h2>
+    <p class="guide-sub">先别急着翻，这几个入口是学长觉得你最可能用到的：</p>
+    <ul class="guide-list">
+      <li><b>科大生活</b>开元/西苑宿舍、食堂、交通，一篇看完</li>
+      <li><b>入学准备</b>照着清单收拾行李，开学不抓瞎</li>
+      <li><b>互动彩蛋</b>抽运势、摇食堂、测你是哪种鼎宝</li>
+      <li><b>新生墙</b>填张身份卡，找同专业/同乡的同学</li>
+    </ul>
+    <button id="guideStart" class="guide-start">好，我知道了</button>
+    <span id="guideSkip" class="guide-skip">不用教了，我自己逛</span>
   </div>
 </div>
+<script src="api-config.js"></script>
+<script src="app.js"></script>
 </body>
 </html>

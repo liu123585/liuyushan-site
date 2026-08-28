@@ -622,7 +622,8 @@ var API_BASE = window.__API_BASE__ || ''; // 部署到云函数后，在 api-con
   try{ if(localStorage.getItem('haust_guide_v1')){g.style.display='none';return;} }catch(e){}
   function close(){g.style.display='none';try{localStorage.setItem('haust_guide_v1','1');}catch(e){}}
   var s=document.getElementById('guideStart'),k=document.getElementById('guideSkip');
-  if(s)s.onclick=close; if(k)k.onclick=close;
+  if(s)s.addEventListener('click',close);
+  if(k)k.addEventListener('click',close);
 })();
 
 // 卡片跳转：点一下在新标签打开跳转链接（如百度地图），不跳学校官网（免 VPN）
