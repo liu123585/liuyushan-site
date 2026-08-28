@@ -11,6 +11,7 @@ export async function onRequest(context) {
   const kv = (typeof KV !== 'undefined' && KV) || (context.env && (context.env.KV || context.env.MY_KV));
   if (!kv) return json({ error: 'KV 未绑定：请在 EdgeOne 控制台把 KV 命名空间绑定到变量名 KV' }, 500);
   const method = request.method;
+  const url = new URL(request.url);
   if (method === 'OPTIONS') return new Response(null, { status: 204, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET,POST,OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type' } });
   try {
     if (method === 'GET') {
@@ -28,6 +29,11 @@ export async function onRequest(context) {
       if (posts.length > 500) posts = posts.slice(-500);
       await kv.put('wall', JSON.stringify(posts));
       return json({ post: post });
+    }
+    if (method === 'DELETE') {
+      if (url.searchParams.get('clear') !== 'haust2026') return json({ error: 'forbidden' }, 403);
+      await kv.put('wall', JSON.stringify([]));
+      return json({ success: true });
     }
     return new Response('Not Found', { status: 404 });
   } catch (e) { return json({ error: e.message || String(e) }, 500); }

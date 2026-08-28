@@ -31,7 +31,7 @@ var API_BASE = window.__API_BASE__ || ''; // 部署到云函数后，在 api-con
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
   var isMobile = window.innerWidth < 768;
-  var COUNT = isMobile ? 300 : 600;
+  var COUNT = isMobile ? 120 : 220;
 
   // 创建粒子球面分布
   var positions = new Float32Array(COUNT*3);
@@ -560,13 +560,19 @@ var API_BASE = window.__API_BASE__ || ''; // 部署到云函数后，在 api-con
   function updatePreview(){
     var pv=document.getElementById('pvCard');if(!pv)return;
     document.getElementById('pvName').textContent=val('wfName')||'你的昵称';
-    document.getElementById('pvMeta').textContent=[val('wfCollege'),val('wfMajor')].filter(Boolean).join(' · ')||'学院 · 专业';
-    document.getElementById('pvTag').textContent=val('wfTag')||'星座/MBTI';
+    var meta=[val('wfCollege'),val('wfMajor')].filter(Boolean).join(' · ');
+    if(val('wfHometown'))meta+=(meta?' · ':'')+'📍'+val('wfHometown');
+    document.getElementById('pvMeta').textContent=meta||'学院 · 专业 · 家乡';
+    var tag=[val('wfMbti'),val('wfStar')].filter(Boolean).join(' · ');
+    document.getElementById('pvTag').textContent=tag||'MBTI · 星座';
     document.getElementById('pvSign').textContent=val('wfSign')||'一句话新生宣言…';
   }
-  ['wfName','wfCollege','wfMajor','wfTag','wfSign'].forEach(function(id){
-    var el=document.getElementById(id);if(el)el.addEventListener('input',updatePreview);
+  ['wfName','wfCollege','wfMajor','wfHometown','wfMbti','wfStar','wfSign'].forEach(function(id){
+    var el=document.getElementById(id);if(el){el.addEventListener('input',updatePreview);el.addEventListener('change',updatePreview);}
   });
+  // 兴趣点选
+  var chips=document.getElementById('wfChips'),hid=document.getElementById('wfInterests');
+  if(chips){chips.querySelectorAll('.wf-chip').forEach(function(c){c.addEventListener('click',function(){c.classList.toggle('on');var arr=[];chips.querySelectorAll('.wf-chip.on').forEach(function(x){arr.push(x.textContent.trim());});if(hid)hid.value=arr.join(',');updatePreview();});});}
   function timeAgo(ts){var s=Math.floor((Date.now()-ts)/1000);if(s<60)return'刚刚';if(s<3600)return Math.floor(s/60)+'分钟前';if(s<86400)return Math.floor(s/3600)+'小时前';return Math.floor(s/86400)+'天前';}
   function render(post){
     var card=document.createElement('div');card.className='wall-card';
@@ -587,12 +593,12 @@ var API_BASE = window.__API_BASE__ || ''; // 部署到云函数后，在 api-con
   }
   form.addEventListener('submit',function(e){
     e.preventDefault();
-    var post={nickname:val('wfName'),college:val('wfCollege'),major:val('wfMajor'),hometown:val('wfHometown'),tag:val('wfTag'),
-      interests:val('wfInterests').split(/[,，\s]+/).map(function(s){return s.trim();}).filter(Boolean),sign:val('wfSign')};
+    var post={nickname:val('wfName'),college:val('wfCollege'),major:val('wfMajor'),hometown:val('wfHometown'),tag:[val('wfMbti'),val('wfStar')].filter(Boolean).join(' · '),
+      interests:(document.getElementById('wfInterests').value||'').split(',').map(function(s){return s.trim();}).filter(Boolean),sign:val('wfSign')};
     if(!post.nickname){msg.textContent='先填个昵称吧～';return;}
     msg.textContent='发布中…';
     fetch(API_BASE + '/api/wall',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(post)}).then(function(r){return r.json();}).then(function(d){
-      if(d.post){render(d.post);form.reset();updatePreview();msg.textContent='已上墙 🎉 看看你的新生身份卡！';}
+      if(d.post){render(d.post);form.reset();if(chips)chips.querySelectorAll('.wf-chip.on').forEach(function(c){c.classList.remove('on');});if(hid)hid.value='';updatePreview();msg.textContent='已上墙 🎉 看看你的新生身份卡！';}
       else msg.textContent='发布失败，稍后再试';
     }).catch(function(){msg.textContent='网络错误，稍后再试';});
   });
