@@ -879,15 +879,16 @@ img{max-width:100%}
 .wf-chip.on{background:rgba(212,175,55,.18);border-color:var(--gold);color:var(--gold2)}
 /* ===== 新人引导浮层 ===== */
 .guide-mask{position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;background:rgba(8,11,20,.96);padding:20px}
-.guide-card{width:100%;max-width:360px;background:var(--card);border:1px solid var(--glass-border);border-radius:14px;padding:26px 22px;text-align:center}
-.guide-card h2{font-size:20px;margin:0 0 10px;letter-spacing:.5px}
-.guide-sub{font-size:13px;color:rgba(245,240,235,.6);margin-bottom:18px;line-height:1.6}
-.guide-list{list-style:none;padding:0;margin:0 0 22px;text-align:left}
-.guide-list li{font-size:13px;color:rgba(245,240,235,.75);padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05);line-height:1.5}
-.guide-list li:last-child{border-bottom:none}
-.guide-list b{display:block;color:var(--white);font-size:14px;margin-bottom:2px}
-.guide-start{width:100%;padding:12px;border:1px solid var(--gold);background:transparent;color:var(--gold2);border-radius:10px;font-size:15px;cursor:pointer;letter-spacing:1px}
-.guide-start:hover{background:rgba(212,175,55,.1)}
+.guide-card{width:100%;max-width:420px;background:var(--card);border:1px solid var(--glass-border);border-radius:16px;padding:28px 24px;text-align:center}
+.guide-card h2{font-size:22px;margin:0 0 8px;letter-spacing:.5px}
+.guide-sub{font-size:13px;color:rgba(245,240,235,.6);margin-bottom:22px;line-height:1.6}
+.guide-steps{display:flex;flex-direction:column;gap:10px;text-align:left;margin-bottom:24px}
+.guide-step{display:flex;gap:12px;align-items:flex-start;padding:12px;border:1px solid rgba(255,255,255,.06);border-radius:12px;background:rgba(255,255,255,.03)}
+.gs-ico{width:28px;height:28px;border-radius:50%;background:rgba(212,175,55,.15);border:1px solid rgba(212,175,55,.35);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--gold2);flex-shrink:0;margin-top:2px}
+.guide-step b{display:block;font-size:15px;color:var(--white);margin-bottom:2px}
+.guide-step span{font-size:13px;color:rgba(245,240,235,.6);line-height:1.4}
+.guide-start{width:100%;padding:13px;border:none;border-radius:12px;background:var(--gold);color:#111;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:1px}
+.guide-start:hover{filter:brightness(1.08)}
 .guide-skip{display:block;margin-top:12px;font-size:12px;color:rgba(245,240,235,.4);cursor:pointer}
 .guide-skip:hover{color:rgba(245,240,235,.7)}
 /* ===== 新生墙筛选 / 点赞 ===== */
