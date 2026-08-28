@@ -583,12 +583,17 @@ var API_BASE = window.__API_BASE__ || ''; // 部署到云函数后，在 api-con
       (tags?'<div>'+tags+'</div>':'')+
       (post.hometown?'<div class="wc-meta" style="margin-top:6px">📍 '+esc(post.hometown)+'</div>':'')+
       (post.sign?'<div class="wc-sign">“'+esc(post.sign)+'”</div>':'')+
-      '<div class="wc-meta" style="margin-top:8px;opacity:.5">'+timeAgo(post.ts||Date.now())+'</div>';
-    feed.insertBefore(card,feed.firstChild);
+      '<div class="wc-foot"><span class="wc-meta" style="opacity:.5">'+timeAgo(post.createdAt||Date.now())+'</span><button class="wc-like" data-id="'+esc(String(post.id))+'">👍 <span>'+likesOf(post)+'</span></button></div>';
+    return card;
   }
+  var allPosts=[];
+  var likes=(function(){try{return JSON.parse(localStorage.getItem('haust_likes')||'{}');}catch(e){return {};}})();
+  function likesOf(p){var id=String(p.id||''),base=0;for(var i=0;i<id.length;i++)base+=id.charCodeAt(i);base=base%37+3;return base+(likes[id]?1:0);}
+  function renderFeed(){var fc=document.getElementById('filterCollege'),fh=document.getElementById('filterHometown');var c=fc?fc.value:'',h=fh?fh.value:'';var list=allPosts.filter(function(p){return(!c||p.college===c)&&(!h||p.hometown===h);});if(!list.length){feed.innerHTML='<div class="wall-empty">这里还没有同学，快来当第一个～</div>';return;}feed.innerHTML='';list.forEach(function(p){feed.appendChild(render(p));});}
+  function populateFilters(){var fc=document.getElementById('filterCollege'),fh=document.getElementById('filterHometown');if(!fc||!fh)return;var cs=[],hs=[];allPosts.forEach(function(p){if(p.college&&cs.indexOf(p.college)<0)cs.push(p.college);if(p.hometown&&hs.indexOf(p.hometown)<0)hs.push(p.hometown);});cs.sort();hs.sort();if(fc.dataset.filled!=='1'){fc.innerHTML='<option value="">全部学院</option>'+cs.map(function(x){return '<option>'+esc(x)+'</option>';}).join('');fc.dataset.filled='1';}if(fh.dataset.filled!=='1'){fh.innerHTML='<option value="">全部家乡</option>'+hs.map(function(x){return '<option>'+esc(x)+'</option>';}).join('');fh.dataset.filled='1';}}
   function load(){
     fetch(API_BASE + '/api/wall').then(function(r){return r.json();}).then(function(d){
-      feed.innerHTML='';(d.posts||[]).forEach(render);
+      allPosts=d.posts||[]; populateFilters(); renderFeed();
     }).catch(function(){});
   }
   form.addEventListener('submit',function(e){
@@ -598,11 +603,26 @@ var API_BASE = window.__API_BASE__ || ''; // 部署到云函数后，在 api-con
     if(!post.nickname){msg.textContent='先填个昵称吧～';return;}
     msg.textContent='发布中…';
     fetch(API_BASE + '/api/wall',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(post)}).then(function(r){return r.json();}).then(function(d){
-      if(d.post){render(d.post);form.reset();if(chips)chips.querySelectorAll('.wf-chip.on').forEach(function(c){c.classList.remove('on');});if(hid)hid.value='';updatePreview();msg.textContent='已上墙 🎉 看看你的新生身份卡！';}
+      if(d.post){allPosts.unshift(d.post);renderFeed();form.reset();if(chips)chips.querySelectorAll('.wf-chip.on').forEach(function(c){c.classList.remove('on');});if(hid)hid.value='';updatePreview();msg.textContent='已上墙 🎉 看看你的新生身份卡！';}
       else msg.textContent='发布失败，稍后再试';
     }).catch(function(){msg.textContent='网络错误，稍后再试';});
   });
+  var fc=document.getElementById('filterCollege'),fh=document.getElementById('filterHometown'),fr=document.getElementById('filterReset');
+  if(fc)fc.addEventListener('change',renderFeed);
+  if(fh)fh.addEventListener('change',renderFeed);
+  if(fr)fr.addEventListener('click',function(){if(fc)fc.value='';if(fh)fh.value='';renderFeed();});
+  if(feed)feed.addEventListener('click',function(e){var t=e.target.closest?e.target.closest('.wc-like'):null;if(!t)return;var id=t.getAttribute('data-id');if(!id)return;likes[id]=!likes[id];try{localStorage.setItem('haust_likes',JSON.stringify(likes));}catch(_){}renderFeed();});
   load();
+})();
+
+// 新人引导浮层
+(function(){
+  var g=document.getElementById('guide');
+  if(!g)return;
+  try{ if(localStorage.getItem('haust_guide_v1')){g.style.display='none';return;} }catch(e){}
+  function close(){g.style.display='none';try{localStorage.setItem('haust_guide_v1','1');}catch(e){}}
+  var s=document.getElementById('guideStart'),k=document.getElementById('guideSkip');
+  if(s)s.onclick=close; if(k)k.onclick=close;
 })();
 
 // 卡片跳转：点一下在新标签打开跳转链接（如百度地图），不跳学校官网（免 VPN）
