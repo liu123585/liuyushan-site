@@ -672,8 +672,9 @@ var API_BASE = window.__API_BASE__ || ''; // 部署到云函数后，在 api-con
 (function(){
   var g=document.getElementById('guide');
   if(!g)return;
-  try{ if(localStorage.getItem('haust_guide_v1')){g.style.display='none';return;} }catch(e){}
-  function close(){g.style.display='none';try{localStorage.setItem('haust_guide_v1','1');}catch(e){}}
+  // 每次打开都显示引导浮层；若只想要首次显示，把下一行取消注释即可
+  // try{ if(localStorage.getItem('haust_guide_v1')){g.style.display='none';return;} }catch(e){}
+  function close(){g.style.display='none';}
   function goTo(id){close();setTimeout(function(){var t=document.getElementById(id);if(t)t.scrollIntoView({behavior:'smooth',block:'start'});},80);}
   var s=document.getElementById('guideStart'),k=document.getElementById('guideSkip');
   if(s)s.addEventListener('click',function(){goTo('life');});   // 好，我知道了 → 生活指南
@@ -714,6 +715,8 @@ var API_BASE = window.__API_BASE__ || ''; // 部署到云函数后，在 api-con
     handle.style.cursor='grab';
     handle.style.touchAction='none';
     handle.addEventListener('pointerdown', function(e){
+      // 点按钮/输入框/链接时不开启拖拽，也不阻止 click，让控件正常响应
+      if(e.target.closest('button') || e.target.closest('input') || e.target.closest('textarea') || e.target.closest('a')) return;
       ensureFrozen();
       dragging=true; moved=false;
       var r=el.getBoundingClientRect();

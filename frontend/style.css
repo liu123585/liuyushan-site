@@ -696,13 +696,13 @@ footer .welcome{
 
 /* ===== BGM 播放器 ===== */
 .music-player{position:fixed;left:20px;bottom:calc(80px + env(safe-area-inset-bottom,0px));z-index:196;
-  display:flex;align-items:center;gap:10px;padding:8px 14px 8px 8px;border-radius:40px;cursor:grab;touch-action:none;user-select:none;
+  display:flex;align-items:center;gap:10px;padding:10px 16px 10px 10px;border-radius:40px;cursor:grab;touch-action:none;user-select:none;
   background:rgba(10,14,26,.96);
   border:1px solid rgba(212,175,55,.35);box-shadow:0 6px 24px rgba(0,0,0,.4);color:var(--white);
   max-width:min(80vw,320px);transition:transform .3s,box-shadow .3s;-webkit-tap-highlight-color:transparent}
 .music-player:hover{box-shadow:0 8px 30px rgba(212,175,55,.3)}
-.music-player .mp-btn{width:40px;height:40px;flex-shrink:0;border-radius:50%;border:none;cursor:pointer;
-  background:linear-gradient(135deg,var(--primary),var(--gold));color:#fff;font-size:15px;
+.music-player .mp-btn{width:44px;height:44px;flex-shrink:0;border-radius:50%;border:none;cursor:pointer;
+  background:linear-gradient(135deg,var(--primary),var(--gold));color:#fff;font-size:16px;
   display:flex;align-items:center;justify-content:center;box-shadow:0 0 16px rgba(212,175,55,.4)}
 .music-player .mp-meta{overflow:hidden;white-space:nowrap}
 .music-player .mp-title{font-size:13px;font-weight:600;letter-spacing:.5px;overflow:hidden;text-overflow:ellipsis}
@@ -714,8 +714,8 @@ footer .welcome{
 .music-player .eq span:nth-child(2){animation-delay:.2s}
 .music-player .eq span:nth-child(3){animation-delay:.4s}
 .music-player .eq span:nth-child(4){animation-delay:.1s}
-.music-player .mp-ctrl{display:flex;align-items:center;gap:3px;margin-left:2px}
-.music-player .mp-prev,.music-player .mp-next{width:22px;height:22px;border-radius:50%;border:1px solid var(--glass-border);background:rgba(255,255,255,.06);color:var(--white);cursor:pointer;font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;transition:transform .15s,background .15s}
+.music-player .mp-ctrl{display:flex;align-items:center;gap:8px;margin-left:6px;margin-right:4px}
+.music-player .mp-prev,.music-player .mp-next{width:32px;height:32px;border-radius:50%;border:1px solid var(--glass-border);background:rgba(255,255,255,.06);color:var(--white);cursor:pointer;font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;transition:transform .15s,background .15s}
 .music-player .mp-prev:active,.music-player .mp-next:active{transform:scale(.9);background:rgba(212,175,55,.2)}
 .music-player .mp-lyrics{position:absolute;left:0;right:0;bottom:calc(100% + 10px);font-size:11px;color:var(--gold2);background:rgba(10,14,26,.92);border:1px solid rgba(212,175,55,.25);padding:5px 12px;border-radius:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:0;transform:translateY(4px);transition:opacity .3s,transform .3s;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.4)}
 .music-player.playing .mp-lyrics{opacity:1;transform:translateY(0)}
