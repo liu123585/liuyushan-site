@@ -729,8 +729,8 @@ var API_BASE = window.__API_BASE__ || ''; // 部署到云函数后，在 api-con
   function close(){g.style.display='none';}
   function goTo(id){close();setTimeout(function(){var t=document.getElementById(id);if(t)t.scrollIntoView({behavior:'smooth',block:'start'});},80);}
   var s=document.getElementById('guideStart'),k=document.getElementById('guideSkip');
-  if(s)s.addEventListener('click',function(){goTo('life');});   // 好，我知道了 → 生活指南
-  if(k)k.addEventListener('click',function(){goTo('fun');});    // 不用教了 → 互动玩法自己逛
+  if(s)s.addEventListener('click',function(){close();});   // 好，我知道了 → 直接关闭，留在顶部
+  if(k)k.addEventListener('click',function(){close();});    // 不用教了 → 也直接关闭，留在顶部
 })();
 
 // 卡片跳转：点一下在新标签打开跳转链接（如百度地图），不跳学校官网（免 VPN）

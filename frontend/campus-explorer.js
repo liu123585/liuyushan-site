@@ -42,7 +42,7 @@
   function initAmap() {
     var box = $('amapContainer'), fb = $('mapFallback');
     if (!box) return;
-    if (!AMAP_KEY) { showFallback('还未配置高德 Key：在 api-config.js 里填 window.__AMAP_KEY__ 即可开启 3D 立体校园（免费申请）。下面「手绘集章地图」不受影响，照常能玩。'); return; }
+    if (!AMAP_KEY) { showFallback('还未配置高德 Key：在 api-config.js 里填 window.__AMAP_KEY__ 即可开启立体校园地图（免费申请）。'); return; }
     // 2021-12 之后申请的 Key 需配安全密钥，且必须在加载 maps 脚本前设置
     if (AMAP_SEC) { window._AMapSecurityConfig = { securityJsCode: AMAP_SEC }; }
     window.__amapReady = function () { try { buildMap(); } catch (e) { showFallback('地图初始化失败：' + e.message); } };
@@ -50,8 +50,8 @@
     s.src = 'https://webapi.amap.com/maps?v=2.0&key=' + encodeURIComponent(AMAP_KEY) + '&callback=__amapReady';
     s.onerror = function () { showFallback('高德地图脚本加载失败，请检查网络或 Key 是否正确。下面「手绘集章地图」不受影响。'); };
     document.head.appendChild(s);
-    // 6 秒脚本还没回调（AMap 未加载），直接降级
-    setTimeout(function () { if ((!window.AMap || !map) && fb && fb.hidden) showFallback('高德地图脚本加载超时（可能是 Key 无效或网络问题）。手绘集章地图仍可正常使用。'); }, 6500);
+    // 6 秒脚本还没回调（AMap 未加载），提示 Key/网络问题
+    setTimeout(function () { if ((!window.AMap || !map) && fb && fb.hidden) showFallback('高德地图脚本加载超时，可能是 Key 无效、未开通「Web端(JS API)」，或白名单未包含当前域名。'); }, 6500);
   }
 
   function showFallback(msg) {
@@ -77,7 +77,7 @@
     var opts = {
       zoom: 16.4,
       center: CENTER[curCampus],
-      mapStyle: 'amap://styles/dark',
+      mapStyle: 'amap://styles/normal',
       rotateEnable: true,
       resizeEnable: true
     };
@@ -107,12 +107,14 @@
       console.error('AMap error', e);
       showFallback('地图渲染出错：' + (e && e.info || '未知错误') + '。可点击下方按钮切换。');
     });
-    // 兜底：10 秒内未 complete，大概率是 Key 未开通 JSAPI 或白名单不包含当前域名
+    // 兜底：8 秒内未 complete，自动降级为 2D 普通地图重试一次
     setTimeout(function () {
-      if (!mapReady) {
-        showFallback('地图加载失败，可能是高德 Key 未开通「Web端(JS API)」，或白名单没有包含当前域名 site.liuyushan.top，也可能是当前浏览器禁用了 WebGL。请按 F12 → Network 查看 webapi.amap.com 请求是否 403，或点击下方按钮切换。');
+      if (!mapReady && map) {
+        try { map.destroy(); } catch (e) {}
+        map = null; walking = null;
+        rebuild2D();
       }
-    }, 10000);
+    }, 8000);
     AMap.plugin(['AMap.ToolBar', 'AMap.ControlBar'], function () {
       if (!map) return;
       try { map.addControl(new AMap.ToolBar({ position: { right: '12px', bottom: '80px' } })); } catch (e) {}
@@ -141,16 +143,16 @@
       });
       map.on('error', function (e) {
         console.error('AMap 2D error', e);
-        showFallback('2D 地图也加载失败：' + (e && e.info || '未知错误') + '。请使用手绘地图。', false);
+        showFallback('2D 地图也加载失败：' + (e && e.info || '未知错误') + '。请检查高德 Key 是否开通「Web端(JS API)」且白名单包含当前域名。', false);
       });
       setTimeout(function () {
-        if (!map || !map.getCenter) showFallback('2D 地图加载超时，请检查 Key 白名单或网络。', false);
+        if (!map || !map.getCenter) showFallback('2D 地图加载超时，请检查高德 Key 是否开通「Web端(JS API)」且白名单包含当前域名 site.liuyushan.top。', false);
       }, 10000);
       AMap.plugin('AMap.Walking', function () {
         if (map) walking = new AMap.Walking({ map: map, panel: '' });
       });
     } catch (e) {
-      showFallback('2D 地图初始化失败：' + e.message + '。请使用手绘地图。', false);
+      showFallback('2D 地图初始化失败：' + e.message + '。请检查高德 Key 是否开通「Web端(JS API)」且白名单包含当前域名。', false);
     }
   }
 
