@@ -38,12 +38,6 @@
     fb.hidden = false;
   }
 
-  function isWebGLSupported() {
-    try {
-      var c = document.createElement('canvas');
-      return !!(window.WebGLRenderingContext && (c.getContext('webgl') || c.getContext('experimental-webgl')));
-    } catch (e) { return false; }
-  }
 
   function loadAmapLoader() {
     console.log('[campus] loadAmapLoader start');
@@ -90,24 +84,15 @@
   function buildMap() {
     console.log('[campus] buildMap called');
     if (!window.AMap) return;
-    var hasWebGL = isWebGLSupported();
     var mapReady = false;
     var opts = {
       zoom: 16.4,
       center: CENTER[curCampus],
       mapStyle: 'amap://styles/normal',
+      viewMode: '2D',
       rotateEnable: true,
       resizeEnable: true
     };
-    if (hasWebGL) {
-      opts.viewMode = '3D';
-      opts.pitch = 62;
-      opts.pitchEnable = true;
-      opts.rotation = -18;
-    } else {
-      opts.viewMode = '2D';
-      console.log('WebGL 不支持，已降为 2D 地图');
-    }
     try {
       console.log('[campus] creating AMap.Map with opts', JSON.stringify({viewMode: opts.viewMode, center: opts.center, zoom: opts.zoom}));
       map = new AMap.Map('amapContainer', opts);
@@ -128,14 +113,7 @@
       console.error('[campus] AMap error', e);
       showMsg('地图渲染出错：' + (e && e.info || '未知错误') + '。');
     });
-    // 8 秒内未 complete，降级 2D 重试一次
-    setTimeout(function () {
-      if (!mapReady && map) {
-        try { map.destroy(); } catch (e) {}
-        map = null; walking = null;
-        rebuild2D();
-      }
-    }, 8000);
+
     try { map.addControl(new AMap.ToolBar({ position: { right: '12px', bottom: '80px' } })); } catch (e) {}
     try { map.addControl(new AMap.ControlBar({ position: { right: '6px', top: '12px' } })); } catch (e) {}
     try { walking = new AMap.Walking({ map: map, panel: '' }); } catch (e) {}
