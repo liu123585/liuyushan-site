@@ -54,45 +54,114 @@
     setTimeout(function () { if ((!window.AMap || !map) && fb && fb.hidden) showFallback('高德地图脚本加载超时（可能是 Key 无效或网络问题）。手绘集章地图仍可正常使用。'); }, 6500);
   }
 
-  function showFallback(msg) {
+  function showFallback(msg, actions) {
     var fb = $('mapFallback'); if (!fb) return;
-    fb.innerHTML = '<div class="fb-inner"><div class="fb-ico">🗺️</div><p>' + esc(msg) + '</p></div>';
+    var btns = '';
+    if (actions !== false) {
+      btns = '<div class="fb-actions">' +
+        '<button class="fb-btn" id="fb2d">切换为 2D 地图</button>' +
+        '<button class="fb-btn gold" id="fbHand">使用手绘地图</button></div>';
+    }
+    fb.innerHTML = '<div class="fb-inner"><div class="fb-ico">🗺️</div><p>' + esc(msg) + '</p>' + btns + '</div>';
     fb.hidden = false;
+    var b2d = $('fb2d'); if (b2d) b2d.addEventListener('click', function () { rebuild2D(); });
+    var bHand = $('fbHand'); if (bHand) bHand.addEventListener('click', function () { useHandMapOnly(); });
+  }
+
+  function isWebGLSupported() {
+    try {
+      var c = document.createElement('canvas');
+      return !!(window.WebGLRenderingContext && (c.getContext('webgl') || c.getContext('experimental-webgl')));
+    } catch (e) { return false; }
   }
 
   function buildMap() {
     if (!window.AMap) return;
-    var box = $('amapContainer');
+    var hasWebGL = isWebGLSupported();
     var mapReady = false;
-    map = new AMap.Map('amapContainer', {
+    // 3D 依赖 WebGL；不支持时自动降为 2D，避免空白
+    var opts = {
       zoom: 16.4,
-      pitch: 62,          // 俯仰角：越大越有立体感
-      rotation: -18,
-      viewMode: '3D',     // 开启 3D 视图（楼块自动立体）
-      pitchEnable: true,
-      rotateEnable: true,
+      center: CENTER[curCampus],
       mapStyle: 'amap://styles/dark',
-      center: CENTER[curCampus]
-    });
+      rotateEnable: true
+    };
+    if (hasWebGL) {
+      opts.viewMode = '3D';
+      opts.pitch = 62;
+      opts.pitchEnable = true;
+      opts.rotation = -18;
+    } else {
+      opts.viewMode = '2D';
+      showFallback('当前浏览器/环境不支持 WebGL，已自动切换为 2D 地图。', false);
+    }
+    try {
+      map = new AMap.Map('amapContainer', opts);
+    } catch (e) {
+      showFallback('地图初始化失败：' + e.message + '。可点击下方按钮切换。');
+      return;
+    }
     // 地图初始化完成（瓦片加载成功）会触发 complete；若 Key/白名单有问题，通常不会触发
     map.on('complete', function () {
       mapReady = true;
       var fb = $('mapFallback'); if (fb) fb.hidden = true;
       renderMarkers();
     });
-    // 兜底：6 秒内未 complete，大概率是 Key 未开通 JSAPI 或白名单不包含当前域名
+    map.on('error', function (e) {
+      console.error('AMap error', e);
+      showFallback('地图渲染出错：' + (e && e.info || '未知错误') + '。可点击下方按钮切换。');
+    });
+    // 兜底：10 秒内未 complete，大概率是 Key 未开通 JSAPI 或白名单不包含当前域名
     setTimeout(function () {
       if (!mapReady) {
-        showFallback('3D 地图加载失败，可能是高德 Key 未开通「Web端(JS API)」，或白名单没有包含当前域名 site.liuyushan.top。请去高德控制台「应用管理 → 编辑 Key」把白名单改成 * 或加上该域名；手绘校园地图仍可正常使用。');
+        showFallback('地图加载失败，可能是高德 Key 未开通「Web端(JS API)」，或白名单没有包含当前域名 site.liuyushan.top，也可能是当前浏览器禁用了 WebGL。请按 F12 → Network 查看 webapi.amap.com 请求是否 403，或点击下方按钮切换。');
       }
-    }, 6500);
+    }, 10000);
     AMap.plugin(['AMap.ToolBar', 'AMap.ControlBar'], function () {
-      map.addControl(new AMap.ToolBar({ position: { right: '12px', bottom: '80px' } }));
-      map.addControl(new AMap.ControlBar({ position: { right: '6px', top: '12px' } }));
+      if (!map) return;
+      try { map.addControl(new AMap.ToolBar({ position: { right: '12px', bottom: '80px' } })); } catch (e) {}
+      try { map.addControl(new AMap.ControlBar({ position: { right: '6px', top: '12px' } })); } catch (e) {}
     });
     AMap.plugin('AMap.Walking', function () {
-      walking = new AMap.Walking({ map: map, panel: '' }); // 不用默认面板，自己渲染成深色步骤列表
+      if (!map) return;
+      try { walking = new AMap.Walking({ map: map, panel: '' }); } catch (e) {}
     });
+  }
+
+  function rebuild2D() {
+    if (map) { try { map.destroy(); } catch (e) {} map = null; walking = null; }
+    var fb = $('mapFallback'); if (fb) fb.hidden = true;
+    try {
+      map = new AMap.Map('amapContainer', {
+        zoom: 16.4,
+        center: CENTER[curCampus],
+        mapStyle: 'amap://styles/normal',
+        viewMode: '2D',
+        rotateEnable: true
+      });
+      map.on('complete', function () {
+        var fb2 = $('mapFallback'); if (fb2) fb2.hidden = true;
+        renderMarkers();
+      });
+      map.on('error', function (e) {
+        console.error('AMap 2D error', e);
+        showFallback('2D 地图也加载失败：' + (e && e.info || '未知错误') + '。请使用手绘地图。', false);
+      });
+      setTimeout(function () {
+        if (!map || !map.getCenter) showFallback('2D 地图加载超时，请检查 Key 白名单或网络。', false);
+      }, 10000);
+      AMap.plugin('AMap.Walking', function () {
+        if (map) walking = new AMap.Walking({ map: map, panel: '' });
+      });
+    } catch (e) {
+      showFallback('2D 地图初始化失败：' + e.message + '。请使用手绘地图。', false);
+    }
+  }
+
+  function useHandMapOnly() {
+    if (map) { try { map.destroy(); } catch (e) {} map = null; walking = null; }
+    var box = $('amapContainer'); if (box) box.style.display = 'none';
+    var fb = $('mapFallback'); if (fb) fb.hidden = true;
   }
 
   function clearMarkers() {
