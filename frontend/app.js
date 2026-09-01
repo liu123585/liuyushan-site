@@ -339,8 +339,7 @@ var API_BASE = window.__API_BASE__ || ''; // 部署到云函数后，在 api-con
       audio=document.getElementById('bgmAudio'),titleEl=document.getElementById('mpTitle'),
       subEl=document.getElementById('mpSub'),lyricsEl=document.getElementById('mpLyrics'),
       prevBtn=document.getElementById('mpPrev'),nextBtn=document.getElementById('mpNext'),
-      progressEl=document.getElementById('mpProgress'),trackEl=document.getElementById('mpTrack'),
-      playedEl=document.getElementById('mpPlayed'),thumbEl=document.getElementById('mpThumb'),
+      playedEl=document.getElementById('mpPlayed'),
       curEl=document.getElementById('mpCur'),durEl=document.getElementById('mpDur');
   if(!player||!audio)return;
 
@@ -360,7 +359,7 @@ var API_BASE = window.__API_BASE__ || ''; // 部署到云函数后，在 api-con
     {title:'起风了', artist:'买辣椒也用券', src:'bgm/song12.mp3', lrc:''},
     {title:'相拥星空', artist:'张洛一', src:'bgm/song13.m4a', lrc:''}
   ];
-  var idx=0, lrcLines=[], lrcTimer=null, started=false, seeking=false;
+  var idx=0, lrcLines=[], lrcTimer=null, started=false;
 
   function formatTime(t){
     if(!isFinite(t)||t<0)return '0:00';
@@ -408,7 +407,7 @@ var API_BASE = window.__API_BASE__ || ''; // 部署到云函数后，在 api-con
   function nextSong(){ loadSong(randomIdx()); if(player.classList.contains('playing')) play(); }
 
   player.addEventListener('click',function(e){
-    if(e.target.closest('.mp-ctrl')||e.target.closest('.mp-lyrics')||e.target.closest('.mp-progress')) return;
+    if(e.target.closest('.mp-ctrl')||e.target.closest('.mp-lyrics')) return;
     e.stopPropagation(); audio.paused?play():pause();
   });
   if(btn)btn.addEventListener('click',function(e){e.stopPropagation();audio.paused?play():pause();});
@@ -422,30 +421,9 @@ var API_BASE = window.__API_BASE__ || ''; // 部署到云函数后，在 api-con
   function updateProgress(){
     var d=audio.duration||0, c=audio.currentTime||0, pct=d>0?(c/d*100):0;
     if(playedEl)playedEl.style.width=pct+'%';
-    if(thumbEl)thumbEl.style.left=pct+'%';
     if(curEl)curEl.textContent=formatTime(c);
     if(durEl)durEl.textContent=formatTime(d);
   }
-  function seekFromEvent(e){
-    if(!trackEl)return;
-    var rect=trackEl.getBoundingClientRect();
-    var clientX=e.touches?e.touches[0].clientX:e.clientX;
-    var p=(clientX-rect.left)/rect.width;
-    p=Math.max(0,Math.min(1,p));
-    var d=audio.duration||0;
-    if(d>0){ audio.currentTime=p*d; updateProgress(); }
-  }
-  function bindSeek(el){
-    if(!el)return;
-    el.addEventListener('mousedown',function(e){e.stopPropagation(); seeking=true; seekFromEvent(e);});
-    el.addEventListener('touchstart',function(e){e.stopPropagation(); seeking=true; seekFromEvent(e);},{passive:false});
-  }
-  bindSeek(trackEl);
-  bindSeek(progressEl);
-  document.addEventListener('mousemove',function(e){ if(seeking){ seekFromEvent(e); } });
-  document.addEventListener('mouseup',function(){ seeking=false; });
-  document.addEventListener('touchmove',function(e){ if(seeking){ e.preventDefault(); seekFromEvent(e); } },{passive:false});
-  document.addEventListener('touchend',function(){ seeking=false; });
   audio.addEventListener('timeupdate',updateProgress);
   audio.addEventListener('durationchange',updateProgress);
   audio.addEventListener('loadedmetadata',updateProgress);
@@ -455,7 +433,7 @@ var API_BASE = window.__API_BASE__ || ''; // 部署到云函数后，在 api-con
   window.addEventListener('touchstart',tryAuto,{once:true});
   window.addEventListener('scroll',tryAuto,{once:true});
 
-  loadSong(0);
+  loadSong(Math.floor(Math.random()*playlist.length));
   updateProgress();
 })();
 
