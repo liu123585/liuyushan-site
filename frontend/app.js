@@ -435,10 +435,13 @@ var API_BASE = window.__API_BASE__ || ''; // 部署到云函数后，在 api-con
     var d=audio.duration||0;
     if(d>0){ audio.currentTime=p*d; updateProgress(); }
   }
-  if(trackEl){
-    trackEl.addEventListener('mousedown',function(e){e.stopPropagation(); seeking=true; seekFromEvent(e);});
-    trackEl.addEventListener('touchstart',function(e){e.stopPropagation(); seeking=true; seekFromEvent(e);},{passive:false});
+  function bindSeek(el){
+    if(!el)return;
+    el.addEventListener('mousedown',function(e){e.stopPropagation(); seeking=true; seekFromEvent(e);});
+    el.addEventListener('touchstart',function(e){e.stopPropagation(); seeking=true; seekFromEvent(e);},{passive:false});
   }
+  bindSeek(trackEl);
+  bindSeek(progressEl);
   document.addEventListener('mousemove',function(e){ if(seeking){ seekFromEvent(e); } });
   document.addEventListener('mouseup',function(){ seeking=false; });
   document.addEventListener('touchmove',function(e){ if(seeking){ e.preventDefault(); seekFromEvent(e); } },{passive:false});

@@ -212,7 +212,7 @@
   </div>
 </section>
 
-<!-- 立体校园地图 + 集章打卡 -->
+<!-- 立体校园地图 -->
 <section class="section" id="campusMap">
   <span class="section-eyebrow reveal">CAMPUS MAP · 立体校园</span>
   <h2 class="section-title reveal">立体看校园，还能<span class="accent">走到宿舍</span></h2>
@@ -660,17 +660,15 @@
   <span class="fab-icon">↑</span>
 </button>
 
-<!-- ===== BGM 播放器（多曲 + 歌词） ===== -->
+<!-- ===== BGM 播放器（多曲 + 歌词 + 进度条） ===== -->
 <div class="music-player" id="musicPlayer" title="点击播放 / 暂停背景音乐">
+  <div class="mp-progress" id="mpProgress">
+    <div class="mp-track" id="mpTrack"><div class="mp-played" id="mpPlayed"></div><div class="mp-thumb" id="mpThumb"></div></div>
+  </div>
   <button class="mp-btn" id="mpBtn" aria-label="播放/暂停">▶</button>
   <div class="mp-meta">
     <div class="mp-title" id="mpTitle">吹着晚风想起你</div>
-    <div class="mp-sub" id="mpSub">苏星婕 · 点击播放 BGM</div>
-    <div class="mp-progress" id="mpProgress">
-      <span class="mp-time" id="mpCur">0:00</span>
-      <div class="mp-track" id="mpTrack"><div class="mp-played" id="mpPlayed"></div><div class="mp-thumb" id="mpThumb"></div></div>
-      <span class="mp-time" id="mpDur">0:00</span>
-    </div>
+    <div class="mp-sub" id="mpSub">苏星婕 · 点击播放 BGM · <span id="mpCur">0:00</span>/<span id="mpDur">0:00</span></div>
   </div>
   <div class="mp-ctrl">
     <button class="mp-prev" id="mpPrev" aria-label="上一首">‹</button>

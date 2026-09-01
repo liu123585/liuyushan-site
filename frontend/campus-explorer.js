@@ -1,9 +1,6 @@
 /* 校园探索模块
-   1) 立体校园地图：高德 JSAPI 3D（俯仰/旋转看立体校园）+ 校园 POI 弹卡 + 步行路线规划
-      —— 需要高德 Key（在 api-config.js 配置）；没有 Key 时自动降级为下面的手绘地图
-   2) 手绘集章打卡地图：纯原生 SVG/Canvas，不依赖任何外部服务，点建筑打卡集章，
-      集满解锁「老生认证」并可生成分享海报
-   除高德 JSAPI（可选、CDN 引入）外无任何依赖，不改动原有逻辑。
+   立体校园地图：使用高德官方 Loader 加载 JSAPI 2.0（3D/2D 自动降级）+ POI 弹卡 + 步行路线规划
+   在 api-config.js 配置 window.__AMAP_KEY__ 与 window.__AMAP_SECURITY_CODE__。
 */
 (function () {
   'use strict';
@@ -12,54 +9,32 @@
 
   /* 校园地标：坐标复用小程序「校园探索」已标注的数据，图片用站点已有素材 */
   var LANDMARKS = [
-    { id: 'lib', name: '图书馆', campus: 'kaiyuan', lng: 112.4558, lat: 34.6412, cat: '学习', desc: '鼎形建筑，豫西最大的图书馆，藏书 450 万册，期末一座难求。', img: 'img/tsg.jpg', emoji: '📚', x: 46, y: 34 },
-    { id: 'th', name: '教学楼', campus: 'kaiyuan', lng: 112.4565, lat: 34.6398, cat: '学习', desc: '一~六号教学楼连成片，上课前看清楼号别跑错。', img: 'img/teaching_building.jpg', emoji: '🏫', x: 58, y: 50 },
-    { id: 'qh', name: '琴湖', campus: 'kaiyuan', lng: 112.4540, lat: 34.6420, cat: '风景', desc: '傍晚散步吹风的好地方，离宿舍区很近。', img: 'img/qinhu.jpg', emoji: '🌊', x: 22, y: 28 },
-    { id: 'canteen', name: '嘉园餐厅', campus: 'kaiyuan', lng: 112.4575, lat: 34.6390, cat: '吃喝', desc: '开元最大的食堂之一，一楼平价、二楼风味窗口多。', img: 'img/jiayuan_canteen.jpg', emoji: '🍜', x: 74, y: 58 },
-    { id: 'dorm', name: '宿舍区', campus: 'kaiyuan', lng: 112.4580, lat: 34.6385, cat: '生活', desc: '嘉园、菁园、乾园等园区，空调独卫看分配运气。', img: 'img/dorm1.jpg', emoji: '🛏️', x: 76, y: 30 },
-    { id: 'gate', name: '开元校门', campus: 'kaiyuan', lng: 112.4560, lat: 34.6450, cat: '地标', desc: '开元大道 263 号，新生报到处就在这片。', img: 'img/campus2.jpg', emoji: '🏛️', x: 50, y: 88 },
-    { id: 'field', name: '运动场', campus: 'kaiyuan', lng: 112.4545, lat: 34.6380, cat: '运动', desc: '操场加篮球场，夜跑和打球的人不少。', img: 'img/nyzt1.jpg', emoji: '🏃', x: 20, y: 64 },
-    { id: 'xy', name: '西苑校区', campus: 'xiyuan', lng: 112.3780, lat: 34.6570, cat: '校区', desc: '老校区，秋天梧桐大道很出片，工科强院聚集地。', img: 'img/xiyuan_campus.jpg', emoji: '🌳', x: 50, y: 50 },
-    { id: 'bearing', name: '中国轴承陈列馆', campus: 'xiyuan', lng: 112.3785, lat: 34.6575, cat: '特色', desc: '轴承强校的门面，馆里能看到不少轴承实物。', img: 'img/gkzt.jpg', emoji: '⚙️', x: 68, y: 32 },
-    { id: 'bridge', name: '连接天桥', campus: 'xiyuan', lng: 112.3775, lat: 34.6565, cat: '风景', desc: '连南北两院的天桥，经典打卡点。', img: 'img/nyzt1.jpg', emoji: '🌉', x: 38, y: 70 }
+    { id: 'lib', name: '图书馆', campus: 'kaiyuan', lng: 112.4558, lat: 34.6412, cat: '学习', desc: '鼎形建筑，豫西最大的图书馆，藏书 450 万册，期末一座难求。', img: 'img/tsg.jpg', emoji: '📚' },
+    { id: 'th', name: '教学楼', campus: 'kaiyuan', lng: 112.4565, lat: 34.6398, cat: '学习', desc: '一~六号教学楼连成片，上课前看清楼号别跑错。', img: 'img/teaching_building.jpg', emoji: '🏫' },
+    { id: 'qh', name: '琴湖', campus: 'kaiyuan', lng: 112.4540, lat: 34.6420, cat: '风景', desc: '傍晚散步吹风的好地方，离宿舍区很近。', img: 'img/qinhu.jpg', emoji: '🌊' },
+    { id: 'canteen', name: '嘉园餐厅', campus: 'kaiyuan', lng: 112.4575, lat: 34.6390, cat: '吃喝', desc: '开元最大的食堂之一，一楼平价、二楼风味窗口多。', img: 'img/jiayuan_canteen.jpg', emoji: '🍜' },
+    { id: 'dorm', name: '宿舍区', campus: 'kaiyuan', lng: 112.4580, lat: 34.6385, cat: '生活', desc: '嘉园、菁园、乾园等园区，空调独卫看分配运气。', img: 'img/dorm1.jpg', emoji: '🛏️' },
+    { id: 'gate', name: '开元校门', campus: 'kaiyuan', lng: 112.4560, lat: 34.6450, cat: '地标', desc: '开元大道 263 号，新生报到处就在这片。', img: 'img/campus2.jpg', emoji: '🏛️' },
+    { id: 'field', name: '运动场', campus: 'kaiyuan', lng: 112.4545, lat: 34.6380, cat: '运动', desc: '操场加篮球场，夜跑和打球的人不少。', img: 'img/nyzt1.jpg', emoji: '🏃' },
+    { id: 'xy', name: '西苑校区', campus: 'xiyuan', lng: 112.3780, lat: 34.6570, cat: '校区', desc: '老校区，秋天梧桐大道很出片，工科强院聚集地。', img: 'img/xiyuan_campus.jpg', emoji: '🌳' },
+    { id: 'bearing', name: '中国轴承陈列馆', campus: 'xiyuan', lng: 112.3785, lat: 34.6575, cat: '特色', desc: '轴承强校的门面，馆里能看到不少轴承实物。', img: 'img/gkzt.jpg', emoji: '⚙️' },
+    { id: 'bridge', name: '连接天桥', campus: 'xiyuan', lng: 112.3775, lat: 34.6565, cat: '风景', desc: '连南北两院的天桥，经典打卡点。', img: 'img/nyzt1.jpg', emoji: '🌉' }
   ];
   var CENTER = { kaiyuan: [112.4560, 34.6405], xiyuan: [112.3780, 34.6570] };
-  var STAMP_KEY = 'haust_stamps_web';
 
   var curCampus = 'kaiyuan';
-  var stamps = loadStamps();
   var map = null, walking = null, curPoly = null, markers = [];
   var routeStart = null, routeEnd = null;
 
   function $(id) { return document.getElementById(id); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
-  function loadStamps() { try { return JSON.parse(localStorage.getItem(STAMP_KEY) || '[]'); } catch (e) { return []; } }
-  function saveStamps() { try { localStorage.setItem(STAMP_KEY, JSON.stringify(stamps)); } catch (e) { } }
   function byCampus(c) { return LANDMARKS.filter(function (l) { return l.campus === c; }); }
   function findL(id) { for (var i = 0; i < LANDMARKS.length; i++) if (LANDMARKS[i].id === id) return LANDMARKS[i]; return null; }
 
-  /* ---------------- 1. 立体校园地图（高德，需 Key） ---------------- */
-  function initAmap() {
-    var box = $('amapContainer'), fb = $('mapFallback');
-    if (!box) return;
-    if (!AMAP_KEY) { showFallback('还未配置高德 Key：在 api-config.js 里填 window.__AMAP_KEY__ 即可开启立体校园地图（免费申请）。'); return; }
-    // 2021-12 之后申请的 Key 需配安全密钥，且必须在加载 maps 脚本前设置
-    if (AMAP_SEC) { window._AMapSecurityConfig = { securityJsCode: AMAP_SEC }; }
-    window.__amapReady = function () { try { buildMap(); } catch (e) { showFallback('地图初始化失败：' + e.message); } };
-    var s = document.createElement('script');
-    s.src = 'https://webapi.amap.com/maps?v=2.0&key=' + encodeURIComponent(AMAP_KEY) + '&callback=__amapReady';
-    s.onerror = function () { showFallback('高德地图脚本加载失败，请检查网络或 Key 是否正确。下面「手绘集章地图」不受影响。'); };
-    document.head.appendChild(s);
-    // 6 秒脚本还没回调（AMap 未加载），提示 Key/网络问题
-    setTimeout(function () { if ((!window.AMap || !map) && fb && fb.hidden) showFallback('高德地图脚本加载超时，可能是 Key 无效、未开通「Web端(JS API)」，或白名单未包含当前域名。'); }, 6500);
-  }
-
-  function showFallback(msg) {
+  function showMsg(msg) {
     var fb = $('mapFallback'); if (!fb) return;
-    fb.innerHTML = '<div class="fb-inner"><div class="fb-ico">🗺️</div><p>' + esc(msg) + '</p>' +
-      '<div class="fb-actions"><button class="fb-btn" id="fb2d">切换为 2D 地图</button></div></div>';
+    fb.innerHTML = '<div class="fb-inner"><div class="fb-ico">🗺️</div><p>' + esc(msg) + '</p></div>';
     fb.hidden = false;
-    var b2d = $('fb2d'); if (b2d) b2d.addEventListener('click', function () { rebuild2D(); });
   }
 
   function isWebGLSupported() {
@@ -69,11 +44,47 @@
     } catch (e) { return false; }
   }
 
+  function loadAmapLoader() {
+    return new Promise(function (resolve, reject) {
+      if (typeof AMapLoader !== 'undefined') return resolve(AMapLoader);
+      var s = document.createElement('script');
+      s.src = 'https://webapi.amap.com/loader.js';
+      s.async = true;
+      s.onload = function () {
+        if (typeof AMapLoader === 'undefined') return reject(new Error('高德 Loader 不可用'));
+        resolve(AMapLoader);
+      };
+      s.onerror = function () { reject(new Error('高德 Loader 脚本加载失败')); };
+      document.head.appendChild(s);
+    });
+  }
+
+  function initAmap() {
+    var box = $('amapContainer');
+    if (!box) return;
+    if (!AMAP_KEY) { showMsg('还未配置高德 Key：在 api-config.js 里填 window.__AMAP_KEY__ 即可开启立体校园地图（免费申请）。'); return; }
+    // 安全密钥必须在加载地图前设置
+    if (AMAP_SEC) { window._AMapSecurityConfig = { securityJsCode: AMAP_SEC }; }
+
+    loadAmapLoader().then(function (Loader) {
+      return Loader.load({
+        key: AMAP_KEY,
+        version: '2.0',
+        plugins: ['AMap.ToolBar', 'AMap.ControlBar', 'AMap.Walking', 'AMap.InfoWindow']
+      });
+    }).then(function (AMap) {
+      window.AMap = AMap;
+      buildMap();
+    }).catch(function (err) {
+      console.error('AMap load error', err);
+      showMsg('地图加载失败：' + (err && err.message || '未知错误') + '。请检查 Key / 安全密钥 / 域名白名单是否配置正确。');
+    });
+  }
+
   function buildMap() {
     if (!window.AMap) return;
     var hasWebGL = isWebGLSupported();
     var mapReady = false;
-    // 3D 依赖 WebGL；不支持时自动降为 2D，避免空白
     var opts = {
       zoom: 16.4,
       center: CENTER[curCampus],
@@ -88,15 +99,14 @@
       opts.rotation = -18;
     } else {
       opts.viewMode = '2D';
-      showFallback('当前浏览器/环境不支持 WebGL，已自动切换为 2D 地图。', false);
+      console.log('WebGL 不支持，已降为 2D 地图');
     }
     try {
       map = new AMap.Map('amapContainer', opts);
     } catch (e) {
-      showFallback('地图初始化失败：' + e.message + '。可点击下方按钮切换。');
+      showMsg('地图初始化失败：' + e.message + '。');
       return;
     }
-    // 地图初始化完成（瓦片加载成功）会触发 complete；若 Key/白名单有问题，通常不会触发
     map.on('complete', function () {
       mapReady = true;
       var fb = $('mapFallback'); if (fb) fb.hidden = true;
@@ -105,9 +115,9 @@
     });
     map.on('error', function (e) {
       console.error('AMap error', e);
-      showFallback('地图渲染出错：' + (e && e.info || '未知错误') + '。可点击下方按钮切换。');
+      showMsg('地图渲染出错：' + (e && e.info || '未知错误') + '。');
     });
-    // 兜底：8 秒内未 complete，自动降级为 2D 普通地图重试一次
+    // 8 秒内未 complete，降级 2D 重试一次
     setTimeout(function () {
       if (!mapReady && map) {
         try { map.destroy(); } catch (e) {}
@@ -115,15 +125,9 @@
         rebuild2D();
       }
     }, 8000);
-    AMap.plugin(['AMap.ToolBar', 'AMap.ControlBar'], function () {
-      if (!map) return;
-      try { map.addControl(new AMap.ToolBar({ position: { right: '12px', bottom: '80px' } })); } catch (e) {}
-      try { map.addControl(new AMap.ControlBar({ position: { right: '6px', top: '12px' } })); } catch (e) {}
-    });
-    AMap.plugin('AMap.Walking', function () {
-      if (!map) return;
-      try { walking = new AMap.Walking({ map: map, panel: '' }); } catch (e) {}
-    });
+    try { map.addControl(new AMap.ToolBar({ position: { right: '12px', bottom: '80px' } })); } catch (e) {}
+    try { map.addControl(new AMap.ControlBar({ position: { right: '6px', top: '12px' } })); } catch (e) {}
+    try { walking = new AMap.Walking({ map: map, panel: '' }); } catch (e) {}
   }
 
   function rebuild2D() {
@@ -135,7 +139,8 @@
         center: CENTER[curCampus],
         mapStyle: 'amap://styles/normal',
         viewMode: '2D',
-        rotateEnable: true
+        rotateEnable: true,
+        resizeEnable: true
       });
       map.on('complete', function () {
         var fb2 = $('mapFallback'); if (fb2) fb2.hidden = true;
@@ -143,16 +148,14 @@
       });
       map.on('error', function (e) {
         console.error('AMap 2D error', e);
-        showFallback('2D 地图也加载失败：' + (e && e.info || '未知错误') + '。请检查高德 Key 是否开通「Web端(JS API)」且白名单包含当前域名。', false);
+        showMsg('2D 地图也加载失败：' + (e && e.info || '未知错误') + '。请检查 Key / 安全密钥 / 域名白名单。');
       });
       setTimeout(function () {
-        if (!map || !map.getCenter) showFallback('2D 地图加载超时，请检查高德 Key 是否开通「Web端(JS API)」且白名单包含当前域名 site.liuyushan.top。', false);
+        if (!map || !map.getCenter) showMsg('2D 地图加载超时，请检查高德 Key 是否开通「Web端(JS API)」且白名单包含当前域名 site.liuyushan.top。');
       }, 10000);
-      AMap.plugin('AMap.Walking', function () {
-        if (map) walking = new AMap.Walking({ map: map, panel: '' });
-      });
+      try { walking = new AMap.Walking({ map: map, panel: '' }); } catch (e) {}
     } catch (e) {
-      showFallback('2D 地图初始化失败：' + e.message + '。请检查高德 Key 是否开通「Web端(JS API)」且白名单包含当前域名。', false);
+      showMsg('2D 地图初始化失败：' + e.message + '。请检查 Key / 安全密钥 / 域名白名单。');
     }
   }
 
@@ -166,11 +169,10 @@
     if (!map) return;
     clearMarkers();
     byCampus(curCampus).forEach(function (l) {
-      var done = stamps.indexOf(l.id) >= 0;
       var mk = new AMap.Marker({
         position: [l.lng, l.lat],
         offset: new AMap.Pixel(-14, -14),
-        content: '<div class="mk' + (done ? ' done' : '') + '" title="' + esc(l.name) + '">' + l.emoji + '</div>',
+        content: '<div class="mk" title="' + esc(l.name) + '">' + l.emoji + '</div>',
         map: map
       });
       mk.on('click', function () { openInfo(l); });
@@ -178,9 +180,18 @@
     });
   }
 
+  function toast(msg) {
+    var t = document.createElement('div');
+    t.className = 'map-toast';
+    t.textContent = msg;
+    t.style.cssText = 'position:fixed;left:50%;bottom:120px;transform:translateX(-50%);background:rgba(10,14,26,.92);color:var(--gold2);border:1px solid rgba(212,175,55,.35);padding:8px 16px;border-radius:999px;font-size:13px;z-index:200;pointer-events:none;opacity:0;transition:opacity .25s;';
+    document.body.appendChild(t);
+    requestAnimationFrame(function () { t.style.opacity = '1'; });
+    setTimeout(function () { t.style.opacity = '0'; setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 250); }, 1600);
+  }
+
   function openInfo(l) {
-    if (!map) { openCard(l); return; }
-    var done = stamps.indexOf(l.id) >= 0;
+    if (!map) return;
     var html = '<div class="iw">' +
       '<img class="iw-img" src="' + esc(l.img) + '" alt="' + esc(l.name) + '">' +
       '<div class="iw-body">' +
@@ -189,7 +200,6 @@
       '<div class="iw-btns">' +
       '<button class="iw-btn" data-act="from">设为起点</button>' +
       '<button class="iw-btn" data-act="to">设为终点</button>' +
-      '<button class="iw-btn gold" data-act="stamp">' + (done ? '已盖章 ✓' : '盖个章 📍') + '</button>' +
       '</div></div></div>';
     var iw = new AMap.InfoWindow({ content: html, offset: new AMap.Pixel(0, -18), isCustom: false });
     iw.open(map, [l.lng, l.lat]);
@@ -202,7 +212,6 @@
         var act = b.getAttribute('data-act');
         if (act === 'from') { routeStart = l; toast('起点：' + l.name); }
         else if (act === 'to') { routeEnd = l; toast('终点：' + l.name); }
-        else { doStamp(l, b); }
       });
     }, 30);
   }
@@ -210,7 +219,7 @@
   /* 步行路线：自己渲染成深色步骤列表（高德默认面板是白底，和站点风格不搭） */
   function planRoute() {
     var panel = $('routePanel');
-    if (!walking) { if (panel) panel.innerHTML = '<div class="route-empty">路线规划需要高德 Key 支持（当前为手绘地图模式）。</div>'; return; }
+    if (!walking) { if (panel) panel.innerHTML = '<div class="route-empty">路线规划功能正在加载中，请稍等。</div>'; return; }
     if (!routeStart || !routeEnd) { if (panel) panel.innerHTML = '<div class="route-empty">先在地图上点两个地点，分别设为「起点」和「终点」。</div>'; return; }
     if (panel) panel.innerHTML = '<div class="route-loading">路线规划中…</div>';
     walking.search([routeStart.lng, routeStart.lat], [routeEnd.lng, routeEnd.lat], function (status, result) {
