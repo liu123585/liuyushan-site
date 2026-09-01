@@ -6,6 +6,7 @@
   'use strict';
   var AMAP_KEY = window.__AMAP_KEY__ || '';
   var AMAP_SEC = window.__AMAP_SECURITY_CODE__ || '';
+  console.log('[campus] loaded. AMAP_KEY present:', !!AMAP_KEY, 'SEC present:', !!AMAP_SEC);
 
   /* 校园地标：坐标复用小程序「校园探索」已标注的数据，图片用站点已有素材 */
   var LANDMARKS = [
@@ -45,43 +46,49 @@
   }
 
   function loadAmapLoader() {
+    console.log('[campus] loadAmapLoader start');
     return new Promise(function (resolve, reject) {
-      if (typeof AMapLoader !== 'undefined') return resolve(AMapLoader);
+      if (typeof AMapLoader !== 'undefined') { console.log('[campus] AMapLoader already defined'); return resolve(AMapLoader); }
       var s = document.createElement('script');
       s.src = 'https://webapi.amap.com/loader.js';
       s.async = true;
       s.onload = function () {
+        console.log('[campus] loader.js loaded. AMapLoader defined:', typeof AMapLoader);
         if (typeof AMapLoader === 'undefined') return reject(new Error('高德 Loader 不可用'));
         resolve(AMapLoader);
       };
-      s.onerror = function () { reject(new Error('高德 Loader 脚本加载失败')); };
+      s.onerror = function () { console.error('[campus] loader.js load error'); reject(new Error('高德 Loader 脚本加载失败')); };
       document.head.appendChild(s);
     });
   }
 
   function initAmap() {
+    console.log('[campus] initAmap called. box:', !!$('amapContainer'), 'AMAP_KEY:', !!AMAP_KEY);
     var box = $('amapContainer');
     if (!box) return;
-    if (!AMAP_KEY) { showMsg('还未配置高德 Key：在 api-config.js 里填 window.__AMAP_KEY__ 即可开启立体校园地图（免费申请）。'); return; }
+    if (!AMAP_KEY) { console.log('[campus] no AMAP_KEY, abort'); showMsg('还未配置高德 Key：在 api-config.js 里填 window.__AMAP_KEY__ 即可开启立体校园地图（免费申请）。'); return; }
     // 安全密钥必须在加载地图前设置
     if (AMAP_SEC) { window._AMapSecurityConfig = { securityJsCode: AMAP_SEC }; }
 
     loadAmapLoader().then(function (Loader) {
+      console.log('[campus] Loader ready, calling load');
       return Loader.load({
         key: AMAP_KEY,
         version: '2.0',
         plugins: ['AMap.ToolBar', 'AMap.ControlBar', 'AMap.Walking', 'AMap.InfoWindow']
       });
     }).then(function (AMap) {
+      console.log('[campus] AMap loaded. building map');
       window.AMap = AMap;
       buildMap();
     }).catch(function (err) {
-      console.error('AMap load error', err);
+      console.error('[campus] AMap load error', err);
       showMsg('地图加载失败：' + (err && err.message || '未知错误') + '。请检查 Key / 安全密钥 / 域名白名单是否配置正确。');
     });
   }
 
   function buildMap() {
+    console.log('[campus] buildMap called');
     if (!window.AMap) return;
     var hasWebGL = isWebGLSupported();
     var mapReady = false;
@@ -102,19 +109,23 @@
       console.log('WebGL 不支持，已降为 2D 地图');
     }
     try {
+      console.log('[campus] creating AMap.Map with opts', JSON.stringify({viewMode: opts.viewMode, center: opts.center, zoom: opts.zoom}));
       map = new AMap.Map('amapContainer', opts);
+      console.log('[campus] AMap.Map created');
     } catch (e) {
+      console.error('[campus] AMap.Map create error', e);
       showMsg('地图初始化失败：' + e.message + '。');
       return;
     }
     map.on('complete', function () {
+      console.log('[campus] map complete');
       mapReady = true;
       var fb = $('mapFallback'); if (fb) fb.hidden = true;
       try { map.resize(); } catch (e) {}
       renderMarkers();
     });
     map.on('error', function (e) {
-      console.error('AMap error', e);
+      console.error('[campus] AMap error', e);
       showMsg('地图渲染出错：' + (e && e.info || '未知错误') + '。');
     });
     // 8 秒内未 complete，降级 2D 重试一次
@@ -241,6 +252,7 @@
   }
 
   function boot() {
+    console.log('[campus] boot. amapContainer found:', !!document.getElementById('amapContainer'));
     if (!document.getElementById('amapContainer')) return;
     initAmap();
     var tabs = document.querySelectorAll('#mapCampusTabs .campus-tab');
