@@ -347,7 +347,14 @@ var API_BASE = window.__API_BASE__ || ''; // 部署到云函数后，在 api-con
     {title:'星与海', artist:'山止川行', src:'bgm/song2.mp3', lrc:''},
     {title:'瞬间', artist:'早八8AM', src:'bgm/song3.mp3', lrc:''},
     {title:'喜欢开始 遗憾终止', artist:'余一', src:'bgm/song4.mp3', lrc:''},
-    {title:'星空裂痕', artist:'pro', src:'bgm/song5.mp3', lrc:''}
+    {title:'星空裂痕', artist:'pro', src:'bgm/song5.mp3', lrc:''},
+    {title:'多幸运', artist:'韩安旭', src:'bgm/song6.mp3', lrc:''},
+    {title:'未知歌曲', artist:'待补充（原名 M500000rEJFB31pYqs）', src:'bgm/song7.mp3', lrc:''},
+    {title:'未知歌曲', artist:'待补充（原名 M500000Zv4DY3Xq1qy）', src:'bgm/song8.mp3', lrc:''},
+    {title:'未知歌曲', artist:'待补充（原名 M5000027ipw13HGcvb）', src:'bgm/song9.mp3', lrc:''},
+    {title:'夜空中最亮的星', artist:'逃跑计划', src:'bgm/song10.mp3', lrc:''},
+    {title:'晴天', artist:'周杰伦', src:'bgm/song11.mp3', lrc:''},
+    {title:'起风了', artist:'买辣椒也用券', src:'bgm/song12.mp3', lrc:''}
   ];
   var idx=0, lrcLines=[], lrcTimer=null, started=false;
 
