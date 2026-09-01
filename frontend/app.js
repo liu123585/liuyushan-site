@@ -354,7 +354,8 @@ var API_BASE = window.__API_BASE__ || ''; // 部署到云函数后，在 api-con
     {title:'沦陷', artist:'JuggShots', src:'bgm/song9.mp3', lrc:''},
     {title:'夜空中最亮的星', artist:'逃跑计划', src:'bgm/song10.mp3', lrc:''},
     {title:'晴天', artist:'周杰伦', src:'bgm/song11.mp3', lrc:''},
-    {title:'起风了', artist:'买辣椒也用券', src:'bgm/song12.mp3', lrc:''}
+    {title:'起风了', artist:'买辣椒也用券', src:'bgm/song12.mp3', lrc:''},
+    {title:'相拥星空', artist:'张洛一', src:'bgm/song13.m4a', lrc:''}
   ];
   var idx=0, lrcLines=[], lrcTimer=null, started=false;
 
