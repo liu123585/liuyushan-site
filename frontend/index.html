@@ -32,11 +32,13 @@
   </div>
   <ul class="nav-links" id="navLinks">
     <li><a href="#campus">校区概览</a></li>
+    <li><a href="#campusMap">校园地图</a></li>
     <li><a href="#life">生活指南</a></li>
     <li><a href="#prepare">入学准备</a></li>
     <li><a href="#club">社团活动</a></li>
     <li><a href="#hero">回到顶部</a></li>
     <li><a href="#freshman">新生墙</a></li>
+    <li><a href="#insights">新生画像</a></li>
     <li><a href="#fun">互动玩法</a></li>
   </ul>
   <button class="menu-toggle" id="menuToggle" aria-label="菜单">&#9776;</button>
@@ -76,6 +78,14 @@
   <div class="stat"><div class="num" data-target="450" data-suffix="万册">0</div><div class="lbl">图书馆藏书</div></div>
   <div class="stat"><div class="num" data-target="2" data-suffix="个">0</div><div class="lbl">主要校区</div></div>
   <div class="stat"><div class="num" data-target="300" data-suffix="+">0</div><div class="lbl">学生社团</div></div>
+</section>
+
+<!-- 开学倒计时 -->
+<section class="section" id="countdown">
+  <span class="section-eyebrow reveal">COUNTDOWN · 开学倒计时</span>
+  <h2 class="section-title reveal">还有几天，<span class="accent">你就到科大了</span></h2>
+  <p class="section-desc reveal">报到、军训、放假这些关键节点都在这儿，每天打开看一眼就不会错过。</p>
+  <div class="countdown-box reveal" id="countdownBox"></div>
 </section>
 
 <!-- 01 校区概览 -->
@@ -201,6 +211,41 @@
     </div>
   </div>
   </div>
+</section>
+
+<!-- 立体校园地图 + 集章打卡 -->
+<section class="section" id="campusMap">
+  <span class="section-eyebrow reveal">CAMPUS MAP · 立体校园</span>
+  <h2 class="section-title reveal">立体看校园，还能<span class="accent">走到宿舍</span></h2>
+  <p class="section-desc reveal">开元 / 西苑两个校区都能立体俯瞰——可拖动旋转、调整俯仰角看楼块。在地图上点两个地点，就能规划步行路线，开学第一天再也不怕找不到报到点。</p>
+
+  <div class="campus-tabs" id="mapCampusTabs">
+    <button class="campus-tab active" data-campus="kaiyuan">开元校区</button>
+    <button class="campus-tab" data-campus="xiyuan">西苑校区</button>
+  </div>
+
+  <div class="map-wrap reveal">
+    <div id="amapContainer" class="amap-box"></div>
+    <div id="mapFallback" class="map-fallback" hidden></div>
+  </div>
+
+  <div class="route-bar">
+    <button id="routeGo" class="route-go">🚶 规划步行路线（先点地图上的地点设为起点 / 终点）</button>
+  </div>
+  <div id="routePanel" class="route-panel"></div>
+
+  <h3 class="sub-title reveal">手绘校园 · 集章打卡</h3>
+  <div class="hand-wrap reveal">
+    <div class="handmap" id="handMap"></div>
+    <div class="stamp-side">
+      <div class="stamp-progress" id="stampProgress"></div>
+      <div class="stamp-card" id="stampCard" hidden></div>
+    </div>
+  </div>
+  <div class="poster-bar">
+    <button id="posterBtn" class="poster-btn">🎨 生成我的集章海报</button>
+  </div>
+  <canvas id="posterCanvas" class="poster-canvas" hidden></canvas>
 </section>
 
 <!-- divider -->
@@ -495,6 +540,14 @@
 </section>
 
 <div class="divider-flow"></div>
+<!-- 新生大数据画像 -->
+<section class="section" id="insights">
+  <span class="section-eyebrow reveal">FRESHMAN DATA · 新生画像</span>
+  <h2 class="section-title reveal">2026 级新生，<span class="accent">都是什么来头</span></h2>
+  <p class="section-desc reveal">数据来自本站「新生墙」实时统计：大家都来自哪、学什么专业、什么星座、爱干什么。上墙的同学越多，这幅画像就越准。</p>
+  <div class="insights-box reveal" id="insightsBox"><div class="ins-empty">数据加载中…</div></div>
+</section>
+
 <!-- 05 互动玩法 -->
 <section class="section five" id="fun">
   <span class="section-eyebrow reveal">INTERACTIVE · 互动玩法</span>
@@ -676,5 +729,7 @@
 </div>
 <script src="api-config.js"></script>
 <script src="app.js"></script>
+<script src="campus-explorer.js"></script>
+<script src="freshman-insights.js"></script>
 </body>
 </html>

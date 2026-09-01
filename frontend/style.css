@@ -924,3 +924,115 @@ a.game-btn{display:block;text-decoration:none;text-align:center}
   .btab{min-width:0;padding:6px 4px}
   .btab span{font-size:9px}
 }
+
+/* ================= 开学倒计时 ================= */
+.countdown-box{max-width:820px;margin:6px auto 0;background:var(--glass);border:1px solid var(--glass-border);border-radius:18px;padding:26px 22px;backdrop-filter:blur(10px)}
+.cd-main{text-align:center;padding-bottom:18px;border-bottom:1px dashed rgba(212,175,55,.25)}
+.cd-label{font-size:13px;letter-spacing:2px;color:var(--grey)}
+.cd-days{font-size:64px;font-weight:800;line-height:1.1;background:linear-gradient(135deg,var(--primary2),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
+.cd-days span{font-size:22px}
+.cd-sub{margin-top:4px;font-size:14px;color:var(--gold2)}
+.cd-list{list-style:none;margin-top:16px}
+.cd-item{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid rgba(255,255,255,.06);font-size:14px;flex-wrap:wrap}
+.cd-item.past{opacity:.45}
+.cd-e{flex:1;min-width:150px}
+.cd-d{color:var(--grey);font-size:13px}
+.cd-t{color:var(--gold2);font-size:13px;font-weight:600}
+.cd-note{margin-top:12px;font-size:12px;color:rgba(245,240,235,.45);text-align:center}
+
+/* ================= 立体校园地图 ================= */
+.map-wrap{position:relative;margin-top:18px;border-radius:16px;overflow:hidden;border:1px solid var(--glass-border);background:#0b1220}
+.amap-box{width:100%;height:460px}
+.map-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0d1a2e,#131a2c);padding:24px;text-align:center}
+.fb-inner{max-width:520px}
+.fb-ico{font-size:44px;margin-bottom:10px}
+.map-fallback p{font-size:14px;color:rgba(245,240,235,.7);line-height:1.8}
+.mk{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;background:rgba(10,14,26,.9);border:2px solid var(--gold);box-shadow:0 0 12px rgba(212,175,55,.5);cursor:pointer}
+.mk.done{border-color:#5f8;box-shadow:0 0 12px rgba(95,136,255,.6)}
+.iw{display:flex;gap:10px;width:270px;background:rgba(10,14,26,.96);border:1px solid var(--glass-border);border-radius:12px;padding:10px;color:var(--white)}
+.iw-img{width:78px;height:78px;object-fit:cover;border-radius:8px;flex:0 0 78px}
+.iw-body{flex:1;min-width:0}
+.iw-name{font-size:15px;font-weight:700;display:flex;align-items:center;gap:6px}
+.iw-cat{font-size:11px;font-weight:400;color:var(--gold2);border:1px solid rgba(212,175,55,.4);border-radius:999px;padding:1px 7px}
+.iw-desc{font-size:12px;color:rgba(245,240,235,.72);margin:4px 0 8px;line-height:1.5}
+.iw-btns{display:flex;gap:6px;flex-wrap:wrap}
+.iw-btn{font-size:12px;padding:5px 9px;border-radius:8px;border:1px solid var(--glass-border);background:rgba(255,255,255,.06);color:var(--white);cursor:pointer}
+.iw-btn.gold{border-color:rgba(212,175,55,.55);background:rgba(212,175,55,.15);color:var(--gold2)}
+.route-bar{margin-top:14px;text-align:center}
+.route-go{background:linear-gradient(135deg,var(--primary),var(--gold));border:0;color:#fff;font-weight:700;padding:12px 22px;border-radius:999px;cursor:pointer;font-size:14px;box-shadow:0 6px 20px rgba(0,85,163,.35)}
+.route-panel{margin-top:12px}
+.route-head{background:var(--glass);border:1px solid var(--glass-border);border-radius:12px;padding:12px 14px;font-weight:700;margin-bottom:8px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.route-meta{font-size:13px;font-weight:400;color:var(--gold2)}
+.route-steps{margin:0;padding-left:0;list-style:none}
+.route-steps li{display:flex;gap:10px;align-items:flex-start;padding:7px 4px;border-bottom:1px solid rgba(255,255,255,.06);font-size:13px}
+.step-i{flex:0 0 20px;height:20px;border-radius:50%;background:rgba(0,85,163,.5);display:flex;align-items:center;justify-content:center;font-size:11px}
+.step-t{flex:1;color:rgba(245,240,235,.85)}
+.step-d{color:var(--grey);font-size:12px}
+.route-empty,.route-loading{text-align:center;padding:16px;color:rgba(245,240,235,.55);font-size:13px}
+
+/* ================= 手绘集章地图 ================= */
+.sub-title{margin:38px 0 6px;font-size:20px;font-weight:700;color:var(--gold2)}
+.hand-wrap{display:grid;grid-template-columns:1.1fr .9fr;gap:18px;margin-top:12px}
+.handmap{position:relative;aspect-ratio:3/4;border-radius:16px;overflow:hidden;border:1px solid var(--glass-border);background:radial-gradient(120% 90% at 50% 10%,#12233d 0%,#0a0e1a 70%)}
+.hm-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px);background-size:34px 34px}
+.hm-road{position:absolute;background:rgba(212,175,55,.18)}
+.hm-road.v{top:0;bottom:0;width:14px;transform:translateX(-50%)}
+.hm-road.h{left:0;right:0;height:14px;transform:translateY(-50%)}
+.hm-lake{position:absolute;left:8%;top:18%;width:26%;height:22%;border-radius:50%;background:radial-gradient(circle,rgba(30,136,229,.35),rgba(30,136,229,0) 70%)}
+.hm-dot{position:absolute;transform:translate(-50%,-50%);background:rgba(10,14,26,.92);border:2px solid rgba(212,175,55,.7);border-radius:12px;padding:4px 8px;display:flex;align-items:center;gap:5px;color:var(--white);cursor:pointer;font-size:12px;white-space:nowrap;transition:transform .15s,border-color .2s}
+.hm-dot:hover{transform:translate(-50%,-50%) scale(1.06)}
+.hm-dot.done{border-color:#5f8;box-shadow:0 0 12px rgba(95,136,255,.45)}
+.hm-ico{font-size:14px}
+.hm-tip{position:absolute;left:0;right:0;bottom:8px;text-align:center;font-size:11px;color:rgba(245,240,235,.5)}
+.stamp-side{display:flex;flex-direction:column;gap:14px}
+.stamp-progress{background:var(--glass);border:1px solid var(--glass-border);border-radius:14px;padding:16px}
+.sp-top{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.sp-num{font-size:34px;font-weight:800;color:var(--gold2)}
+.sp-tot{color:var(--grey);font-size:13px}
+.sp-badge{margin-left:auto;font-size:12px;background:linear-gradient(135deg,var(--primary),var(--gold));padding:3px 10px;border-radius:999px;color:#fff}
+.sp-bar{height:8px;border-radius:999px;background:rgba(255,255,255,.08);margin:10px 0 12px;overflow:hidden}
+.sp-bar i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--primary2),var(--gold));transition:width .4s}
+.sp-list{display:flex;flex-wrap:wrap;gap:6px}
+.sp-chip{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);opacity:.35;font-size:14px}
+.sp-chip.on{opacity:1;border-color:rgba(212,175,55,.6);background:rgba(212,175,55,.14)}
+.stamp-card{display:flex;gap:12px;background:var(--glass);border:1px solid var(--glass-border);border-radius:14px;padding:12px;align-items:flex-start}
+.stamp-card img{width:96px;height:72px;object-fit:cover;border-radius:8px;flex:0 0 96px}
+.sc-body{flex:1;min-width:0}
+.sc-name{font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px}
+.sc-cat{font-size:11px;font-weight:400;color:var(--gold2);border:1px solid rgba(212,175,55,.4);border-radius:999px;padding:1px 7px}
+.stamp-card p{font-size:13px;color:rgba(245,240,235,.75);margin:6px 0 10px;line-height:1.6}
+.poster-bar{margin-top:16px;text-align:center}
+.poster-btn{background:linear-gradient(135deg,var(--gold),#b8860b);border:0;color:#20160a;font-weight:800;padding:12px 24px;border-radius:999px;cursor:pointer;font-size:14px}
+.poster-canvas{max-width:360px;width:100%;margin:14px auto 0;display:block;border-radius:14px;border:1px solid var(--glass-border)}
+.map-toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(14px);background:rgba(10,14,26,.95);border:1px solid var(--glass-border);color:var(--white);padding:10px 18px;border-radius:999px;font-size:13px;z-index:9999;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s}
+.map-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ================= 新生大数据画像 ================= */
+.insights-box{margin-top:14px}
+.ins-empty{text-align:center;padding:34px;color:rgba(245,240,235,.55);font-size:14px;line-height:1.9;background:var(--glass);border:1px solid var(--glass-border);border-radius:14px}
+.ins-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.ins-kpi{background:var(--glass);border:1px solid var(--glass-border);border-radius:14px;padding:16px;text-align:center}
+.kpi-n{font-size:26px;font-weight:800;background:linear-gradient(135deg,var(--primary2),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent;word-break:break-all}
+.kpi-l{font-size:12px;color:var(--grey);margin-top:4px}
+.ins-panel{background:var(--glass);border:1px solid var(--glass-border);border-radius:14px;padding:16px 18px;margin-bottom:14px}
+.ins-panel h4{font-size:15px;margin-bottom:12px;color:var(--gold2)}
+.ins-grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.bars{display:flex;flex-direction:column;gap:9px}
+.bar-row{display:flex;align-items:center;gap:10px;font-size:13px}
+.bar-k{flex:0 0 96px;color:rgba(245,240,235,.85);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar-track{flex:1;height:9px;border-radius:999px;background:rgba(255,255,255,.07);overflow:hidden}
+.bar-track i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--primary2),var(--gold))}
+.bar-v{flex:0 0 28px;text-align:right;color:var(--gold2);font-weight:700}
+.cloud{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;padding:6px 0}
+.cw{color:var(--white);opacity:.9}
+.match-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.match-row select{flex:1;min-width:150px;background:#0f1a30;color:var(--white);border:1px solid var(--glass-border);border-radius:10px;padding:9px 10px;font-size:13px}
+.match-result{font-size:14px;color:rgba(245,240,235,.8)}
+.match-result b{color:var(--gold2);font-size:16px}
+
+@media(max-width:860px){
+  .hand-wrap{grid-template-columns:1fr}
+  .ins-kpis{grid-template-columns:repeat(2,1fr)}
+  .ins-grid2{grid-template-columns:1fr}
+  .amap-box{height:360px}
+}
