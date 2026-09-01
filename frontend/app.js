@@ -333,12 +333,15 @@ var API_BASE = window.__API_BASE__ || ''; // 部署到云函数后，在 api-con
   badge.addEventListener('click',function(e){e.stopPropagation();badge.classList.remove('badge-pop');void badge.offsetWidth;badge.classList.add('badge-pop');});
 })();
 
-// ===== BGM 播放器（多曲 + 歌词）=====
+// ===== BGM 播放器（多曲 + 歌词 + 进度条 + 随机播放）=====
 (function(){
   var player=document.getElementById('musicPlayer'),btn=document.getElementById('mpBtn'),
       audio=document.getElementById('bgmAudio'),titleEl=document.getElementById('mpTitle'),
       subEl=document.getElementById('mpSub'),lyricsEl=document.getElementById('mpLyrics'),
-      prevBtn=document.getElementById('mpPrev'),nextBtn=document.getElementById('mpNext');
+      prevBtn=document.getElementById('mpPrev'),nextBtn=document.getElementById('mpNext'),
+      progressEl=document.getElementById('mpProgress'),trackEl=document.getElementById('mpTrack'),
+      playedEl=document.getElementById('mpPlayed'),thumbEl=document.getElementById('mpThumb'),
+      curEl=document.getElementById('mpCur'),durEl=document.getElementById('mpDur');
   if(!player||!audio)return;
 
   // 歌单：把想加的歌（mp3 + 同名 .lrc 歌词）放进 bgm/ 目录，在这里加一项即可自动支持切歌与歌词
@@ -357,8 +360,13 @@ var API_BASE = window.__API_BASE__ || ''; // 部署到云函数后，在 api-con
     {title:'起风了', artist:'买辣椒也用券', src:'bgm/song12.mp3', lrc:''},
     {title:'相拥星空', artist:'张洛一', src:'bgm/song13.m4a', lrc:''}
   ];
-  var idx=0, lrcLines=[], lrcTimer=null, started=false;
+  var idx=0, lrcLines=[], lrcTimer=null, started=false, seeking=false;
 
+  function formatTime(t){
+    if(!isFinite(t)||t<0)return '0:00';
+    var m=Math.floor(t/60), s=Math.floor(t%60);
+    return m+':'+(s<10?'0':'')+s;
+  }
   function loadSong(i){
     idx=(i+playlist.length)%playlist.length;
     var s=playlist[idx];
@@ -391,18 +399,53 @@ var API_BASE = window.__API_BASE__ || ''; // 部署到云函数后，在 api-con
   }
   function play(){audio.play().then(function(){setState(true);}).catch(function(){});}
   function pause(){audio.pause();setState(false);}
-  function jump(d){ loadSong(idx+d); if(player.classList.contains('playing')) play(); }
+  // 随机切歌：不重复当前这首
+  function randomIdx(){
+    if(playlist.length<=1)return 0;
+    var i; do{ i=Math.floor(Math.random()*playlist.length); }while(i===idx);
+    return i;
+  }
+  function nextSong(){ loadSong(randomIdx()); if(player.classList.contains('playing')) play(); }
 
   player.addEventListener('click',function(e){
-    if(e.target.closest('.mp-ctrl')||e.target.closest('.mp-lyrics')) return;
+    if(e.target.closest('.mp-ctrl')||e.target.closest('.mp-lyrics')||e.target.closest('.mp-progress')) return;
     e.stopPropagation(); audio.paused?play():pause();
   });
   if(btn)btn.addEventListener('click',function(e){e.stopPropagation();audio.paused?play():pause();});
-  if(prevBtn)prevBtn.addEventListener('click',function(e){e.stopPropagation();jump(-1);});
-  if(nextBtn)nextBtn.addEventListener('click',function(e){e.stopPropagation();jump(1);});
-  audio.addEventListener('ended',function(){ jump(1); }); // 播完自动下一首
+  if(prevBtn)prevBtn.addEventListener('click',function(e){e.stopPropagation();nextSong();});
+  if(nextBtn)nextBtn.addEventListener('click',function(e){e.stopPropagation();nextSong();});
+  audio.addEventListener('ended',function(){ nextSong(); });
   audio.addEventListener('play',function(){setState(true);});
   audio.addEventListener('pause',function(){setState(false);});
+
+  // 进度条
+  function updateProgress(){
+    var d=audio.duration||0, c=audio.currentTime||0, pct=d>0?(c/d*100):0;
+    if(playedEl)playedEl.style.width=pct+'%';
+    if(thumbEl)thumbEl.style.left=pct+'%';
+    if(curEl)curEl.textContent=formatTime(c);
+    if(durEl)durEl.textContent=formatTime(d);
+  }
+  function seekFromEvent(e){
+    if(!trackEl)return;
+    var rect=trackEl.getBoundingClientRect();
+    var clientX=e.touches?e.touches[0].clientX:e.clientX;
+    var p=(clientX-rect.left)/rect.width;
+    p=Math.max(0,Math.min(1,p));
+    var d=audio.duration||0;
+    if(d>0){ audio.currentTime=p*d; updateProgress(); }
+  }
+  if(trackEl){
+    trackEl.addEventListener('mousedown',function(e){e.stopPropagation(); seeking=true; seekFromEvent(e);});
+    trackEl.addEventListener('touchstart',function(e){e.stopPropagation(); seeking=true; seekFromEvent(e);},{passive:false});
+  }
+  document.addEventListener('mousemove',function(e){ if(seeking){ seekFromEvent(e); } });
+  document.addEventListener('mouseup',function(){ seeking=false; });
+  document.addEventListener('touchmove',function(e){ if(seeking){ e.preventDefault(); seekFromEvent(e); } },{passive:false});
+  document.addEventListener('touchend',function(){ seeking=false; });
+  audio.addEventListener('timeupdate',updateProgress);
+  audio.addEventListener('durationchange',updateProgress);
+  audio.addEventListener('loadedmetadata',updateProgress);
 
   function tryAuto(){if(started)return;started=true;audio.play().then(function(){setState(true);}).catch(function(){});}
   window.addEventListener('click',tryAuto,{once:true});
@@ -410,6 +453,7 @@ var API_BASE = window.__API_BASE__ || ''; // 部署到云函数后，在 api-con
   window.addEventListener('scroll',tryAuto,{once:true});
 
   loadSong(0);
+  updateProgress();
 })();
 
 

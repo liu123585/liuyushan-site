@@ -233,18 +233,6 @@
   </div>
   <div id="routePanel" class="route-panel"></div>
 
-  <h3 class="sub-title reveal">手绘校园 · 集章打卡</h3>
-  <div class="hand-wrap reveal">
-    <div class="handmap" id="handMap"></div>
-    <div class="stamp-side">
-      <div class="stamp-progress" id="stampProgress"></div>
-      <div class="stamp-card" id="stampCard" hidden></div>
-    </div>
-  </div>
-  <div class="poster-bar">
-    <button id="posterBtn" class="poster-btn">🎨 生成我的集章海报</button>
-  </div>
-  <canvas id="posterCanvas" class="poster-canvas" hidden></canvas>
 </section>
 
 <!-- divider -->
@@ -678,6 +666,11 @@
   <div class="mp-meta">
     <div class="mp-title" id="mpTitle">吹着晚风想起你</div>
     <div class="mp-sub" id="mpSub">苏星婕 · 点击播放 BGM</div>
+    <div class="mp-progress" id="mpProgress">
+      <span class="mp-time" id="mpCur">0:00</span>
+      <div class="mp-track" id="mpTrack"><div class="mp-played" id="mpPlayed"></div><div class="mp-thumb" id="mpThumb"></div></div>
+      <span class="mp-time" id="mpDur">0:00</span>
+    </div>
   </div>
   <div class="mp-ctrl">
     <button class="mp-prev" id="mpPrev" aria-label="上一首">‹</button>

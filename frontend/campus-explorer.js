@@ -47,25 +47,19 @@
     if (AMAP_SEC) { window._AMapSecurityConfig = { securityJsCode: AMAP_SEC }; }
     window.__amapReady = function () { try { buildMap(); } catch (e) { showFallback('地图初始化失败：' + e.message); } };
     var s = document.createElement('script');
-    s.src = 'https://webapi.amap.com/maps?v=2.0&key=' + encodeURIComponent(AMAP_KEY) + '&plugin=AMap.Walking,AMap.ToolBar,AMap.ControlBar&callback=__amapReady';
+    s.src = 'https://webapi.amap.com/maps?v=2.0&key=' + encodeURIComponent(AMAP_KEY) + '&callback=__amapReady';
     s.onerror = function () { showFallback('高德地图脚本加载失败，请检查网络或 Key 是否正确。下面「手绘集章地图」不受影响。'); };
     document.head.appendChild(s);
     // 6 秒脚本还没回调（AMap 未加载），直接降级
     setTimeout(function () { if ((!window.AMap || !map) && fb && fb.hidden) showFallback('高德地图脚本加载超时（可能是 Key 无效或网络问题）。手绘集章地图仍可正常使用。'); }, 6500);
   }
 
-  function showFallback(msg, actions) {
+  function showFallback(msg) {
     var fb = $('mapFallback'); if (!fb) return;
-    var btns = '';
-    if (actions !== false) {
-      btns = '<div class="fb-actions">' +
-        '<button class="fb-btn" id="fb2d">切换为 2D 地图</button>' +
-        '<button class="fb-btn gold" id="fbHand">使用手绘地图</button></div>';
-    }
-    fb.innerHTML = '<div class="fb-inner"><div class="fb-ico">🗺️</div><p>' + esc(msg) + '</p>' + btns + '</div>';
+    fb.innerHTML = '<div class="fb-inner"><div class="fb-ico">🗺️</div><p>' + esc(msg) + '</p>' +
+      '<div class="fb-actions"><button class="fb-btn" id="fb2d">切换为 2D 地图</button></div></div>';
     fb.hidden = false;
     var b2d = $('fb2d'); if (b2d) b2d.addEventListener('click', function () { rebuild2D(); });
-    var bHand = $('fbHand'); if (bHand) bHand.addEventListener('click', function () { useHandMapOnly(); });
   }
 
   function isWebGLSupported() {
@@ -84,7 +78,8 @@
       zoom: 16.4,
       center: CENTER[curCampus],
       mapStyle: 'amap://styles/dark',
-      rotateEnable: true
+      rotateEnable: true,
+      resizeEnable: true
     };
     if (hasWebGL) {
       opts.viewMode = '3D';
@@ -105,6 +100,7 @@
     map.on('complete', function () {
       mapReady = true;
       var fb = $('mapFallback'); if (fb) fb.hidden = true;
+      try { map.resize(); } catch (e) {}
       renderMarkers();
     });
     map.on('error', function (e) {
@@ -156,12 +152,6 @@
     } catch (e) {
       showFallback('2D 地图初始化失败：' + e.message + '。请使用手绘地图。', false);
     }
-  }
-
-  function useHandMapOnly() {
-    if (map) { try { map.destroy(); } catch (e) {} map = null; walking = null; }
-    var box = $('amapContainer'); if (box) box.style.display = 'none';
-    var fb = $('mapFallback'); if (fb) fb.hidden = true;
   }
 
   function clearMarkers() {
@@ -239,12 +229,9 @@
     });
   }
 
-  /* ---------------- 2. 手绘集章打卡地图（不依赖 Key） ---------------- */
-  function initHandMap() {
-    var wrap = $('handMap');
-    if (!wrap) return;
-    renderHandMap();
-    renderStampProgress();
+  function boot() {
+    if (!document.getElementById('amapContainer')) return;
+    initAmap();
     var tabs = document.querySelectorAll('#mapCampusTabs .campus-tab');
     Array.prototype.forEach.call(tabs, function (t) {
       t.addEventListener('click', function () {
@@ -252,146 +239,10 @@
         t.classList.add('active');
         curCampus = t.getAttribute('data-campus');
         routeStart = routeEnd = null;
-        if (map) { map.setCenter(CENTER[curCampus]); }
-        renderMarkers();
-        renderHandMap();
+        if (map) { try { map.setCenter(CENTER[curCampus]); renderMarkers(); } catch (e) {} }
       });
     });
     var go = $('routeGo'); if (go) go.addEventListener('click', planRoute);
-    var pb = $('posterBtn'); if (pb) pb.addEventListener('click', makePoster);
-  }
-
-  function renderHandMap() {
-    var wrap = $('handMap');
-    if (!wrap) return;
-    var list = byCampus(curCampus);
-    var dots = list.map(function (l) {
-      var done = stamps.indexOf(l.id) >= 0;
-      return '<button class="hm-dot' + (done ? ' done' : '') + '" data-id="' + l.id + '" style="left:' + l.x + '%;top:' + l.y + '%">' +
-        '<span class="hm-ico">' + l.emoji + '</span><span class="hm-name">' + esc(l.name) + '</span></button>';
-    }).join('');
-    wrap.innerHTML =
-      '<div class="hm-grid"></div>' +
-      '<div class="hm-road v" style="left:50%"></div><div class="hm-road h" style="top:62%"></div>' +
-      '<div class="hm-lake"></div>' +
-      dots +
-      '<div class="hm-tip">👆 点建筑打卡集章（手绘示意图，位置为示意）</div>';
-    var btns = wrap.querySelectorAll('.hm-dot');
-    Array.prototype.forEach.call(btns, function (b) {
-      b.addEventListener('click', function () { openCard(findL(b.getAttribute('data-id'))); });
-    });
-  }
-
-  function openCard(l) {
-    if (!l) return;
-    var card = $('stampCard');
-    var done = stamps.indexOf(l.id) >= 0;
-    if (card) {
-      card.innerHTML = '<img src="' + esc(l.img) + '" alt="' + esc(l.name) + '">' +
-        '<div class="sc-body"><div class="sc-name">' + esc(l.name) + '<span class="sc-cat">' + esc(l.cat) + '</span></div>' +
-        '<p>' + esc(l.desc) + '</p>' +
-        '<button class="iw-btn gold" id="scStamp">' + (done ? '已盖章 ✓' : '在这里盖个章 📍') + '</button></div>';
-      card.hidden = false;
-      var sb = $('scStamp');
-      if (sb) sb.addEventListener('click', function () { doStamp(l, sb); });
-    }
-  }
-
-  function doStamp(l, btn) {
-    if (stamps.indexOf(l.id) >= 0) { toast('这枚已经盖过啦'); return; }
-    stamps = stamps.concat(l.id);
-    saveStamps();
-    if (btn) btn.textContent = '已盖章 ✓';
-    toast('盖章成功：' + l.name + ' 🎉');
-    renderHandMap();
-    renderMarkers();
-    renderStampProgress();
-    if (stamps.length >= LANDMARKS.length) toast('全部集齐！你是真正的「老生」了 🎓 可以生成海报啦');
-  }
-
-  function renderStampProgress() {
-    var box = $('stampProgress');
-    if (!box) return;
-    var total = LANDMARKS.length, n = stamps.length;
-    var pct = Math.round(n / total * 100);
-    var all = n >= total;
-    box.innerHTML = '<div class="sp-top"><span class="sp-num">' + n + '</span><span class="sp-tot">/ ' + total + ' 枚印章</span>' +
-      (all ? '<span class="sp-badge">老生认证 ✓</span>' : '') + '</div>' +
-      '<div class="sp-bar"><i style="width:' + pct + '%"></i></div>' +
-      '<div class="sp-list">' + LANDMARKS.map(function (l) {
-        var on = stamps.indexOf(l.id) >= 0;
-        return '<span class="sp-chip' + (on ? ' on' : '') + '" title="' + esc(l.name) + '">' + l.emoji + '</span>';
-      }).join('') + '</div>';
-  }
-
-  /* 集章海报：Canvas 画好后提示长按/下载保存 */
-  function makePoster() {
-    var cv = $('posterCanvas');
-    if (!cv) return;
-    var W = 720, H = 1100;
-    cv.width = W; cv.height = H; cv.hidden = false;
-    var g = cv.getContext('2d');
-    var bg = g.createLinearGradient(0, 0, 0, H);
-    bg.addColorStop(0, '#0a0e1a'); bg.addColorStop(0.5, '#0f1a30'); bg.addColorStop(1, '#160a2e');
-    g.fillStyle = bg; g.fillRect(0, 0, W, H);
-    // 金色描边
-    g.strokeStyle = 'rgba(212,175,55,.55)'; g.lineWidth = 6; g.strokeRect(18, 18, W - 36, H - 36);
-    g.textAlign = 'center';
-    g.fillStyle = '#D4AF37'; g.font = 'bold 46px "Microsoft YaHei",sans-serif';
-    g.fillText('河南科技大学 · 校园集章', W / 2, 120);
-    g.fillStyle = '#F5F0EB'; g.font = '28px "Microsoft YaHei",sans-serif';
-    g.fillText('2026 级新生 · 探索打卡证书', W / 2, 176);
-    // 进度环
-    var cx = W / 2, cy = 330, r = 96;
-    var pct = stamps.length / LANDMARKS.length;
-    g.lineWidth = 20; g.lineCap = 'round';
-    g.strokeStyle = 'rgba(255,255,255,.10)'; g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.stroke();
-    var grad = g.createLinearGradient(cx - r, cy, cx + r, cy);
-    grad.addColorStop(0, '#1E88E5'); grad.addColorStop(1, '#D4AF37');
-    g.strokeStyle = grad; g.beginPath(); g.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * pct); g.stroke();
-    g.fillStyle = '#fff'; g.font = 'bold 60px "Microsoft YaHei",sans-serif';
-    g.fillText(stamps.length + ' / ' + LANDMARKS.length, cx, cy + 20);
-    // 章列表
-    g.textAlign = 'left';
-    var x0 = 90, y0 = 500;
-    LANDMARKS.forEach(function (l, i) {
-      var col = i % 2, row = Math.floor(i / 2);
-      var x = x0 + col * 280, y = y0 + row * 78;
-      var on = stamps.indexOf(l.id) >= 0;
-      g.globalAlpha = on ? 1 : 0.32;
-      g.fillStyle = on ? 'rgba(212,175,55,.16)' : 'rgba(255,255,255,.05)';
-      g.beginPath(); if (g.roundRect) { g.roundRect(x, y, 250, 60, 12); } else { g.rect(x, y, 250, 60); } g.fill();
-      g.strokeStyle = on ? 'rgba(212,175,55,.6)' : 'rgba(255,255,255,.12)'; g.lineWidth = 2; g.stroke();
-      g.fillStyle = on ? '#F4D078' : '#8b95a8';
-      g.font = '26px "Microsoft YaHei",sans-serif';
-      g.fillText((on ? '✓ ' : '· ') + l.emoji + ' ' + l.name, x + 18, y + 40);
-      g.globalAlpha = 1;
-    });
-    g.textAlign = 'center';
-    g.fillStyle = '#8b95a8'; g.font = '22px "Microsoft YaHei",sans-serif';
-    g.fillText('明德 博学 日新 笃行 · site.liuyushan.top', W / 2, H - 60);
-    try {
-      var url = cv.toDataURL('image/png');
-      var a = document.createElement('a');
-      a.href = url; a.download = '河科大校园集章.png';
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      toast('海报已生成，去相册/下载里看看 🎨');
-    } catch (e) { toast('生成成功，长按下方图片可保存'); }
-  }
-
-  var toastTimer = null;
-  function toast(msg) {
-    var t = $('mapToast');
-    if (!t) { t = document.createElement('div'); t.id = 'mapToast'; t.className = 'map-toast'; document.body.appendChild(t); }
-    t.textContent = msg; t.classList.add('show');
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { t.classList.remove('show'); }, 2200);
-  }
-
-  function boot() {
-    if (!document.getElementById('handMap')) return;
-    initHandMap();
-    initAmap();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();
