@@ -8,5 +8,5 @@ window.__API_BASE__ = '';
 // 1) 打开 https://lbs.amap.com/ 注册 → 控制台「应用管理」→ 创建新应用 → 添加 Key → 服务平台选「Web端(JS API)」
 // 2) 把生成的 Key 填到下面；2021-12 之后申请的 Key 还会给一个「安全密钥 jscode」，一并填到 __AMAP_SECURITY_CODE__
 // 3) 两个都留空也能正常浏览本站：立体地图会自动降级为「手绘集章打卡地图」，不影响其他功能
-window.__AMAP_KEY__ = '';
-window.__AMAP_SECURITY_CODE__ = '';
+window.__AMAP_KEY__ = '4977bc6d6d06b528e35f2115f1c8ef6f';
+window.__AMAP_SECURITY_CODE__ = '14942987a7a5864b944d7e956a1f5614';
