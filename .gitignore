@@ -10,6 +10,9 @@ scf/clean/
 frontend.zip
 _zip.py
 
+# 部署配置（含项目名，避免误提交真实密钥）
+.env
+
 # 系统 / 缓存
 .DS_Store
 *.pyc

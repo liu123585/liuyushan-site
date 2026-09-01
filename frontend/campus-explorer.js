@@ -50,8 +50,8 @@
     s.src = 'https://webapi.amap.com/maps?v=2.0&key=' + encodeURIComponent(AMAP_KEY) + '&plugin=AMap.Walking,AMap.ToolBar,AMap.ControlBar&callback=__amapReady';
     s.onerror = function () { showFallback('高德地图脚本加载失败，请检查网络或 Key 是否正确。下面「手绘集章地图」不受影响。'); };
     document.head.appendChild(s);
-    // 5 秒没就绪也降级，避免一直空白
-    setTimeout(function () { if (!map && fb && fb.hidden) showFallback('地图加载超时（可能是 Key 无效或未开通 Web 端 JSAPI）。下面「手绘集章地图」不受影响。'); }, 6000);
+    // 6 秒脚本还没回调（AMap 未加载），直接降级
+    setTimeout(function () { if ((!window.AMap || !map) && fb && fb.hidden) showFallback('高德地图脚本加载超时（可能是 Key 无效或网络问题）。手绘集章地图仍可正常使用。'); }, 6500);
   }
 
   function showFallback(msg) {
@@ -62,6 +62,8 @@
 
   function buildMap() {
     if (!window.AMap) return;
+    var box = $('amapContainer');
+    var mapReady = false;
     map = new AMap.Map('amapContainer', {
       zoom: 16.4,
       pitch: 62,          // 俯仰角：越大越有立体感
@@ -72,6 +74,18 @@
       mapStyle: 'amap://styles/dark',
       center: CENTER[curCampus]
     });
+    // 地图初始化完成（瓦片加载成功）会触发 complete；若 Key/白名单有问题，通常不会触发
+    map.on('complete', function () {
+      mapReady = true;
+      var fb = $('mapFallback'); if (fb) fb.hidden = true;
+      renderMarkers();
+    });
+    // 兜底：6 秒内未 complete，大概率是 Key 未开通 JSAPI 或白名单不包含当前域名
+    setTimeout(function () {
+      if (!mapReady) {
+        showFallback('3D 地图加载失败，可能是高德 Key 未开通「Web端(JS API)」，或白名单没有包含当前域名 site.liuyushan.top。请去高德控制台「应用管理 → 编辑 Key」把白名单改成 * 或加上该域名；手绘校园地图仍可正常使用。');
+      }
+    }, 6500);
     AMap.plugin(['AMap.ToolBar', 'AMap.ControlBar'], function () {
       map.addControl(new AMap.ToolBar({ position: { right: '12px', bottom: '80px' } }));
       map.addControl(new AMap.ControlBar({ position: { right: '6px', top: '12px' } }));
@@ -79,7 +93,6 @@
     AMap.plugin('AMap.Walking', function () {
       walking = new AMap.Walking({ map: map, panel: '' }); // 不用默认面板，自己渲染成深色步骤列表
     });
-    renderMarkers();
   }
 
   function clearMarkers() {
