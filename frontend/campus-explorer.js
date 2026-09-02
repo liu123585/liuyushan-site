@@ -349,6 +349,27 @@
     planRoute();
   }
 
+  /* 一键跳转到高德 App/网页，导航到当前选中的校区 */
+  function openAmapNav() {
+    var dest = curCampus === 'xiyuan'
+      ? { name: '河南科技大学西苑校区', lng: CENTER.xiyuan[0], lat: CENTER.xiyuan[1] }
+      : { name: '河南科技大学开元校区（国旗广场）', lng: CENTER.kaiyuan[0], lat: CENTER.kaiyuan[1] };
+    function open(from) {
+      var link = 'https://uri.amap.com/navigation?to=' + dest.lng + ',' + dest.lat + ',' + encodeURIComponent(dest.name) +
+        (from ? '&from=' + from.lng + ',' + from.lat + ',' + encodeURIComponent('我的位置') : '') +
+        '&mode=car&policy=1&callnative=1';
+      window.open(link, '_blank');
+    }
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        function (pos) { open({ lng: pos.coords.longitude, lat: pos.coords.latitude }); },
+        function () { open(null); }
+      );
+    } else {
+      open(null);
+    }
+  }
+
   /* 实景：展示地标的真实照片相册（高德街景在校园基本无数据，改为照片灯箱） */
   function openPano(l) {
     var modal = $('panoModal'); if (!modal) return;
@@ -477,10 +498,7 @@
         if (map) { try { map.setZoomAndCenter(ZOOM[curCampus], CENTER[curCampus]); renderMarkers(); } catch (e) {} }
       });
     });
-    var go = $('routeGo'); if (go) go.addEventListener('click', planRoute);
-    var ps = $('routePickStart'); if (ps) ps.addEventListener('click', function () { pickMode = (pickMode === 'start' ? null : 'start'); updatePickButtons(); toast(pickMode ? '点击地图选择起点' : '已取消选点'); });
-    var pe = $('routePickEnd'); if (pe) pe.addEventListener('click', function () { pickMode = (pickMode === 'end' ? null : 'end'); updatePickButtons(); toast(pickMode ? '点击地图选择终点' : '已取消选点'); });
-    var rr = $('routeReset'); if (rr) rr.addEventListener('click', resetRoute);
+    var navBtn = $('navigateToCampus'); if (navBtn) navBtn.addEventListener('click', openAmapNav);
     // 实景弹层关闭
     var pc = $('panoClose'); if (pc) pc.addEventListener('click', closePano);
     var pm = $('panoModal'); if (pm) pm.addEventListener('click', function (e) { if (e.target === pm) closePano(); });

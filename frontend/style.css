@@ -1026,6 +1026,25 @@ a.game-btn{display:block;text-decoration:none;text-align:center}
 .step-t{flex:1;color:rgba(21,35,61,.85)}
 .step-d{color:var(--grey);font-size:12px}
 .route-empty,.route-loading{text-align:center;padding:16px;color:rgba(21,35,61,.55);font-size:13px}
+.route-go.route-go-full{min-width:min(420px,92vw);padding:14px 28px;font-size:15px;letter-spacing:1px}
+.gate-info{margin-top:14px;background:var(--card);border:1px solid var(--hair);border-left:4px solid var(--gold);border-radius:12px;padding:14px 18px;color:var(--white);font-size:14px;line-height:1.8}
+.gate-info strong{color:var(--gold)}
+.gate-open{font-weight:700;color:#00a859}
+.gate-closed{font-weight:700;color:#e53935}
+.dorm-grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));margin-top:18px}
+.dorm-card{background:var(--card);border:1px solid var(--hair);border-radius:16px;padding:20px;position:relative;transition:transform .25s,border-color .25s,box-shadow .25s}
+.dorm-card:hover{transform:translateY(-4px);border-color:var(--gold);box-shadow:0 14px 30px rgba(20,40,80,.12)}
+.dorm-card h3{font-size:18px;color:var(--white);margin-bottom:12px;letter-spacing:1px;padding-bottom:8px;border-bottom:2px solid var(--hair)}
+.dorm-card ul{list-style:none;margin:0;padding:0;font-size:13px}
+.dorm-card li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:7px 0;border-bottom:1px dashed var(--hair)}
+.dorm-card li:last-child{border-bottom:none}
+.dorm-name{font-weight:700;color:var(--primary);white-space:nowrap}
+.dorm-meta{text-align:right;color:var(--grey);line-height:1.5}
+@media(max-width:480px){
+  .dorm-card li{flex-direction:column;align-items:flex-start;gap:2px}
+  .dorm-meta{text-align:left}
+  .route-go.route-go-full{min-width:auto;width:100%}
+}
 
 @media(max-width:860px){
   .amap-box{height:360px}

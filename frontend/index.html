@@ -33,6 +33,7 @@
   <ul class="nav-links" id="navLinks">
     <li><a href="#campus">校区概览</a></li>
     <li><a href="#campusMap">校园地图</a></li>
+    <li><a href="#dorms">宿舍参考</a></li>
     <li><a href="#life">生活指南</a></li>
     <li><a href="#prepare">入学准备</a></li>
     <li><a href="#club">社团活动</a></li>
@@ -216,8 +217,8 @@
 <!-- 立体校园地图 -->
 <section class="section" id="campusMap">
   <span class="section-eyebrow reveal">CAMPUS MAP · 立体校园</span>
-  <h2 class="section-title reveal">立体看校园，还能<span class="accent">走到宿舍</span></h2>
-  <p class="section-desc reveal">开元 / 西苑两个校区都能立体俯瞰——可拖动旋转、调整俯仰角看楼块。规划步行路线：先点「①选起点」「②选终点」，再到地图上点一下；或直接点地标弹窗里的按钮，自动帮你算好步行路线。</p>
+  <h2 class="section-title reveal">立体看校园，一键<span class="accent">高德导航到宿舍</span></h2>
+  <p class="section-desc reveal">开元 / 西苑两个校区都能立体俯瞰——可拖动旋转、调整俯仰角看楼块。选好校区后，点下方按钮直接跳转到高德地图导航到校区。</p>
 
   <div class="campus-tabs" id="mapCampusTabs">
     <button class="campus-tab active" data-campus="kaiyuan">开元校区</button>
@@ -239,13 +240,88 @@
   </div>
 
   <div class="route-bar">
-    <button id="routePickStart" class="route-go">① 选起点</button>
-    <button id="routePickEnd" class="route-go">② 选终点</button>
-    <button id="routeGo" class="route-go route-go-plan">🚶 规划路线</button>
-    <button id="routeReset" class="route-go route-reset">重置</button>
+    <button id="navigateToCampus" class="route-go route-go-plan route-go-full">🗺️ 用高德导航到当前校区</button>
   </div>
-  <div id="routePanel" class="route-panel"></div>
+  <div class="gate-info">
+    <p><strong>校门开放提示</strong>：目前 <span class="gate-open">小北门、大北门、西门</span> 可正常进出；<span class="gate-closed">南门</span> 暂不开放，不能进人。新生报到建议优先选择大北门或西门。</p>
+  </div>
 
+</section>
+
+<!-- 宿舍分布参考 -->
+<section class="section" id="dorms">
+  <span class="section-eyebrow reveal">DORMS · 宿舍参考</span>
+  <h2 class="section-title reveal">各园区楼栋、<span class="accent">床位与性别</span></h2>
+  <p class="section-desc reveal">下面从历年宿舍分配表整理出开元校区（菁园 / 嘉园 / 乾园）和西苑校区各楼栋的床位类型、住宿性别，方便新生提前了解；专业和学院每年可能调整，因此只保留楼栋信息，<span style="color:var(--gold2)">实际分配以学校当年安排为准</span>。</p>
+
+  <div class="dorm-grid reveal-stagger">
+    <div class="dorm-card">
+      <h3>西苑校区</h3>
+      <ul>
+        <li><span class="dorm-name">北院3</span><span class="dorm-meta">男生 · 上下铺</span></li>
+        <li><span class="dorm-name">北院10</span><span class="dorm-meta">男生 · 上下铺</span></li>
+        <li><span class="dorm-name">北院11</span><span class="dorm-meta">男生 · 上下铺</span></li>
+        <li><span class="dorm-name">南院2</span><span class="dorm-meta">男女混宿 · 上下铺</span></li>
+        <li><span class="dorm-name">南院3</span><span class="dorm-meta">女生 · 上下铺</span></li>
+        <li><span class="dorm-name">南院4</span><span class="dorm-meta">女生 · 上下铺</span></li>
+        <li><span class="dorm-name">南院5 / 南院7</span><span class="dorm-meta">男生 · 上下铺</span></li>
+        <li><span class="dorm-name">南院6</span><span class="dorm-meta">女生 · 上下铺</span></li>
+      </ul>
+    </div>
+
+    <div class="dorm-card">
+      <h3>开元校区 · 菁园</h3>
+      <ul>
+        <li><span class="dorm-name">菁园1</span><span class="dorm-meta">男女混宿 · 上床下桌/上下铺均有</span></li>
+        <li><span class="dorm-name">菁园2</span><span class="dorm-meta">男女混宿 · 上下铺</span></li>
+        <li><span class="dorm-name">菁园3</span><span class="dorm-meta">男生 · 上床下桌</span></li>
+        <li><span class="dorm-name">菁园4</span><span class="dorm-meta">男女混宿 · 上床下桌/上下铺均有</span></li>
+        <li><span class="dorm-name">菁园6</span><span class="dorm-meta">女生 · 上下铺</span></li>
+        <li><span class="dorm-name">菁园7</span><span class="dorm-meta">女生 · 上下铺</span></li>
+        <li><span class="dorm-name">菁园8</span><span class="dorm-meta">女生 · 上下铺</span></li>
+        <li><span class="dorm-name">菁园9</span><span class="dorm-meta">男生 · 上床下桌</span></li>
+        <li><span class="dorm-name">菁园10</span><span class="dorm-meta">男生 · 上床下桌</span></li>
+        <li><span class="dorm-name">菁园11</span><span class="dorm-meta">男生 · 上床下桌</span></li>
+        <li><span class="dorm-name">菁园12</span><span class="dorm-meta">男生 · 上床下桌/上下铺均有</span></li>
+        <li><span class="dorm-name">菁园13</span><span class="dorm-meta">男生 · 上床下桌</span></li>
+        <li><span class="dorm-name">菁园14</span><span class="dorm-meta">男生 · 上床下桌</span></li>
+      </ul>
+    </div>
+
+    <div class="dorm-card">
+      <h3>开元校区 · 嘉园</h3>
+      <ul>
+        <li><span class="dorm-name">嘉园1</span><span class="dorm-meta">男女混宿 · 上床下桌</span></li>
+        <li><span class="dorm-name">嘉园2</span><span class="dorm-meta">男生 · 上床下桌</span></li>
+        <li><span class="dorm-name">嘉园3</span><span class="dorm-meta">男生 · 上床下桌</span></li>
+        <li><span class="dorm-name">嘉园4</span><span class="dorm-meta">男生 · 上床下桌</span></li>
+        <li><span class="dorm-name">嘉园5</span><span class="dorm-meta">女生 · 上下铺/上床下桌均有</span></li>
+        <li><span class="dorm-name">嘉园6</span><span class="dorm-meta">女生 · 上下铺/上床下桌均有</span></li>
+        <li><span class="dorm-name">嘉园7</span><span class="dorm-meta">女生 · 上下铺/上床下桌均有</span></li>
+        <li><span class="dorm-name">嘉园8</span><span class="dorm-meta">女生 · 上下铺/上床下桌均有</span></li>
+        <li><span class="dorm-name">嘉园9</span><span class="dorm-meta">男女混宿 · 上下铺/上床下桌均有</span></li>
+        <li><span class="dorm-name">嘉园10</span><span class="dorm-meta">男生 · 上床下桌</span></li>
+        <li><span class="dorm-name">嘉园11</span><span class="dorm-meta">女生 · 上床下桌</span></li>
+        <li><span class="dorm-name">嘉园12</span><span class="dorm-meta">女生 · 上床下桌</span></li>
+      </ul>
+    </div>
+
+    <div class="dorm-card">
+      <h3>开元校区 · 乾园</h3>
+      <ul>
+        <li><span class="dorm-name">乾园1</span><span class="dorm-meta">女生 · 上下铺</span></li>
+        <li><span class="dorm-name">乾园2</span><span class="dorm-meta">女生 · 上下铺</span></li>
+        <li><span class="dorm-name">乾园4</span><span class="dorm-meta">男生 · 上下铺</span></li>
+        <li><span class="dorm-name">乾园5</span><span class="dorm-meta">男生 · 上下铺</span></li>
+        <li><span class="dorm-name">乾园6</span><span class="dorm-meta">男生 · 上下铺</span></li>
+        <li><span class="dorm-name">乾园7</span><span class="dorm-meta">女生 · 上下铺</span></li>
+        <li><span class="dorm-name">乾园8</span><span class="dorm-meta">男生 · 上下铺</span></li>
+        <li><span class="dorm-name">乾园9</span><span class="dorm-meta">男生 · 上下铺</span></li>
+        <li><span class="dorm-name">乾园10</span><span class="dorm-meta">男生 · 上下铺</span></li>
+        <li><span class="dorm-name">菁元7</span><span class="dorm-meta">男生 · 上下铺</span></li>
+      </ul>
+    </div>
+  </div>
 </section>
 
 <!-- divider -->
