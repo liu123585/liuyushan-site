@@ -85,8 +85,12 @@ var API_BASE = window.__API_BASE__ || ''; // 部署到云函数后，在 api-con
     // 滚动暂停：滑出首屏时停掉渲染循环，避免一直吃 GPU/电（"页面卡"的主因）
     var heroVisible = true;
     var rafId = null;
-    function animate(){
+    var lastFrame = 0;
+    function animate(now){
       rafId = requestAnimationFrame(animate);
+      now = now || Date.now();
+      if(now - lastFrame < 33) return; // 限到约 30fps，降低首屏 GPU 占用（页面卡的主因之一）
+      lastFrame = now;
       var time = Date.now()*0.0005;
       // 整体缓慢旋转
       points.rotation.y = time*0.2;
@@ -118,6 +122,11 @@ var API_BASE = window.__API_BASE__ || ''; // 部署到云函数后，在 api-con
       var v = window.scrollY < window.innerHeight * 0.85;
       if(v !== heroVisible){ heroVisible = v; v ? startLoop() : stopLoop(); }
     }, {passive:true});
+    // 标签页隐藏时暂停渲染，省电省 GPU
+    document.addEventListener('visibilitychange', function(){
+      if(document.hidden) stopLoop();
+      else if(window.scrollY < window.innerHeight*0.85) startLoop();
+    });
 
     window.addEventListener('resize', function(){
       camera.aspect = window.innerWidth/window.innerHeight;
@@ -138,7 +147,7 @@ var API_BASE = window.__API_BASE__ || ''; // 部署到云函数后，在 api-con
   window.addEventListener('scroll', function(){
     if(window.scrollY > 80) nav.classList.add('solid');
     else nav.classList.remove('solid');
-  });
+  }, {passive:true});
   // Smooth scroll for anchors
   document.querySelectorAll('.nav-links a[href^="#"]').forEach(function(a){
     a.addEventListener('click', function(e){
