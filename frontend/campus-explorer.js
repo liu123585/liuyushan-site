@@ -88,7 +88,6 @@
     var opts = {
       zoom: 16.4,
       center: CENTER[curCampus],
-      mapStyle: 'amap://styles/normal',
       viewMode: '2D',
       rotateEnable: true,
       resizeEnable: true
@@ -117,6 +116,8 @@
     try { map.addControl(new AMap.ToolBar({ position: { right: '12px', bottom: '80px' } })); } catch (e) {}
     try { map.addControl(new AMap.ControlBar({ position: { right: '6px', top: '12px' } })); } catch (e) {}
     try { walking = new AMap.Walking({ map: map, panel: '' }); } catch (e) {}
+    // 兜底：布局稳定后再次 resize，避免底图空白
+    setTimeout(function () { if (map) { try { map.resize(); } catch (e) {} } }, 500);
   }
 
   function rebuild2D() {
@@ -126,7 +127,6 @@
       map = new AMap.Map('amapContainer', {
         zoom: 16.4,
         center: CENTER[curCampus],
-        mapStyle: 'amap://styles/normal',
         viewMode: '2D',
         rotateEnable: true,
         resizeEnable: true
@@ -232,7 +232,31 @@
   function boot() {
     console.log('[campus] boot. amapContainer found:', !!document.getElementById('amapContainer'));
     if (!document.getElementById('amapContainer')) return;
-    initAmap();
+
+    // 关键修复：地图区块在页面较靠下，初始处于 reveal 入场动画（容器带 opacity/transform）。
+    // 若在此时初始化，高德 WebGL 底图会在未稳定的容器里渲染成空白且事后不重绘。
+    // 改为：滚动进入视口后再创建地图；并监听窗口尺寸变化触发 resize。
+    var mapInited = false;
+    function initWhenReady() {
+      if (mapInited) return;
+      mapInited = true;
+      initAmap();
+    }
+    var wrap = document.querySelector('.map-wrap') || $('amapContainer');
+    if (wrap && 'IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (en.isIntersecting) { initWhenReady(); io.disconnect(); }
+        });
+      }, { threshold: 0.15 });
+      io.observe(wrap);
+      // 兜底：6 秒内若仍未触发（如脚本加载极慢），也强制初始化
+      setTimeout(initWhenReady, 6000);
+    } else {
+      initWhenReady();
+    }
+    window.addEventListener('resize', function () { if (map) { try { map.resize(); } catch (e) {} } });
+
     var tabs = document.querySelectorAll('#mapCampusTabs .campus-tab');
     Array.prototype.forEach.call(tabs, function (t) {
       t.addEventListener('click', function () {
