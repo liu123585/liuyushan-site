@@ -353,7 +353,6 @@ var API_BASE = window.__API_BASE__ || ''; // 部署到云函数后，在 api-con
     {title:'多幸运', artist:'韩安旭', src:'bgm/song6.mp3', lrc:''},
     {title:'遇星', artist:'韩帅（HS）', src:'bgm/song7.mp3', lrc:''},
     {title:'眸cc', artist:'徐靖雯/海绵先生', src:'bgm/song8.mp3', lrc:''},
-    {title:'沦陷', artist:'JuggShots', src:'bgm/song9.mp3', lrc:''},
     {title:'夜空中最亮的星', artist:'逃跑计划', src:'bgm/song10.mp3', lrc:''},
     {title:'晴天', artist:'周杰伦', src:'bgm/song11.mp3', lrc:''},
     {title:'起风了', artist:'买辣椒也用券', src:'bgm/song12.mp3', lrc:''},
@@ -521,84 +520,6 @@ var API_BASE = window.__API_BASE__ || ''; // 部署到云函数后，在 api-con
         rolling=false;
       }
     },50);
-  });
-})();
-
-// ===== 你是哪种鼎宝（人格测试） =====
-(function(){
-  var box=document.getElementById('personaBox');if(!box)return;
-  var Q=[
-    {q:'报到第一天，你最想先干嘛？',o:[
-      {t:'把校园每个角落逛一遍',k:'social'},{t:'去图书馆占个座',k:'study'},
-      {t:'回宿舍躺平休息',k:'zen'},{t:'找学长借工具修修行李',k:'do'}]},
-    {q:'百团大战，哪个社团最吸引你？',o:[
-      {t:'街舞 / 吉他 / 主持人',k:'social'},{t:'学术科技类',k:'study'},
-      {t:'瑜伽 / 养生 / 慢生活',k:'zen'},{t:'创客 / 机器人 / 航模',k:'do'}]},
-    {q:'周末洛阳天气超好，你选？',o:[
-      {t:'约一帮人去龙门石窟',k:'social'},{t:'泡馆写论文 / 考证',k:'study'},
-      {t:'睡到自然醒 + 校园散步',k:'zen'},{t:'去西苑轴承陈列馆 / 实验室',k:'do'}]},
-    {q:'期末周你的状态是？',o:[
-      {t:'组队复习 + 吃夜宵',k:'social'},{t:'早八晚十泡图书馆',k:'study'},
-      {t:'计划随缘，随它去',k:'zen'},{t:'动手做思维导图整理笔记',k:'do'}]}
-  ];
-  var TYPES={
-    social:{e:'🦄',t:'交际花鼎宝',d:'社团、破冰、组局样样在行，大学四年人脉一点点织成网。记得也留点独处时间给自己～'},
-    study:{e:'📚',t:'卷王鼎宝',d:'图书馆常驻 VIP，目标感拉满。偶尔抬头看看窗外的梧桐，松弛一点走得更久。'},
-    zen:{e:'🍃',t:'淡人鼎宝',d:'情绪稳定、万事随缘，是宿舍的定海神针。别太佛，重要的事还是得上点心哦。'},
-    do:{e:'🔧',t:'硬核鼎宝',d:'动手派、实干家，轴承和代码都拿得下。把这份硬核用在热爱上，你会闪闪发光。'}
-  };
-  var step=0,score={social:0,study:0,zen:0,do:0};
-  function prog(){var h='<div class="quiz-progress">';for(var i=0;i<Q.length;i++)h+='<i class="'+(i<step?'on':'')+'"></i>';return h+'</div>';}
-  function render(){
-    if(step>=Q.length) return finish();
-    box.innerHTML=prog()+'<div class="quiz-q">'+(step+1)+'. '+Q[step].q+'</div>';
-    Q[step].o.forEach(function(op){
-      var b=document.createElement('button');b.className='quiz-opt';b.textContent=op.t;
-      b.addEventListener('click',function(){score[op.k]++;step++;render();});
-      box.appendChild(b);
-    });
-  }
-  function finish(){
-    var best='study',bval=-1;
-    for(var k in score){if(score[k]>bval){bval=score[k];best=k;}}
-    var t=TYPES[best];
-    box.innerHTML='<div class="quiz-result"><div class="qr-emoji">'+t.e+'</div>'+
-      '<div class="qr-title">你是 '+t.t+'</div>'+
-      '<div class="qr-desc">'+t.d+'</div>'+
-      '<button class="game-btn quiz-restart" id="personaRestart">再测一次 🔁</button></div>';
-    document.getElementById('personaRestart').addEventListener('click',function(){step=0;score={social:0,study:0,zen:0,do:0};render();});
-  }
-  render();
-})();
-
-// ===== 新生心愿漂流瓶 =====
-(function(){
-  var input=document.getElementById('wishInput'),send=document.getElementById('wishSend'),show=document.getElementById('wishShow');
-  if(!input)return;
-  var POOL=[
-    '希望四年后能笑着回头，不后悔每一个选择。',
-    '想遇到一群能一起熬夜赶作业的好朋友。',
-    '绩点稳稳的，恋爱甜甜的。',
-    '西苑的梧桐大道，想和喜欢的人走一遍。',
-    '学会一门真正有用的技术，不枉这四年。',
-    '军训别晒太黑，但也别下雨 😂',
-    '图书馆的座位永远为我留着。',
-    '洛阳的牡丹，今年一定要去看一次。'
-  ];
-  var KEY='haust_wishes';
-  function load(){try{return JSON.parse(localStorage.getItem(KEY)||'[]');}catch(_){return [];}}
-  function save(a){try{localStorage.setItem(KEY,JSON.stringify(a));}catch(_){}}
-  var mine=load();
-  show.innerHTML='<div class="wish-count">洛河里已漂着 '+(POOL.length+mine.length)+' 条心愿，投一个试试 🫧</div>';
-  send.addEventListener('click',function(){
-    var v=input.value.trim();
-    if(!v){show.innerHTML='<div class="wish-bubble">先写点什么再投瓶呀～</div>';return;}
-    mine.push(v);if(mine.length>30)mine.shift();save(mine);input.value='';
-    var all=POOL.concat(mine);
-    var pick=all[Math.floor(Math.random()*all.length)];
-    var from=(mine.indexOf(pick)>=0)?'一位匿名的鼎宝':'往届学长学姐';
-    show.innerHTML='<div class="wish-bubble">🌊 '+pick+'<span class="wb-from">— '+from+' 的心愿</span></div>'+
-      '<div class="wish-count">你已投 '+mine.length+' 个心愿 · 心愿瓶里共有 '+(POOL.length+mine.length)+' 条</div>';
   });
 })();
 
