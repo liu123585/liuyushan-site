@@ -39,6 +39,7 @@
     <li><a href="#hero">回到顶部</a></li>
     <li><a href="#freshman">新生墙</a></li>
     <li><a href="#fun">互动玩法</a></li>
+    <li><a href="#toolkit">新生工具箱</a></li>
   </ul>
   <button class="menu-toggle" id="menuToggle" aria-label="菜单">&#9776;</button>
 </nav>
@@ -487,6 +488,74 @@
 <div class="divider-flow"></div>
 
 
+<!-- 新生实用工具箱 -->
+<section class="section" id="toolkit">
+  <span class="section-eyebrow reveal">TOOLKIT · 新生工具箱</span>
+  <h2 class="section-title reveal">来科大，这几样最<span class="accent">顶用</span></h2>
+  <p class="section-desc reveal">学长把新生最容易懵的几件事做成了工具：军训要带啥、怎么来学校、快递填哪、宿舍啥不能带。都是实打实用得上的 🧰</p>
+
+  <div class="tool-grid">
+
+    <!-- 军训生存清单 -->
+    <div class="panel-card reveal" id="cardMilitary">
+      <h3>🪖 军训生存清单</h3>
+      <p class="hint">9 月 12 日军训开训，勾上你已备齐的，别漏了</p>
+      <div class="military-count" id="militaryCount">已备齐 0 / 10</div>
+      <div class="check-bar"><i id="militaryBar"></i></div>
+      <ul class="check-list" id="militaryList">
+        <li><label class="check-item"><input type="checkbox" data-i="0"><span>高倍防晒霜（洛阳 9 月太阳毒）</span></label></li>
+        <li><label class="check-item"><input type="checkbox" data-i="1"><span>大容量水杯（训练场补水）</span></label></li>
+        <li><label class="check-item"><input type="checkbox" data-i="2"><span>舒适鞋垫（解放鞋偏硬）</span></label></li>
+        <li><label class="check-item"><input type="checkbox" data-i="3"><span>别针 / 一字夹（衣服不合身）</span></label></li>
+        <li><label class="check-item"><input type="checkbox" data-i="4"><span>润喉糖（喊口号护嗓）</span></label></li>
+        <li><label class="check-item"><input type="checkbox" data-i="5"><span>小风扇 / 清凉贴</span></label></li>
+        <li><label class="check-item"><input type="checkbox" data-i="6"><span>湿巾 / 纸巾</span></label></li>
+        <li><label class="check-item"><input type="checkbox" data-i="7"><span>晒后修复（芦荟胶）</span></label></li>
+        <li><label class="check-item"><input type="checkbox" data-i="8"><span>发圈 / 发网（长发同学）</span></label></li>
+        <li><label class="check-item"><input type="checkbox" data-i="9"><span>少量现金零钱（应急）</span></label></li>
+      </ul>
+    </div>
+
+    <!-- 来校交通 -->
+    <div class="panel-card reveal" id="cardTraffic">
+      <h3>🚉 怎么来科大</h3>
+      <p class="hint">三个常见出发地 → 开元 / 西苑 校区（打车价仅供参考）</p>
+      <div class="traffic-card">
+        <div class="traffic-from">🚄 洛阳龙门站（高铁）</div>
+        <div class="traffic-route">→ 开元校区：打车约 25–35 元，约 15 km</div>
+        <div class="traffic-route">→ 西苑校区：打车约 40–55 元，约 22 km</div>
+      </div>
+      <div class="traffic-card">
+        <div class="traffic-from">🚉 洛阳站（普速）</div>
+        <div class="traffic-route">→ 开元校区：打车约 35–45 元</div>
+        <div class="traffic-route">→ 西苑校区：打车约 15–25 元（离站近）</div>
+      </div>
+      <div class="traffic-card">
+        <div class="traffic-from">✈️ 北郊机场</div>
+        <div class="traffic-route">机场大巴到市区约 20 元，再转打车；直达打车约 60–80 元到开元</div>
+      </div>
+      <p class="tool-note">具体公交 / 地铁线路以高德、百度地图实时导航为准；报到日学校通常在车站设迎新接站点。</p>
+    </div>
+
+    <!-- 快递 & 宿舍常识 -->
+    <div class="panel-card reveal" id="cardExpress">
+      <h3>📦 快递 & 宿舍常识</h3>
+      <p class="hint">收货地址照抄，取件 & 违禁提醒看下面</p>
+      <div class="addr-block">
+        <div class="addr-row"><span class="addr-tag">开元</span><code id="addrKaiyuan">河南省洛阳市洛龙区开元大道263号 河南科技大学开元校区 XX 宿舍楼</code><button class="copy-btn" data-copy="addrKaiyuan" type="button">复制</button></div>
+        <div class="addr-row"><span class="addr-tag">西苑</span><code id="addrXiyuan">河南省洛阳市涧西区西苑路48号 河南科技大学西苑校区 XX 宿舍楼</code><button class="copy-btn" data-copy="addrXiyuan" type="button">复制</button></div>
+      </div>
+      <ul class="tip-list">
+        <li>取件：校内一般设菜鸟驿站 / 快递柜，凭取件码领取，以学校最新通知为准。</li>
+        <li>一卡通（校园卡）：食堂消费、澡堂热水、宿舍门禁都靠它，到校尽快绑定充值。</li>
+        <li>宿舍限电：电煮锅、电热毯、卷发棒等大功率电器禁用，用多了会跳闸。</li>
+        <li>洗衣机多为扫码支付，自备洗衣液；贵重物品随身带，锁好柜子。</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
 <!-- 新生墙 -->
 <section class="section" id="freshman">
   <span class="section-eyebrow reveal">FRESHMAN WALL · 新生墙</span>
@@ -605,6 +674,10 @@
     <img class="btab-icon" loading="lazy" src="img/gkzt.jpg" alt="社团" style="width:22px;height:22px;border-radius:4px;object-fit:cover">
     <span>社团</span>
   </div>
+  <div class="btab" data-href="#toolkit">
+    <img class="btab-icon" loading="lazy" src="img/logo.png" alt="工具" style="width:22px;height:22px;border-radius:4px;object-fit:cover">
+    <span>工具箱</span>
+  </div>
   <div class="btab" data-href="#freshman">
       <img class="btab-icon" loading="lazy" src="img/tsg.jpg" alt="墙" style="width:22px;height:22px;border-radius:4px;object-fit:cover">
       <span>新生墙</span>
@@ -632,6 +705,10 @@
   <div class="fab-item" data-href="#club">
     <img src="img/gkzt.jpg" alt="社团" loading="lazy" style="width:18px;height:18px;border-radius:3px;object-fit:cover">
     <span>社团活动</span>
+  </div>
+  <div class="fab-item" data-href="#toolkit">
+    <img src="img/logo.png" alt="工具" loading="lazy" style="width:18px;height:18px;border-radius:3px;object-fit:cover">
+    <span>新生工具箱</span>
   </div>
   <div class="fab-item" data-href="#campus">
     <img src="img/logo.png" alt="校区" loading="lazy" style="width:18px;height:18px;border-radius:3px;object-fit:cover">
@@ -703,5 +780,6 @@
 <script src="app.js"></script>
 <script src="campus-explorer.js?v=3"></script>
 <script src="freshman-insights.js"></script>
+<script src="freshman-toolkit.js?v=1"></script>
 </body>
 </html>

@@ -1035,3 +1035,25 @@ a.game-btn{display:block;text-decoration:none;text-align:center}
   .ins-grid2{grid-template-columns:1fr}
   .amap-box{height:360px}
 }
+
+/* ================= 新生实用工具箱 ================= */
+.tool-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:22px;margin-top:30px}
+.check-list{list-style:none;margin:14px 0 0;padding:0;display:flex;flex-direction:column;gap:9px}
+.check-item{display:flex;align-items:flex-start;gap:10px;font-size:14px;color:var(--white);cursor:pointer;line-height:1.5}
+.check-item input{width:17px;height:17px;margin-top:2px;accent-color:var(--gold);flex:0 0 auto;cursor:pointer}
+.military-count{margin-top:12px;font-size:13px;color:var(--primary);font-weight:700}
+.check-bar{height:8px;border-radius:8px;background:rgba(0,85,163,.1);overflow:hidden;margin-top:8px}
+.check-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--primary2),var(--gold));transition:width .3s}
+.traffic-card{background:rgba(0,85,163,.05);border:1px solid var(--hair);border-radius:12px;padding:12px 14px;margin-top:10px}
+.traffic-from{font-weight:700;color:var(--primary);font-size:14px;margin-bottom:5px}
+.traffic-route{font-size:13px;color:var(--grey);line-height:1.7}
+.tool-note{font-size:12px;color:var(--grey);margin-top:12px;opacity:.9;line-height:1.7}
+.addr-block{margin-top:12px;display:flex;flex-direction:column;gap:10px}
+.addr-row{display:flex;align-items:center;gap:8px;background:rgba(0,85,163,.05);border:1px solid var(--hair);border-radius:10px;padding:8px 10px}
+.addr-tag{flex:0 0 auto;background:var(--primary);color:#fff;font-size:12px;font-weight:700;padding:3px 9px;border-radius:6px}
+.addr-row code{flex:1;font-size:12px;color:var(--white);word-break:break-all;font-family:inherit}
+.copy-btn{flex:0 0 auto;border:none;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1a1205;font-weight:700;font-size:12px;padding:6px 11px;border-radius:8px;cursor:pointer;transition:transform .15s}
+.copy-btn:active{transform:scale(.92)}
+.tip-list{list-style:none;margin:14px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
+.tip-list li{font-size:13px;color:var(--grey);line-height:1.7;padding-left:16px;position:relative}
+.tip-list li:before{content:'·';position:absolute;left:4px;color:var(--gold);font-weight:700}
