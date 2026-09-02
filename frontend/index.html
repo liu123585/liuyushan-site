@@ -36,6 +36,7 @@
     <li><a href="#life">生活指南</a></li>
     <li><a href="#prepare">入学准备</a></li>
     <li><a href="#club">社团活动</a></li>
+    <li><a href="#insights">新生画像</a></li>
     <li><a href="#hero">回到顶部</a></li>
     <li><a href="#freshman">新生墙</a></li>
     <li><a href="#fun">互动玩法</a></li>
@@ -641,6 +642,34 @@
   </div>
 </section>
 
+<!-- 06 新生大数据画像（实时取自新生墙 + 弹幕） -->
+<section class="section six" id="insights">
+  <span class="section-eyebrow reveal">DATA PORTRAIT · 新生画像</span>
+  <h2 class="section-title reveal">2026 级新生<span class="accent">大数据画像</span></h2>
+  <p class="section-desc reveal">用真实的新生墙投稿 + 弹幕，实时拼出这一届的模样。数据随大家上墙动态更新，看看你和多少同频小伙伴要相遇 📊</p>
+  <div class="insights-box reveal">
+    <div class="ins-kpis" id="insKpis"></div>
+    <div class="ins-grid2">
+      <div class="ins-panel">
+        <h4>🏫 新生都来自哪些学院</h4>
+        <div class="bars" id="insCollegeBars"></div>
+      </div>
+      <div class="ins-panel">
+        <h4>🌏 大家从哪些城市飞来</h4>
+        <div class="cloud" id="insCloud"></div>
+      </div>
+    </div>
+    <div class="ins-panel">
+      <h4>🤝 找找和你同频的人</h4>
+      <div class="match-row">
+        <select id="matchCollege"></select>
+        <select id="matchHometown"></select>
+      </div>
+      <div class="match-result" id="matchResult">选一下学院或家乡，看看有多少同频的小伙伴 👀</div>
+    </div>
+  </div>
+</section>
+
 <!-- Footer -->
 <footer>
   <p class="welcome">欢迎成为新的鼎宝</p>
@@ -781,6 +810,7 @@
 <script src="app.js"></script>
 <script src="campus-explorer.js?v=4"></script>
 <script src="freshman-insights.js"></script>
+<script src="insights.js"></script>
 <script src="freshman-toolkit.js?v=1"></script>
 </body>
 </html>

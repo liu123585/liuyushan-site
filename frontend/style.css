@@ -1028,9 +1028,9 @@ a.game-btn{display:block;text-decoration:none;text-align:center}
 .bar-track i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--primary2),var(--gold))}
 .bar-v{flex:0 0 28px;text-align:right;color:var(--gold);font-weight:700}
 .cloud{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;padding:6px 0}
-.cw{color:var(--white);opacity:.9}
+.cw{color:var(--primary);font-weight:700;opacity:1}
 .match-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
-.match-row select{flex:1;min-width:150px;background:#ffffff;color:var(--white);border:1px solid var(--hair);border-radius:10px;padding:9px 10px;font-size:13px}
+.match-row select{flex:1;min-width:150px;background:#ffffff;color:rgba(21,35,61,.9);border:1px solid var(--hair);border-radius:10px;padding:9px 10px;font-size:13px}
 .match-result{font-size:14px;color:rgba(21,35,61,.8)}
 .match-result b{color:var(--primary);font-size:16px}
 
