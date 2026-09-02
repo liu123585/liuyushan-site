@@ -105,13 +105,20 @@
       showMsg('地图初始化失败：' + e.message + '。');
       return;
     }
+    // 兜底：地图创建后持续 resize 一段时间，彻底避免「隐藏/尺寸不稳导致底图空白不重绘」
+    var ri = 0;
+    var rt = setInterval(function () {
+      if (!map) { clearInterval(rt); return; }
+      try { map.resize(); } catch (e) {}
+      if (++ri > 12) clearInterval(rt);
+    }, 250);
     map.on('complete', function () {
       console.log('[campus] map complete');
       mapReady = true;
       var fb = $('mapFallback'); if (fb) fb.hidden = true;
       try { map.resize(); } catch (e) {}
       renderMarkers();
-      // 诊断：3 秒后若底图仍未渲染，给出可见提示，方便排查 Key/网络问题
+      // 诊断：网络慢时瓦片可能晚到，先 resize 再延后判定，避免误报 fallback
       setTimeout(function () {
         var e = $('amapContainer'); if (!e) return;
         var imgs = e.querySelectorAll('img');
@@ -125,7 +132,17 @@
         }
         console.log('[campus] diag imgs=', imgs.length, 'canvas=', cv.length, 'loadedTiles=', loadedTiles);
         if (loadedTiles === 0) {
-          showMapFallback();
+          try { map.resize(); } catch (err) {}
+          // 再宽限 4 秒，给慢网络瓦片加载时间，仍为空才提示
+          setTimeout(function () {
+            var e2 = $('amapContainer'); if (!e2) return;
+            var imgs2 = e2.querySelectorAll('img');
+            var cv2 = e2.querySelectorAll('canvas');
+            var lt2 = 0;
+            for (var a = 0; a < imgs2.length; a++) { if (imgs2[a].naturalWidth > 0) lt2++; }
+            for (var b = 0; b < cv2.length; b++) { if (cv2[b].width > 0) lt2++; }
+            if (lt2 === 0) showMapFallback();
+          }, 4000);
         }
       }, 4000);
     });
@@ -298,37 +315,17 @@
     console.log('[campus] boot. amapContainer found:', !!document.getElementById('amapContainer'));
     if (!document.getElementById('amapContainer')) return;
 
-    // 关键修复：地图区块在页面较靠下，初始处于 reveal 入场动画（容器带 opacity/transform）。
-    // 若在此时初始化，高德 WebGL 底图会在未稳定的容器里渲染成空白且事后不重绘。
-    // 改为：滚动进入视口后再创建地图；并监听窗口尺寸变化触发 resize。
+    // 地图容器（.map-wrap）已被强制可见且尺寸固定，无需再等滚动/显形时序。
+    // 直接初始化，创建后由 buildMap 内的 resize 循环兜底，彻底避免底图空白。
     var mapInited = false;
     function initWhenReady() {
       if (mapInited) return;
       mapInited = true;
       initAmap();
     }
-    // 关键修复：必须等地图容器真正可见（opacity:1）后再初始化。
-    // 否则高德在隐藏/位移状态（被 reveal 动画覆盖）下创建地图，底图会渲染成空白。
-    function waitVisibleThenInit() {
-      if (mapInited) return;
-      var w = document.querySelector('.map-wrap') || $('amapContainer');
-      var op = w ? getComputedStyle(w).opacity : '1';
-      if (op === '1') { initWhenReady(); }
-      else { setTimeout(waitVisibleThenInit, 150); }
-    }
-    var wrap = document.querySelector('.map-wrap') || $('amapContainer');
-    if (wrap && 'IntersectionObserver' in window) {
-      var io = new IntersectionObserver(function (entries) {
-        entries.forEach(function (en) {
-          if (en.isIntersecting) { waitVisibleThenInit(); io.disconnect(); }
-        });
-      }, { threshold: 0.15 });
-      io.observe(wrap);
-      // 兜底：6 秒内若仍未触发（如脚本加载极慢），也强制初始化
-      setTimeout(waitVisibleThenInit, 6000);
-    } else {
-      waitVisibleThenInit();
-    }
+    // 立即初始化，最稳妥；若 AMap 脚本还没加载完，initAmap 内部会等 onload 再建图。
+    initWhenReady();
+    window.addEventListener('load', function () { if (map) { try { map.resize(); } catch (e) {} } });
     window.addEventListener('resize', function () { if (map) { try { map.resize(); } catch (e) {} } });
 
     var tabs = document.querySelectorAll('#mapCampusTabs .campus-tab');
