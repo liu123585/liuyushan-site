@@ -42,6 +42,23 @@
     fb.hidden = false;
   }
 
+  function showMapFallback() {
+    var fb = $('mapFallback'); if (!fb) return;
+    fb.innerHTML = '<div class="fb-inner">' +
+      '<div class="fb-ico">🗺️</div>' +
+      '<p><b>地图控件已加载，但底图没有显示出来。</b></p>' +
+      '<p>最常见原因：① 高德 Key 未授权当前域名 <code>site.liuyushan.top</code>；② 浏览器/网络拦截了地图瓦片；③ 高德服务临时波动。</p>' +
+      '<div class="fb-btns">' +
+      '<button class="game-btn" id="mapRetryBtn">重新加载地图</button>' +
+      '<a class="game-btn" href="https://uri.amap.com/marker?position=112.4559,34.6412&name=河南科技大学开元校区&src=liuyushan&coordinate=gaode&callnative=1" target="_blank" rel="noopener">用高德地图打开校园</a>' +
+      '</div>' +
+      '<p class="fb-tip">若一直空白，请去 <a href="https://lbs.amap.com" target="_blank" rel="noopener">高德控制台</a> → 应用管理 → HAUST_Campus → 域名白名单里添加 <code>site.liuyushan.top</code>。</p>' +
+      '</div>';
+    fb.hidden = false;
+    var btn = $('mapRetryBtn');
+    if (btn) btn.addEventListener('click', function () { fb.hidden = true; rebuild2D(); });
+  }
+
 
   function initAmap() {
     console.log('[campus] initAmap called. box:', !!$('amapContainer'), 'AMAP_KEY:', !!AMAP_KEY);
@@ -63,7 +80,7 @@
     };
     s.onerror = function () {
       console.error('[campus] AMap 1.4.x script load error');
-      showMsg('高德地图脚本加载失败，请检查 Key / 安全密钥 / 域名白名单是否配置正确。');
+      showMapFallback();
     };
     document.head.appendChild(s);
   }
@@ -97,14 +114,20 @@
       // 诊断：3 秒后若底图仍未渲染，给出可见提示，方便排查 Key/网络问题
       setTimeout(function () {
         var e = $('amapContainer'); if (!e) return;
-        var layers = e.querySelectorAll('.amap-layer').length;
-        var imgs = e.querySelectorAll('img').length;
-        var cv = e.querySelectorAll('canvas').length;
-        console.log('[campus] diag layers=', layers, 'imgs=', imgs, 'canvas=', cv);
-        if (layers === 0 && imgs === 0 && cv === 0) {
-          showMsg('底图加载失败：高德瓦片未返回。请确认高德 Key 已开通「Web端(JS API)」且 域名白名单 包含 site.liuyushan.top，并检查网络能否访问 is.autonavi.com。');
+        var imgs = e.querySelectorAll('img');
+        var cv = e.querySelectorAll('canvas');
+        var loadedTiles = 0;
+        for (var i = 0; i < imgs.length; i++) {
+          if (imgs[i].naturalWidth > 0 && imgs[i].naturalHeight > 0) loadedTiles++;
         }
-      }, 3000);
+        for (var j = 0; j < cv.length; j++) {
+          if (cv[j].width > 0 && cv[j].height > 0) loadedTiles++;
+        }
+        console.log('[campus] diag imgs=', imgs.length, 'canvas=', cv.length, 'loadedTiles=', loadedTiles);
+        if (loadedTiles === 0) {
+          showMapFallback();
+        }
+      }, 4000);
     });
     map.on('error', function (e) {
       console.error('[campus] AMap error', e);

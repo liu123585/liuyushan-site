@@ -973,6 +973,11 @@ a.game-btn{display:block;text-decoration:none;text-align:center}
 .fb-inner{max-width:520px}
 .fb-ico{font-size:44px;margin-bottom:10px}
 .map-fallback p{font-size:14px;color:rgba(21,35,61,.7);line-height:1.8}
+.fb-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:16px 0 10px}
+.fb-btns .game-btn{font-size:13px;padding:8px 16px}
+.fb-tip{font-size:12px;color:var(--grey);margin-top:8px}
+.fb-tip a{color:var(--primary);text-decoration:underline}
+.fb-tip code{background:rgba(0,85,163,.08);padding:1px 5px;border-radius:4px;font-size:12px;color:var(--white)}
 .mk{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;background:rgba(255,255,255,.96);border:2px solid var(--gold);box-shadow:0 0 12px rgba(212,175,55,.5);cursor:pointer}
 .iw{display:flex;gap:10px;width:270px;background:rgba(255,255,255,.97);border:1px solid var(--hair);border-radius:12px;padding:10px;color:var(--white);box-shadow:0 10px 28px rgba(20,40,80,.2)}
 .iw-img{width:78px;height:78px;object-fit:cover;border-radius:8px;flex:0 0 78px}
