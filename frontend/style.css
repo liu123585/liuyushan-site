@@ -1016,8 +1016,6 @@ a.game-btn{display:block;text-decoration:none;text-align:center}
 .locate-btn:hover{transform:translateY(-2px);box-shadow:0 6px 22px rgba(0,85,163,.35)}
 .locate-btn:active{transform:scale(.95)}
 .route-panel{margin-top:12px}
-.route-quick{margin-top:10px;text-align:center;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
-.route-quick .route-go{padding:9px 16px;font-size:13px}
 .route-navi{display:inline-block;margin-top:10px;padding:9px 16px;background:linear-gradient(135deg,#00a859,#00c853);color:#fff;border-radius:999px;text-decoration:none;font-size:13px;font-weight:700;box-shadow:0 6px 18px rgba(0,168,89,.35)}
 .route-navi.inline{margin-top:0;margin-left:8px;padding:5px 12px;font-size:12px}
 .route-head{background:var(--glass);border:1px solid var(--hair);border-radius:12px;padding:12px 14px;font-weight:700;margin-bottom:8px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;color:var(--white)}

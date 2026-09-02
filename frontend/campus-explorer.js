@@ -54,7 +54,6 @@
   var map = null, walking = null, curPoly = null, markers = [];
   var routeStart = null, routeEnd = null;
   var pickMode = null, startMark = null, endMark = null;
-  var flagMode = false;
   var geolocation = null, locateMarker = null;
 
   function $(id) { return document.getElementById(id); }
@@ -241,11 +240,6 @@
       mk.on('click', function () { openInfo(l); });
       markers.push(mk);
     });
-    // 开元校区默认把「起点」落在国旗广场（校园几何中心），用户可随时改点
-    if (curCampus === 'kaiyuan' && !routeStart) {
-      var f = findL('flag');
-      if (f) setEndpoint('start', f);
-    }
   }
 
   /* 起点/终点选点：地标弹窗按钮 或 直接在地图上点，都会走到这里 */
@@ -283,21 +277,6 @@
     if (!map) return;
     try {
       map.on('click', function (e) {
-        // 校正国旗广场：点一下地图，把该点设为国旗广场并记住
-        if (flagMode) {
-          var fll = e.lnglat; if (!fll) return;
-          var flng = fll.getLng(), flat = fll.getLat();
-          CENTER.kaiyuan = [flng, flat];
-          var fob = findL('flag'); if (fob) { fob.lng = flng; fob.lat = flat; }
-          try { localStorage.setItem('flagPos', JSON.stringify({ lng: flng, lat: flat })); } catch (err) {}
-          if (map) { try { map.setZoomAndCenter(18, [flng, flat]); } catch (err) {} }
-          renderMarkers();
-          flagMode = false;
-          var coordStr = flng.toFixed(5) + ',' + flat.toFixed(5);
-          toast('国旗广场已校正到 ' + coordStr + '（已记住）');
-          try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(coordStr); } catch (err) {}
-          return;
-        }
         if (!pickMode) return;
         var ll = e.lnglat; if (!ll) return;
         setEndpoint(pickMode, { lng: ll.getLng(), lat: ll.getLat(), name: '地图选点' });
@@ -506,22 +485,6 @@
     var ps = $('routePickStart'); if (ps) ps.addEventListener('click', function () { pickMode = (pickMode === 'start' ? null : 'start'); updatePickButtons(); toast(pickMode ? '点击地图选择起点' : '已取消选点'); });
     var pe = $('routePickEnd'); if (pe) pe.addEventListener('click', function () { pickMode = (pickMode === 'end' ? null : 'end'); updatePickButtons(); toast(pickMode ? '点击地图选择终点' : '已取消选点'); });
     var rr = $('routeReset'); if (rr) rr.addEventListener('click', resetRoute);
-    var sf = $('setStartFlag'); if (sf) sf.addEventListener('click', function () {
-      var f = findL('flag');
-      if (!f) { toast('未找到国旗广场'); return; }
-      setEndpoint('start', f);
-      if (map) { try { map.setZoomAndCenter(18, [f.lng, f.lat]); } catch (e) {} }
-    });
-    var cf = $('centerFlag'); if (cf) cf.addEventListener('click', function () {
-      var f = findL('flag');
-      if (f && map) { try { map.setZoomAndCenter(18, [f.lng, f.lat]); } catch (e) {} }
-      else { toast('未找到国旗广场'); }
-    });
-    var cf2 = $('calibFlag'); if (cf2) cf2.addEventListener('click', function () {
-      flagMode = !flagMode;
-      cf2.classList.toggle('active', flagMode);
-      toast(flagMode ? '请在地图上点一下国旗广场的真实位置' : '已取消校正');
-    });
     // 实景弹层关闭
     var pc = $('panoClose'); if (pc) pc.addEventListener('click', closePano);
     var pm = $('panoModal'); if (pm) pm.addEventListener('click', function (e) { if (e.target === pm) closePano(); });
