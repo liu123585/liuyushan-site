@@ -30,6 +30,7 @@
   var curCampus = 'kaiyuan';
   var map = null, walking = null, curPoly = null, markers = [];
   var routeStart = null, routeEnd = null;
+  var pickMode = null, startMark = null, endMark = null;
 
   function $(id) { return document.getElementById(id); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -156,7 +157,8 @@
     try { walking = new AMap.Walking({ map: map, panel: '' }); } catch (e) {}
     // 兜底：布局稳定后再次 resize，避免底图空白
     setTimeout(function () { if (map) { try { map.resize(); } catch (e) {} } }, 500);
-  }
+    bindRoutePicking();
+    }
 
   function rebuild2D() {
     if (map) { try { map.destroy(); } catch (e) {} map = null; walking = null; }
@@ -181,6 +183,7 @@
         if (!map || !map.getCenter) showMsg('2D 地图加载超时，请检查高德 Key 是否开通「Web端(JS API)」且白名单包含当前域名 site.liuyushan.top。');
       }, 10000);
       try { walking = new AMap.Walking({ map: map, panel: '' }); } catch (e) {}
+      bindRoutePicking();
     } catch (e) {
       showMsg('2D 地图初始化失败：' + e.message + '。请检查 Key / 安全密钥 / 域名白名单。');
     }
@@ -205,6 +208,49 @@
       mk.on('click', function () { openInfo(l); });
       markers.push(mk);
     });
+  }
+
+  /* 起点/终点选点：地标弹窗按钮 或 直接在地图上点，都会走到这里 */
+  function setEndpoint(which, pt) {
+    if (!map) return;
+    if (which === 'start') {
+      routeStart = pt;
+      if (startMark) { try { map.remove(startMark); } catch (e) {} }
+      startMark = new AMap.Marker({ position: [pt.lng, pt.lat], map: map, offset: new AMap.Pixel(-14, -28), content: '<div class="mk mk-start">起</div>' });
+    } else {
+      routeEnd = pt;
+      if (endMark) { try { map.remove(endMark); } catch (e) {} }
+      endMark = new AMap.Marker({ position: [pt.lng, pt.lat], map: map, offset: new AMap.Pixel(-14, -28), content: '<div class="mk mk-end">终</div>' });
+    }
+    toast((which === 'start' ? '起点：' : '终点：') + pt.name);
+    if (routeStart && routeEnd) planRoute();
+  }
+  function clearRouteMarks() {
+    if (startMark) { try { map.remove(startMark); } catch (e) {} startMark = null; }
+    if (endMark) { try { map.remove(endMark); } catch (e) {} endMark = null; }
+  }
+  function resetRoute() {
+    routeStart = routeEnd = null;
+    clearRouteMarks();
+    if (curPoly) { try { map.remove(curPoly); } catch (e) {} curPoly = null; }
+    var panel = $('routePanel'); if (panel) panel.innerHTML = '';
+    pickMode = null; updatePickButtons();
+  }
+  function updatePickButtons() {
+    var ps = $('routePickStart'), pe = $('routePickEnd');
+    if (ps) ps.classList.toggle('active', pickMode === 'start');
+    if (pe) pe.classList.toggle('active', pickMode === 'end');
+  }
+  function bindRoutePicking() {
+    if (!map) return;
+    try {
+      map.on('click', function (e) {
+        if (!pickMode) return;
+        var ll = e.lnglat; if (!ll) return;
+        setEndpoint(pickMode, { lng: ll.getLng(), lat: ll.getLat(), name: '地图选点' });
+        pickMode = null; updatePickButtons();
+      });
+    } catch (e) {}
   }
 
   function toast(msg) {
@@ -279,8 +325,8 @@
         var b = e.target.closest ? e.target.closest('.iw-btn') : null;
         if (!b) return;
         var act = b.getAttribute('data-act');
-        if (act === 'from') { routeStart = l; toast('起点：' + l.name); }
-        else if (act === 'to') { routeEnd = l; toast('终点：' + l.name); }
+        if (act === 'from') setEndpoint('start', l);
+        else if (act === 'to') setEndpoint('end', l);
         else if (act === 'nav') { navigateTo(l); }
         else if (act === 'pano') { openPano(l); }
       });
@@ -290,25 +336,37 @@
   /* 步行路线：自己渲染成深色步骤列表（高德默认面板是白底，和站点风格不搭） */
   function planRoute() {
     var panel = $('routePanel');
-    if (!walking) { if (panel) panel.innerHTML = '<div class="route-empty">路线规划功能正在加载中，请稍等。</div>'; return; }
-    if (!routeStart || !routeEnd) { if (panel) panel.innerHTML = '<div class="route-empty">先在地图上点两个地点，分别设为「起点」和「终点」。</div>'; return; }
+    if (!routeStart || !routeEnd) {
+      if (panel) panel.innerHTML = '<div class="route-empty">先选两个地点：点「①选起点」「②选终点」后到地图上点一下，或直接点地标弹窗里的「设为起点 / 终点」。</div>';
+      return;
+    }
+    // 兜底：若 walking 插件因加载时序没初始化成功，这里再建一次
+    if (!walking) { try { walking = new AMap.Walking({ map: map, panel: '' }); } catch (e) { walking = null; } }
+    if (!walking) {
+      if (panel) panel.innerHTML = '<div class="route-empty">步行路线插件还在加载，稍等一两秒再点「规划路线」。</div>';
+      return;
+    }
     if (panel) panel.innerHTML = '<div class="route-loading">路线规划中…</div>';
-    walking.search([routeStart.lng, routeStart.lat], [routeEnd.lng, routeEnd.lat], function (status, result) {
-      if (status !== 'complete' || !result.routes || !result.routes.length) {
-        if (panel) panel.innerHTML = '<div class="route-empty">没查到步行路线，换个起点/终点试试。</div>';
-        return;
-      }
-      var r = result.routes[0];
-      var mins = Math.max(1, Math.round(r.time / 60));
-      var dist = r.distance >= 1000 ? (r.distance / 1000).toFixed(1) + ' 公里' : r.distance + ' 米';
-      var steps = (r.steps || []).map(function (s, i) {
-        return '<li><span class="step-i">' + (i + 1) + '</span><span class="step-t">' + esc(s.instruction) + '</span><span class="step-d">' + (s.distance >= 1000 ? (s.distance / 1000).toFixed(1) + 'km' : s.distance + 'm') + '</span></li>';
-      }).join('');
-      if (panel) {
-        panel.innerHTML = '<div class="route-head">🚶 ' + esc(routeStart.name) + ' → ' + esc(routeEnd.name) +
-          '<span class="route-meta">约 ' + dist + ' · 步行 ' + mins + ' 分钟</span></div><ol class="route-steps">' + steps + '</ol>';
-      }
-    });
+    try {
+      walking.search([routeStart.lng, routeStart.lat], [routeEnd.lng, routeEnd.lat], function (status, result) {
+        if (status !== 'complete' || !result.routes || !result.routes.length) {
+          if (panel) panel.innerHTML = '<div class="route-empty">没查到步行路线，换个起点/终点试试。</div>';
+          return;
+        }
+        var r = result.routes[0];
+        var mins = Math.max(1, Math.round(r.time / 60));
+        var dist = r.distance >= 1000 ? (r.distance / 1000).toFixed(1) + ' 公里' : r.distance + ' 米';
+        var steps = (r.steps || []).map(function (s, i) {
+          return '<li><span class="step-i">' + (i + 1) + '</span><span class="step-t">' + esc(s.instruction) + '</span><span class="step-d">' + (s.distance >= 1000 ? (s.distance / 1000).toFixed(1) + 'km' : s.distance + 'm') + '</span></li>';
+        }).join('');
+        if (panel) {
+          panel.innerHTML = '<div class="route-head">🚶 ' + esc(routeStart.name) + ' → ' + esc(routeEnd.name) +
+            '<span class="route-meta">约 ' + dist + ' · 步行 ' + mins + ' 分钟</span></div><ol class="route-steps">' + steps + '</ol>';
+        }
+      });
+    } catch (e) {
+      if (panel) panel.innerHTML = '<div class="route-empty">路线规划出错：' + e.message + '。</div>';
+    }
   }
 
   function boot() {
@@ -334,11 +392,14 @@
         Array.prototype.forEach.call(tabs, function (x) { x.classList.remove('active'); });
         t.classList.add('active');
         curCampus = t.getAttribute('data-campus');
-        routeStart = routeEnd = null;
+        resetRoute();
         if (map) { try { map.setZoomAndCenter(ZOOM[curCampus], CENTER[curCampus]); renderMarkers(); } catch (e) {} }
       });
     });
     var go = $('routeGo'); if (go) go.addEventListener('click', planRoute);
+    var ps = $('routePickStart'); if (ps) ps.addEventListener('click', function () { pickMode = (pickMode === 'start' ? null : 'start'); updatePickButtons(); toast(pickMode ? '点击地图选择起点' : '已取消选点'); });
+    var pe = $('routePickEnd'); if (pe) pe.addEventListener('click', function () { pickMode = (pickMode === 'end' ? null : 'end'); updatePickButtons(); toast(pickMode ? '点击地图选择终点' : '已取消选点'); });
+    var rr = $('routeReset'); if (rr) rr.addEventListener('click', resetRoute);
     // 实景弹层关闭
     var pc = $('panoClose'); if (pc) pc.addEventListener('click', closePano);
     var pm = $('panoModal'); if (pm) pm.addEventListener('click', function (e) { if (e.target === pm) closePano(); });

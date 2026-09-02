@@ -994,8 +994,13 @@ a.game-btn{display:block;text-decoration:none;text-align:center}
 .pano-close:hover{background:rgba(0,85,163,.12)}
 .pano-box{flex:1;position:relative;background:#eef4fc}
 .pano-loading,.pano-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:rgba(21,35,61,.7);font-size:14px;text-align:center;padding:24px}
-.route-bar{margin-top:14px;text-align:center}
+.route-bar{margin-top:14px;text-align:center;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 .route-go{background:linear-gradient(135deg,var(--primary),var(--gold));border:0;color:#fff;font-weight:700;padding:12px 22px;border-radius:999px;cursor:pointer;font-size:14px;box-shadow:0 6px 20px rgba(0,85,163,.35)}
+.route-go.route-go-plan{padding:12px 18px}
+.route-go.route-reset{background:rgba(255,255,255,.96);color:var(--primary);box-shadow:0 4px 14px rgba(20,40,80,.12);border:1px solid var(--hair)}
+.route-go.active{outline:3px solid rgba(212,175,55,.6);transform:translateY(-1px)}
+.mk-start{background:#e8f3ff;border-color:#0055a3;box-shadow:0 0 12px rgba(0,85,163,.5)}
+.mk-end{background:#fff4e0;border-color:#d4af37;box-shadow:0 0 12px rgba(212,175,55,.5)}
 .route-panel{margin-top:12px}
 .route-head{background:var(--glass);border:1px solid var(--hair);border-radius:12px;padding:12px 14px;font-weight:700;margin-bottom:8px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;color:var(--white)}
 .route-meta{font-size:13px;font-weight:400;color:var(--primary)}

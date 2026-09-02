@@ -1,6 +1,9 @@
 
 var API_BASE = window.__API_BASE__ || ''; // 部署到云函数后，在 api-config.js 里改成 API 网关公网地址；本地为空=同源
 
+// 滚动事件 rAF 节流：避免在每次 scroll 里同步读取布局属性造成重排卡顿
+function rafThrottle(fn){var scheduled=false,lastArgs;return function(){lastArgs=arguments;if(scheduled)return;scheduled=true;requestAnimationFrame(function(){scheduled=false;fn.apply(null,lastArgs);});};}
+
 // ===== Star sprinkle background =====
 (function(){
   var starsEl = document.getElementById('stars');
@@ -144,10 +147,10 @@ var API_BASE = window.__API_BASE__ || ''; // 部署到云函数后，在 api-con
 // ===== Navigation solid on scroll =====
 (function(){
   var nav = document.getElementById('nav');
-  window.addEventListener('scroll', function(){
+  window.addEventListener('scroll', rafThrottle(function(){
     if(window.scrollY > 80) nav.classList.add('solid');
     else nav.classList.remove('solid');
-  }, {passive:true});
+  }), {passive:true});
   // Smooth scroll for anchors
   document.querySelectorAll('.nav-links a[href^="#"]').forEach(function(a){
     a.addEventListener('click', function(e){
@@ -199,7 +202,7 @@ var API_BASE = window.__API_BASE__ || ''; // 部署到云函数后，在 api-con
     sectEls.forEach(function(s,i){ if(s && s.offsetTop <= scrollY) active = i; });
     tabs.forEach(function(t,i){ t.classList.toggle('active', i === active); });
   }
-  window.addEventListener('scroll', updateTab, {passive:true});
+  window.addEventListener('scroll', rafThrottle(updateTab), {passive:true});
   updateTab();
   // Tab click -> smooth scroll
   tabs.forEach(function(tab){
@@ -210,12 +213,12 @@ var API_BASE = window.__API_BASE__ || ''; // 部署到云函数后，在 api-con
   });
   // Show/hide tab bar based on scroll direction
   var lastScroll = 0;
-  window.addEventListener('scroll', function(){
+  window.addEventListener('scroll', rafThrottle(function(){
     var cur = window.scrollY;
     if(cur > lastScroll && cur > 200) bar.style.transform = 'translateY(100%)';
     else bar.style.transform = 'translateY(0)';
     lastScroll = cur;
-  }, {passive:true});
+  }), {passive:true});
 })();
 
 // ===== Mobile: Card Expand on Tap =====
@@ -286,12 +289,12 @@ var API_BASE = window.__API_BASE__ || ''; // 部署到云函数后，在 api-con
   });
   // Auto-hide FAB on scroll down, show on scroll up
   var lastY = 0;
-  window.addEventListener('scroll', function(){
+  window.addEventListener('scroll', rafThrottle(function(){
     var y = window.scrollY;
     if(y > lastY && y > 400) { fab.style.opacity = '0'; fab.style.pointerEvents = 'none'; }
     else { fab.style.opacity = '1'; fab.style.pointerEvents = 'auto'; }
     lastY = y;
-  }, {passive:true});
+  }), {passive:true});
 })();
 
 
@@ -301,7 +304,7 @@ var API_BASE = window.__API_BASE__ || ''; // 部署到云函数后，在 api-con
   if(!bar)return;
   function upd(){var d=document.documentElement;var max=d.scrollHeight-d.clientHeight;
     var y=d.scrollTop||document.body.scrollTop;bar.style.width=(max>0?y/max*100:0)+'%';}
-  window.addEventListener('scroll',upd,{passive:true});upd();
+  window.addEventListener('scroll',rafThrottle(upd),{passive:true});upd();
 })();
 
 // ===== Hero 轮播标语 =====
@@ -351,6 +354,7 @@ var API_BASE = window.__API_BASE__ || ''; // 部署到云函数后，在 api-con
       playedEl=document.getElementById('mpPlayed'),
       curEl=document.getElementById('mpCur'),durEl=document.getElementById('mpDur');
   if(!player||!audio)return;
+  audio.volume=0.35; // 初始音量调小，避免一开网页太吵
 
   // 歌单：把想加的歌（mp3 + 同名 .lrc 歌词）放进 bgm/ 目录，在这里加一项即可自动支持切歌与歌词
   var playlist=[
