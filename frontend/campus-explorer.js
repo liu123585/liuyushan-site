@@ -22,6 +22,21 @@
     { id: 'bearing', name: '中国轴承陈列馆', campus: 'xiyuan', lng: 112.3785, lat: 34.6575, cat: '特色', desc: '轴承强校的门面，馆里能看到不少轴承实物。', img: 'img/gkzt.jpg', emoji: '⚙️' },
     { id: 'bridge', name: '连接天桥', campus: 'xiyuan', lng: 112.3775, lat: 34.6565, cat: '风景', desc: '连南北两院的天桥，经典打卡点。', img: 'img/nyzt1.jpg', emoji: '🌉' }
   ];
+  /* 每个地标的真实照片相册（复用站点已有素材），"看实景"会打开照片灯箱 */
+  var GAL = {
+    lib: ['img/tsg.jpg', 'img/library_cover.jpg', 'img/map_library.jpg'],
+    th: ['img/teaching_building.jpg'],
+    qh: ['img/qinhu.jpg'],
+    canteen: ['img/jiayuan_canteen.jpg', 'img/jiayuan_canteen_real.jpg', 'img/jiayuan_canteen_area.png', 'img/jiayuan_canteen_interior.png', 'img/jiayuan_canteen2.png'],
+    dorm: ['img/dorm1.jpg', 'img/dorm_real_1.jpg', 'img/dorm_real_2.jpg', 'img/jiayuan_dorm_real.jpg', 'img/jingyuan_dorm_real.jpg', 'img/dorm_exterior1.jpg', 'img/dorm_interior.jpg'],
+    gate: ['img/campus2.jpg'],
+    field: ['img/nyzt1.jpg', 'img/nyzt2.jpg', 'img/ztyc.jpg'],
+    flag: ['img/campus2.jpg'],
+    xy: ['img/xiyuan_campus.jpg'],
+    bearing: ['img/gkzt.jpg'],
+    bridge: ['img/nyzt1.jpg']
+  };
+  LANDMARKS.forEach(function (l) { if (GAL[l.id]) l.gallery = GAL[l.id]; });
   // 开元校区定位到「国旗广场」（校园正中央）；西苑校区定位到校区中心（Bigemap 精确坐标）。
   var CENTER = { kaiyuan: [112.4559, 34.6412], xiyuan: [112.37384, 34.661337] };
   // 越详细越好：开元放大到广场级，西苑校区较小也给到街区级。
@@ -72,12 +87,16 @@
     // 改用高德 1.4.x 传统栅格地图脚本，避免 JSAPI 2.0 WebGL 矢量底图
     // 在某些 Key/浏览器/域名组合下出现「控件可见、底图空白」的问题。
     var s = document.createElement('script');
-    s.src = 'https://webapi.amap.com/maps?v=1.4.15&key=' + encodeURIComponent(AMAP_KEY) + (AMAP_SEC ? '&jscode=' + encodeURIComponent(AMAP_SEC) : '') + '&plugin=AMap.ToolBar,AMap.Walking,AMap.Panorama';
+    s.src = 'https://webapi.amap.com/maps?v=1.4.15&key=' + encodeURIComponent(AMAP_KEY) + (AMAP_SEC ? '&jscode=' + encodeURIComponent(AMAP_SEC) : '') + '&plugin=AMap.ToolBar,AMap.Walking';
     s.async = true;
     s.onload = function () {
       console.log('[campus] AMap 1.4.x script loaded');
       window.AMap = window.AMap || AMap;
-      buildMap();
+      // 显式等插件就绪，避免直接 new AMap.Walking 时插件还没加载完
+      AMap.plugin(['AMap.ToolBar', 'AMap.Walking'], function () {
+        console.log('[campus] AMap plugins ready');
+        buildMap();
+      });
     };
     s.onerror = function () {
       console.error('[campus] AMap 1.4.x script load error');
@@ -154,7 +173,7 @@
 
     try { map.addControl(new AMap.ToolBar({ position: { right: '12px', bottom: '80px' } })); } catch (e) {}
     try { map.addControl(new AMap.ControlBar({ position: { right: '6px', top: '12px' } })); } catch (e) {}
-    try { walking = new AMap.Walking({ map: map, panel: '' }); } catch (e) {}
+    // 步行插件延迟到第一次规划时再初始化，避免插件时序问题
     // 兜底：布局稳定后再次 resize，避免底图空白
     setTimeout(function () { if (map) { try { map.resize(); } catch (e) {} } }, 500);
     bindRoutePicking();
@@ -182,7 +201,6 @@
       setTimeout(function () {
         if (!map || !map.getCenter) showMsg('2D 地图加载超时，请检查高德 Key 是否开通「Web端(JS API)」且白名单包含当前域名 site.liuyushan.top。');
       }, 10000);
-      try { walking = new AMap.Walking({ map: map, panel: '' }); } catch (e) {}
       bindRoutePicking();
     } catch (e) {
       showMsg('2D 地图初始化失败：' + e.message + '。请检查 Key / 安全密钥 / 域名白名单。');
@@ -208,6 +226,11 @@
       mk.on('click', function () { openInfo(l); });
       markers.push(mk);
     });
+    // 开元校区默认把「起点」落在国旗广场（校园几何中心），用户可随时改点
+    if (curCampus === 'kaiyuan' && !routeStart) {
+      var f = findL('flag');
+      if (f) setEndpoint('start', f);
+    }
   }
 
   /* 起点/终点选点：地标弹窗按钮 或 直接在地图上点，都会走到这里 */
@@ -252,6 +275,19 @@
       });
     } catch (e) {}
   }
+  // 确保 walking 插件真正就绪后再调用 search
+  function ensureWalking(cb) {
+    if (walking) { cb && cb(null); return; }
+    if (!window.AMap) { cb && cb(new Error('AMap 未加载')); return; }
+    AMap.plugin(['AMap.Walking'], function () {
+      try {
+        walking = new AMap.Walking({ map: map, panel: '' });
+        cb && cb(null);
+      } catch (e) {
+        cb && cb(e);
+      }
+    });
+  }
 
   function toast(msg) {
     var t = document.createElement('div');
@@ -270,37 +306,32 @@
     window.open(url, '_blank');
   }
 
-  /* 实景：高德全景（街景），支持点箭头在相邻点位间移动 */
-  var panoInstance = null;
+  /* 实景：展示地标的真实照片相册（高德街景在校园基本无数据，改为照片灯箱） */
   function openPano(l) {
     var modal = $('panoModal'); if (!modal) return;
     var title = $('panoTitle'); if (title) title.textContent = l.name + ' · 实景';
-    var box = $('panoBox'); if (box) box.innerHTML = '<div class="pano-loading">实景加载中…</div>';
+    var box = $('panoBox'); if (!box) return;
+    var imgs = (l.gallery && l.gallery.length) ? l.gallery : [l.img];
+    var idx = 0;
+    function render() {
+      var src = imgs[idx];
+      box.innerHTML = '<div class="ph-viewer">' +
+        (imgs.length > 1 ? '<button class="ph-nav ph-prev" type="button" aria-label="上一张">‹</button>' : '') +
+        '<img class="ph-img" src="' + esc(src) + '" alt="' + esc(l.name) + ' 实景' + (imgs.length > 1 ? (' ' + (idx + 1) + '/' + imgs.length) : '') + '">' +
+        (imgs.length > 1 ? '<button class="ph-nav ph-next" type="button" aria-label="下一张">›</button>' : '') +
+        (imgs.length > 1 ? '<div class="ph-dots">' + imgs.map(function (_, i) { return '<i class="' + (i === idx ? 'on' : '') + '"></i>'; }).join('') + '</div>' : '') +
+        '</div>';
+      var prev = box.querySelector('.ph-prev');
+      var next = box.querySelector('.ph-next');
+      if (prev) prev.onclick = function (e) { e.stopPropagation(); idx = (idx - 1 + imgs.length) % imgs.length; render(); };
+      if (next) next.onclick = function (e) { e.stopPropagation(); idx = (idx + 1) % imgs.length; render(); };
+    }
+    render();
     modal.hidden = false;
-    if (!window.AMap || !AMap.Panorama) {
-      if (box) box.innerHTML = '<div class="pano-empty">实景功能需等地图脚本加载完成后重试。</div>';
-      return;
-    }
-    if (panoInstance) { try { panoInstance.destroy(); } catch (e) {} panoInstance = null; }
-    try {
-      panoInstance = new AMap.Panorama('panoBox', {
-        position: [l.lng, l.lat],
-        zoom: 1,
-        linksControl: true,
-        keyboard: true,
-        scrollWheel: true,
-        showClose: false
-      });
-      panoInstance.on('error', function () {
-        var b = $('panoBox'); if (b) b.innerHTML = '<div class="pano-empty">该位置暂无可用的实景图，换个地标试试。</div>';
-      });
-    } catch (e) {
-      if (box) box.innerHTML = '<div class="pano-empty">实景加载失败：' + e.message + '。</div>';
-    }
   }
   function closePano() {
     var modal = $('panoModal'); if (modal) modal.hidden = true;
-    if (panoInstance) { try { panoInstance.destroy(); } catch (e) {} panoInstance = null; }
+    var box = $('panoBox'); if (box) box.innerHTML = '';
   }
 
   function openInfo(l) {
@@ -333,40 +364,47 @@
     }, 30);
   }
 
-  /* 步行路线：自己渲染成深色步骤列表（高德默认面板是白底，和站点风格不搭） */
+  /* 步行路线：优先用 JS 插件画线；不行就兜底用高德官方导航链接 */
   function planRoute() {
     var panel = $('routePanel');
     if (!routeStart || !routeEnd) {
       if (panel) panel.innerHTML = '<div class="route-empty">先选两个地点：点「①选起点」「②选终点」后到地图上点一下，或直接点地标弹窗里的「设为起点 / 终点」。</div>';
       return;
     }
-    // 兜底：若 walking 插件因加载时序没初始化成功，这里再建一次
-    if (!walking) { try { walking = new AMap.Walking({ map: map, panel: '' }); } catch (e) { walking = null; } }
-    if (!walking) {
-      if (panel) panel.innerHTML = '<div class="route-empty">步行路线插件还在加载，稍等一两秒再点「规划路线」。</div>';
-      return;
+    // 兜底：始终提供「用高德 App 打开导航」链接，校内/小路高德 Web 插件可能没数据，App 一定有
+    var amapLink = 'https://uri.amap.com/navigation?from=' + routeStart.lng + ',' + routeStart.lat + ',' + encodeURIComponent(routeStart.name) +
+      '&to=' + routeEnd.lng + ',' + routeEnd.lat + ',' + encodeURIComponent(routeEnd.name) +
+      '&mode=walk&policy=1&callnative=1';
+    if (panel) {
+      panel.innerHTML = '<div class="route-loading">路线规划中…<br><a class="route-navi" href="' + amapLink + '" target="_blank" rel="noopener">🗺️ 直接用高德导航打开</a></div>';
     }
-    if (panel) panel.innerHTML = '<div class="route-loading">路线规划中…</div>';
-    try {
-      walking.search([routeStart.lng, routeStart.lat], [routeEnd.lng, routeEnd.lat], function (status, result) {
-        if (status !== 'complete' || !result.routes || !result.routes.length) {
-          if (panel) panel.innerHTML = '<div class="route-empty">没查到步行路线，换个起点/终点试试。</div>';
-          return;
-        }
-        var r = result.routes[0];
-        var mins = Math.max(1, Math.round(r.time / 60));
-        var dist = r.distance >= 1000 ? (r.distance / 1000).toFixed(1) + ' 公里' : r.distance + ' 米';
-        var steps = (r.steps || []).map(function (s, i) {
-          return '<li><span class="step-i">' + (i + 1) + '</span><span class="step-t">' + esc(s.instruction) + '</span><span class="step-d">' + (s.distance >= 1000 ? (s.distance / 1000).toFixed(1) + 'km' : s.distance + 'm') + '</span></li>';
-        }).join('');
-        if (panel) {
-          panel.innerHTML = '<div class="route-head">🚶 ' + esc(routeStart.name) + ' → ' + esc(routeEnd.name) +
-            '<span class="route-meta">约 ' + dist + ' · 步行 ' + mins + ' 分钟</span></div><ol class="route-steps">' + steps + '</ol>';
-        }
-      });
-    } catch (e) {
-      if (panel) panel.innerHTML = '<div class="route-empty">路线规划出错：' + e.message + '。</div>';
-    }
+    ensureWalking(function (err) {
+      if (err || !walking) {
+        if (panel) panel.innerHTML = '<div class="route-empty">地图内置路线未就绪，<a class="route-navi" href="' + amapLink + '" target="_blank" rel="noopener">🗺️ 用高德 App 导航更稳</a></div>';
+        return;
+      }
+      try {
+        walking.search([routeStart.lng, routeStart.lat], [routeEnd.lng, routeEnd.lat], function (status, result) {
+          console.log('[campus] walking search', status, result);
+          if (status !== 'complete' || !result.routes || !result.routes.length) {
+            if (panel) panel.innerHTML = '<div class="route-empty">地图内置步行路线没查到（可能该路段高德还没收录），<a class="route-navi" href="' + amapLink + '" target="_blank" rel="noopener">🗺️ 点击用高德 App 导航</a></div>';
+            return;
+          }
+          var r = result.routes[0];
+          var mins = Math.max(1, Math.round(r.time / 60));
+          var dist = r.distance >= 1000 ? (r.distance / 1000).toFixed(1) + ' 公里' : r.distance + ' 米';
+          var steps = (r.steps || []).map(function (s, i) {
+            return '<li><span class="step-i">' + (i + 1) + '</span><span class="step-t">' + esc(s.instruction) + '</span><span class="step-d">' + (s.distance >= 1000 ? (s.distance / 1000).toFixed(1) + 'km' : s.distance + 'm') + '</span></li>';
+          }).join('');
+          if (panel) {
+            panel.innerHTML = '<div class="route-head"><span>🚶 ' + esc(routeStart.name) + ' → ' + esc(routeEnd.name) + '</span>' +
+              '<span class="route-meta">约 ' + dist + ' · 步行 ' + mins + ' 分钟 <a class="route-navi inline" href="' + amapLink + '" target="_blank" rel="noopener">🗺️ 用高德打开</a></span></div><ol class="route-steps">' + steps + '</ol>';
+          }
+        });
+      } catch (e) {
+        if (panel) panel.innerHTML = '<div class="route-empty">路线规划出错：' + e.message + '。<a class="route-navi" href="' + amapLink + '" target="_blank" rel="noopener">🗺️ 用高德 App 导航</a></div>';
+      }
+    });
   }
 
   function boot() {
@@ -400,6 +438,17 @@
     var ps = $('routePickStart'); if (ps) ps.addEventListener('click', function () { pickMode = (pickMode === 'start' ? null : 'start'); updatePickButtons(); toast(pickMode ? '点击地图选择起点' : '已取消选点'); });
     var pe = $('routePickEnd'); if (pe) pe.addEventListener('click', function () { pickMode = (pickMode === 'end' ? null : 'end'); updatePickButtons(); toast(pickMode ? '点击地图选择终点' : '已取消选点'); });
     var rr = $('routeReset'); if (rr) rr.addEventListener('click', resetRoute);
+    var sf = $('setStartFlag'); if (sf) sf.addEventListener('click', function () {
+      var f = findL('flag');
+      if (!f) { toast('未找到国旗广场'); return; }
+      setEndpoint('start', f);
+      if (map) { try { map.setZoomAndCenter(18, [f.lng, f.lat]); } catch (e) {} }
+    });
+    var cf = $('centerFlag'); if (cf) cf.addEventListener('click', function () {
+      var f = findL('flag');
+      if (f && map) { try { map.setZoomAndCenter(18, [f.lng, f.lat]); } catch (e) {} }
+      else { toast('未找到国旗广场'); }
+    });
     // 实景弹层关闭
     var pc = $('panoClose'); if (pc) pc.addEventListener('click', closePano);
     var pm = $('panoModal'); if (pm) pm.addEventListener('click', function (e) { if (e.target === pm) closePano(); });
