@@ -8,16 +8,16 @@
   var AMAP_SEC = window.__AMAP_SECURITY_CODE__ || '';
   console.log('[campus] loaded. AMAP_KEY present:', !!AMAP_KEY, 'SEC present:', !!AMAP_SEC);
 
-  /* 校园地标：坐标复用小程序「校园探索」已标注的数据，图片用站点已有素材 */
+  /* 校园地标：坐标以国旗广场为基准（你校正后的 112.42311,34.60390），其他开元地标整体平移对齐 */
   var LANDMARKS = [
-    { id: 'lib', name: '图书馆', campus: 'kaiyuan', lng: 112.4558, lat: 34.6412, cat: '学习', desc: '鼎形建筑，豫西最大的图书馆，藏书 450 万册，期末一座难求。', img: 'img/tsg.jpg', emoji: '📚' },
-    { id: 'th', name: '教学楼', campus: 'kaiyuan', lng: 112.4565, lat: 34.6398, cat: '学习', desc: '一~六号教学楼连成片，上课前看清楼号别跑错。', img: 'img/teaching_building.jpg', emoji: '🏫' },
-    { id: 'qh', name: '琴湖', campus: 'kaiyuan', lng: 112.4540, lat: 34.6420, cat: '风景', desc: '傍晚散步吹风的好地方，离宿舍区很近。', img: 'img/qinhu.jpg', emoji: '🌊' },
-    { id: 'canteen', name: '嘉园餐厅', campus: 'kaiyuan', lng: 112.4575, lat: 34.6390, cat: '吃喝', desc: '开元最大的食堂之一，一楼平价、二楼风味窗口多。', img: 'img/jiayuan_canteen.jpg', emoji: '🍜' },
-    { id: 'dorm', name: '宿舍区', campus: 'kaiyuan', lng: 112.4580, lat: 34.6385, cat: '生活', desc: '嘉园、菁园、乾园等园区，空调独卫看分配运气。', img: 'img/dorm1.jpg', emoji: '🛏️' },
-    { id: 'gate', name: '开元校门', campus: 'kaiyuan', lng: 112.4560, lat: 34.6450, cat: '地标', desc: '开元大道 263 号，新生报到处就在这片。', img: 'img/campus2.jpg', emoji: '🏛️' },
-    { id: 'field', name: '运动场', campus: 'kaiyuan', lng: 112.4545, lat: 34.6380, cat: '运动', desc: '操场加篮球场，夜跑和打球的人不少。', img: 'img/nyzt1.jpg', emoji: '🏃' },
-    { id: 'flag', name: '国旗广场', campus: 'kaiyuan', lng: 112.4559, lat: 34.6412, cat: '地标', desc: '校园正中央的升旗广场，开学典礼、重大活动都在这里举行，是开元校区的几何中心。', img: 'img/campus2.jpg', emoji: '🚩' },
+    { id: 'lib', name: '图书馆', campus: 'kaiyuan', lng: 112.42301, lat: 34.60390, cat: '学习', desc: '鼎形建筑，豫西最大的图书馆，藏书 450 万册，期末一座难求。', img: 'img/tsg.jpg', emoji: '📚' },
+    { id: 'th', name: '教学楼', campus: 'kaiyuan', lng: 112.42371, lat: 34.60250, cat: '学习', desc: '一~六号教学楼连成片，上课前看清楼号别跑错。', img: 'img/teaching_building.jpg', emoji: '🏫' },
+    { id: 'qh', name: '琴湖', campus: 'kaiyuan', lng: 112.42121, lat: 34.60470, cat: '风景', desc: '傍晚散步吹风的好地方，离宿舍区很近。', img: 'img/qinhu.jpg', emoji: '🌊' },
+    { id: 'canteen', name: '嘉园餐厅', campus: 'kaiyuan', lng: 112.42471, lat: 34.60170, cat: '吃喝', desc: '开元最大的食堂之一，一楼平价、二楼风味窗口多。', img: 'img/jiayuan_canteen.jpg', emoji: '🍜' },
+    { id: 'dorm', name: '宿舍区', campus: 'kaiyuan', lng: 112.42521, lat: 34.60120, cat: '生活', desc: '嘉园、菁园、乾园等园区，空调独卫看分配运气。', img: 'img/dorm1.jpg', emoji: '🛏️' },
+    { id: 'gate', name: '开元校门', campus: 'kaiyuan', lng: 112.42321, lat: 34.60770, cat: '地标', desc: '开元大道 263 号，新生报到处就在这片。', img: 'img/campus2.jpg', emoji: '🏛️' },
+    { id: 'field', name: '运动场', campus: 'kaiyuan', lng: 112.42171, lat: 34.60070, cat: '运动', desc: '操场加篮球场，夜跑和打球的人不少。', img: 'img/nyzt1.jpg', emoji: '🏃' },
+    { id: 'flag', name: '国旗广场', campus: 'kaiyuan', lng: 112.42311, lat: 34.60390, cat: '地标', desc: '校园正中央的升旗广场，开学典礼、重大活动都在这里举行，是开元校区的几何中心。', img: 'img/campus2.jpg', emoji: '🚩' },
     { id: 'xy', name: '西苑校区', campus: 'xiyuan', lng: 112.37384, lat: 34.661337, cat: '校区', desc: '老校区，秋天梧桐大道很出片，工科强院聚集地。', img: 'img/xiyuan_campus.jpg', emoji: '🌳' },
     { id: 'bearing', name: '中国轴承陈列馆', campus: 'xiyuan', lng: 112.3785, lat: 34.6575, cat: '特色', desc: '轴承强校的门面，馆里能看到不少轴承实物。', img: 'img/gkzt.jpg', emoji: '⚙️' },
     { id: 'bridge', name: '连接天桥', campus: 'xiyuan', lng: 112.3775, lat: 34.6565, cat: '风景', desc: '连南北两院的天桥，经典打卡点。', img: 'img/nyzt1.jpg', emoji: '🌉' }
@@ -38,7 +38,7 @@
   };
   LANDMARKS.forEach(function (l) { if (GAL[l.id]) l.gallery = GAL[l.id]; });
   // 开元校区定位到「国旗广场」（校园正中央）；西苑校区定位到校区中心（Bigemap 精确坐标）。
-  var CENTER = { kaiyuan: [112.4559, 34.6412], xiyuan: [112.37384, 34.661337] };
+  var CENTER = { kaiyuan: [112.42311, 34.60390], xiyuan: [112.37384, 34.661337] };
   // 用户手动校正的国旗广场坐标（localStorage 记忆），优先于默认值
   try {
     var _fp = JSON.parse(localStorage.getItem('flagPos') || 'null');
@@ -55,6 +55,7 @@
   var routeStart = null, routeEnd = null;
   var pickMode = null, startMark = null, endMark = null;
   var flagMode = false;
+  var geolocation = null, locateMarker = null;
 
   function $(id) { return document.getElementById(id); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -96,13 +97,13 @@
     // 改用高德 1.4.x 传统栅格地图脚本，避免 JSAPI 2.0 WebGL 矢量底图
     // 在某些 Key/浏览器/域名组合下出现「控件可见、底图空白」的问题。
     var s = document.createElement('script');
-    s.src = 'https://webapi.amap.com/maps?v=1.4.15&key=' + encodeURIComponent(AMAP_KEY) + (AMAP_SEC ? '&jscode=' + encodeURIComponent(AMAP_SEC) : '') + '&plugin=AMap.ToolBar,AMap.Walking';
+    s.src = 'https://webapi.amap.com/maps?v=1.4.15&key=' + encodeURIComponent(AMAP_KEY) + (AMAP_SEC ? '&jscode=' + encodeURIComponent(AMAP_SEC) : '') + '&plugin=AMap.ToolBar,AMap.Walking,AMap.Geolocation';
     s.async = true;
     s.onload = function () {
       console.log('[campus] AMap 1.4.x script loaded');
       window.AMap = window.AMap || AMap;
       // 显式等插件就绪，避免直接 new AMap.Walking 时插件还没加载完
-      AMap.plugin(['AMap.ToolBar', 'AMap.Walking'], function () {
+      AMap.plugin(['AMap.ToolBar', 'AMap.Walking', 'AMap.Geolocation'], function () {
         console.log('[campus] AMap plugins ready');
         buildMap();
       });
@@ -182,6 +183,8 @@
 
     try { map.addControl(new AMap.ToolBar({ position: { right: '12px', bottom: '80px' } })); } catch (e) {}
     try { map.addControl(new AMap.ControlBar({ position: { right: '6px', top: '12px' } })); } catch (e) {}
+    setupGeolocation();
+    bindLocate();
     // 步行插件延迟到第一次规划时再初始化，避免插件时序问题
     // 兜底：布局稳定后再次 resize，避免底图空白
     setTimeout(function () { if (map) { try { map.resize(); } catch (e) {} } }, 500);
@@ -190,6 +193,7 @@
 
   function rebuild2D() {
     if (map) { try { map.destroy(); } catch (e) {} map = null; walking = null; }
+    geolocation = null; locateMarker = null;
     var fb = $('mapFallback'); if (fb) fb.hidden = true;
     try {
       map = new AMap.Map('amapContainer', {
@@ -210,6 +214,8 @@
       setTimeout(function () {
         if (!map || !map.getCenter) showMsg('2D 地图加载超时，请检查高德 Key 是否开通「Web端(JS API)」且白名单包含当前域名 site.liuyushan.top。');
       }, 10000);
+      setupGeolocation();
+      bindLocate();
       bindRoutePicking();
     } catch (e) {
       showMsg('2D 地图初始化失败：' + e.message + '。请检查 Key / 安全密钥 / 域名白名单。');
@@ -310,6 +316,44 @@
       } catch (e) {
         cb && cb(e);
       }
+    });
+  }
+
+  function setupGeolocation() {
+    if (!window.AMap || !map || geolocation) return;
+    try {
+      geolocation = new AMap.Geolocation({
+        enableHighAccuracy: true,
+        timeout: 10000,
+        zoomToAccuracy: false,
+        showButton: false,
+        showMarker: false,
+        showCircle: false
+      });
+      map.addControl(geolocation);
+    } catch (e) { console.error('[campus] geolocation init error', e); }
+  }
+
+  function bindLocate() {
+    var btn = $('locateMe'); if (!btn) return;
+    if (btn._locBound) return; btn._locBound = true;
+    btn.addEventListener('click', function () {
+      if (!geolocation) { toast('定位功能尚未初始化'); return; }
+      toast('正在定位…');
+      geolocation.getCurrentPosition(function (status, result) {
+        if (status === 'complete') {
+          var p = result.position;
+          if (!p || typeof p.getLng !== 'function') { toast('定位结果异常'); return; }
+          var lng = p.getLng(), lat = p.getLat();
+          try { map.setZoomAndCenter(18, [lng, lat]); } catch (e) {}
+          if (locateMarker) { try { map.remove(locateMarker); } catch (e) {} }
+          locateMarker = new AMap.Marker({ position: [lng, lat], map: map, offset: new AMap.Pixel(-14, -14), content: '<div class="mk mk-locate" title="我的位置">📍</div>' });
+          toast('已定位到你的位置');
+        } else {
+          var msg = (result && result.message) ? result.message : '无法获取位置';
+          toast('定位失败：' + msg);
+        }
+      });
     });
   }
 
