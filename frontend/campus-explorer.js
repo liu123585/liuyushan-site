@@ -17,11 +17,15 @@
     { id: 'dorm', name: '宿舍区', campus: 'kaiyuan', lng: 112.4580, lat: 34.6385, cat: '生活', desc: '嘉园、菁园、乾园等园区，空调独卫看分配运气。', img: 'img/dorm1.jpg', emoji: '🛏️' },
     { id: 'gate', name: '开元校门', campus: 'kaiyuan', lng: 112.4560, lat: 34.6450, cat: '地标', desc: '开元大道 263 号，新生报到处就在这片。', img: 'img/campus2.jpg', emoji: '🏛️' },
     { id: 'field', name: '运动场', campus: 'kaiyuan', lng: 112.4545, lat: 34.6380, cat: '运动', desc: '操场加篮球场，夜跑和打球的人不少。', img: 'img/nyzt1.jpg', emoji: '🏃' },
-    { id: 'xy', name: '西苑校区', campus: 'xiyuan', lng: 112.3780, lat: 34.6570, cat: '校区', desc: '老校区，秋天梧桐大道很出片，工科强院聚集地。', img: 'img/xiyuan_campus.jpg', emoji: '🌳' },
+    { id: 'flag', name: '国旗广场', campus: 'kaiyuan', lng: 112.4559, lat: 34.6412, cat: '地标', desc: '校园正中央的升旗广场，开学典礼、重大活动都在这里举行，是开元校区的几何中心。', img: 'img/campus2.jpg', emoji: '🚩' },
+    { id: 'xy', name: '西苑校区', campus: 'xiyuan', lng: 112.37384, lat: 34.661337, cat: '校区', desc: '老校区，秋天梧桐大道很出片，工科强院聚集地。', img: 'img/xiyuan_campus.jpg', emoji: '🌳' },
     { id: 'bearing', name: '中国轴承陈列馆', campus: 'xiyuan', lng: 112.3785, lat: 34.6575, cat: '特色', desc: '轴承强校的门面，馆里能看到不少轴承实物。', img: 'img/gkzt.jpg', emoji: '⚙️' },
     { id: 'bridge', name: '连接天桥', campus: 'xiyuan', lng: 112.3775, lat: 34.6565, cat: '风景', desc: '连南北两院的天桥，经典打卡点。', img: 'img/nyzt1.jpg', emoji: '🌉' }
   ];
-  var CENTER = { kaiyuan: [112.4560, 34.6405], xiyuan: [112.3780, 34.6570] };
+  // 开元校区定位到「国旗广场」（校园正中央）；西苑校区定位到校区中心（Bigemap 精确坐标）。
+  var CENTER = { kaiyuan: [112.4559, 34.6412], xiyuan: [112.37384, 34.661337] };
+  // 越详细越好：开元放大到广场级，西苑校区较小也给到街区级。
+  var ZOOM = { kaiyuan: 17, xiyuan: 16.5 };
 
   var curCampus = 'kaiyuan';
   var map = null, walking = null, curPoly = null, markers = [];
@@ -69,7 +73,7 @@
     if (!window.AMap) return;
     var mapReady = false;
     var opts = {
-      zoom: 16.4,
+      zoom: ZOOM[curCampus],
       center: CENTER[curCampus],
       viewMode: '2D',
       rotateEnable: true,
@@ -119,7 +123,7 @@
     var fb = $('mapFallback'); if (fb) fb.hidden = true;
     try {
       map = new AMap.Map('amapContainer', {
-        zoom: 16.4,
+        zoom: ZOOM[curCampus],
         center: CENTER[curCampus],
         viewMode: '2D',
         rotateEnable: true,
@@ -267,7 +271,7 @@
         t.classList.add('active');
         curCampus = t.getAttribute('data-campus');
         routeStart = routeEnd = null;
-        if (map) { try { map.setCenter(CENTER[curCampus]); renderMarkers(); } catch (e) {} }
+        if (map) { try { map.setZoomAndCenter(ZOOM[curCampus], CENTER[curCampus]); renderMarkers(); } catch (e) {} }
       });
     });
     var go = $('routeGo'); if (go) go.addEventListener('click', planRoute);
