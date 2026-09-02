@@ -354,7 +354,7 @@ function rafThrottle(fn){var scheduled=false,lastArgs;return function(){lastArgs
       playedEl=document.getElementById('mpPlayed'),
       curEl=document.getElementById('mpCur'),durEl=document.getElementById('mpDur');
   if(!player||!audio)return;
-  audio.volume=0.35; // 初始音量调小，避免一开网页太吵
+  audio.volume=0.20; // 初始音量再调小
 
   // 歌单：把想加的歌（mp3 + 同名 .lrc 歌词）放进 bgm/ 目录，在这里加一项即可自动支持切歌与歌词
   var playlist=[

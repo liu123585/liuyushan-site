@@ -287,7 +287,9 @@
           if (map) { try { map.setZoomAndCenter(18, [flng, flat]); } catch (err) {} }
           renderMarkers();
           flagMode = false;
-          toast('国旗广场已校正到 ' + flng.toFixed(5) + ',' + flat.toFixed(5) + '（已记住）');
+          var coordStr = flng.toFixed(5) + ',' + flat.toFixed(5);
+          toast('国旗广场已校正到 ' + coordStr + '（已记住）');
+          try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(coordStr); } catch (err) {}
           return;
         }
         if (!pickMode) return;
