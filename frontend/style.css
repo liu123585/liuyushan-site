@@ -950,6 +950,9 @@ a.game-btn{display:block;text-decoration:none;text-align:center}
 /* 禁用地图容器的 reveal 入场动画，避免高德在隐藏/位移状态下初始化导致底图空白 */
 .map-wrap.reveal{opacity:1!important;transform:none!important;transition:none!important}
 .map-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0d1a2e,#131a2c);padding:24px;text-align:center}
+/* 关键修复：author 的 display:flex 会覆盖浏览器默认的 [hidden]{display:none}，
+   导致蒙层一直盖在地图上面（底图被遮成空白）。显式让 hidden 生效。 */
+.map-fallback[hidden]{display:none}
 .fb-inner{max-width:520px}
 .fb-ico{font-size:44px;margin-bottom:10px}
 .map-fallback p{font-size:14px;color:rgba(245,240,235,.7);line-height:1.8}
