@@ -362,6 +362,7 @@ function rafThrottle(fn){var scheduled=false,lastArgs;return function(){lastArgs
     {title:'多幸运', artist:'韩安旭', src:'bgm/song6.mp3', lrc:''},
     {title:'遇星', artist:'韩帅（HS）', src:'bgm/song7.mp3', lrc:''},
     {title:'眸cc', artist:'徐靖雯/海绵先生', src:'bgm/song8.mp3', lrc:''},
+    {title:'夜空中最亮的星', artist:'逃跑计划', src:'bgm/song10.mp3', lrc:''},
     {title:'晴天', artist:'周杰伦', src:'bgm/song11.mp3', lrc:''},
     {title:'起风了', artist:'买辣椒也用券', src:'bgm/song12.mp3', lrc:''},
     {title:'相拥星空', artist:'张洛一', src:'bgm/song13.m4a', lrc:''}
