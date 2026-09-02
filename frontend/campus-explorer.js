@@ -39,6 +39,14 @@
   LANDMARKS.forEach(function (l) { if (GAL[l.id]) l.gallery = GAL[l.id]; });
   // 开元校区定位到「国旗广场」（校园正中央）；西苑校区定位到校区中心（Bigemap 精确坐标）。
   var CENTER = { kaiyuan: [112.4559, 34.6412], xiyuan: [112.37384, 34.661337] };
+  // 用户手动校正的国旗广场坐标（localStorage 记忆），优先于默认值
+  try {
+    var _fp = JSON.parse(localStorage.getItem('flagPos') || 'null');
+    if (_fp && _fp.lng && _fp.lat) {
+      CENTER.kaiyuan = [_fp.lng, _fp.lat];
+      var _fl = findL('flag'); if (_fl) { _fl.lng = _fp.lng; _fl.lat = _fp.lat; }
+    }
+  } catch (e) {}
   // 越详细越好：开元放大到广场级，西苑校区较小也给到街区级。
   var ZOOM = { kaiyuan: 17, xiyuan: 16.5 };
 
@@ -46,6 +54,7 @@
   var map = null, walking = null, curPoly = null, markers = [];
   var routeStart = null, routeEnd = null;
   var pickMode = null, startMark = null, endMark = null;
+  var flagMode = false;
 
   function $(id) { return document.getElementById(id); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -66,7 +75,7 @@
       '<p>最常见原因：① 高德 Key 未授权当前域名 <code>site.liuyushan.top</code>；② 浏览器/网络拦截了地图瓦片；③ 高德服务临时波动。</p>' +
       '<div class="fb-btns">' +
       '<button class="game-btn" id="mapRetryBtn">重新加载地图</button>' +
-      '<a class="game-btn" href="https://uri.amap.com/marker?position=112.4559,34.6412&name=河南科技大学开元校区&src=liuyushan&coordinate=gaode&callnative=1" target="_blank" rel="noopener">用高德地图打开校园</a>' +
+      '<a class="game-btn" href="https://uri.amap.com/marker?position=' + CENTER.kaiyuan[0] + ',' + CENTER.kaiyuan[1] + '&name=河南科技大学开元校区&src=liuyushan&coordinate=gaode&callnative=1" target="_blank" rel="noopener">用高德地图打开校园</a>' +
       '</div>' +
       '<p class="fb-tip">若一直空白，请去 <a href="https://lbs.amap.com" target="_blank" rel="noopener">高德控制台</a> → 应用管理 → HAUST_Campus → 域名白名单里添加 <code>site.liuyushan.top</code>。</p>' +
       '</div>';
@@ -268,6 +277,19 @@
     if (!map) return;
     try {
       map.on('click', function (e) {
+        // 校正国旗广场：点一下地图，把该点设为国旗广场并记住
+        if (flagMode) {
+          var fll = e.lnglat; if (!fll) return;
+          var flng = fll.getLng(), flat = fll.getLat();
+          CENTER.kaiyuan = [flng, flat];
+          var fob = findL('flag'); if (fob) { fob.lng = flng; fob.lat = flat; }
+          try { localStorage.setItem('flagPos', JSON.stringify({ lng: flng, lat: flat })); } catch (err) {}
+          if (map) { try { map.setZoomAndCenter(18, [flng, flat]); } catch (err) {} }
+          renderMarkers();
+          flagMode = false;
+          toast('国旗广场已校正到 ' + flng.toFixed(5) + ',' + flat.toFixed(5) + '（已记住）');
+          return;
+        }
         if (!pickMode) return;
         var ll = e.lnglat; if (!ll) return;
         setEndpoint(pickMode, { lng: ll.getLng(), lat: ll.getLat(), name: '地图选点' });
@@ -448,6 +470,11 @@
       var f = findL('flag');
       if (f && map) { try { map.setZoomAndCenter(18, [f.lng, f.lat]); } catch (e) {} }
       else { toast('未找到国旗广场'); }
+    });
+    var cf2 = $('calibFlag'); if (cf2) cf2.addEventListener('click', function () {
+      flagMode = !flagMode;
+      cf2.classList.toggle('active', flagMode);
+      toast(flagMode ? '请在地图上点一下国旗广场的真实位置' : '已取消校正');
     });
     // 实景弹层关闭
     var pc = $('panoClose'); if (pc) pc.addEventListener('click', closePano);

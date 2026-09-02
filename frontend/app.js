@@ -358,15 +358,10 @@ function rafThrottle(fn){var scheduled=false,lastArgs;return function(){lastArgs
 
   // 歌单：把想加的歌（mp3 + 同名 .lrc 歌词）放进 bgm/ 目录，在这里加一项即可自动支持切歌与歌词
   var playlist=[
-    {title:'吹着晚风想起你', artist:'苏星婕', src:'bgm/bgm.mp3', lrc:''},
-    {title:'星与海', artist:'山止川行', src:'bgm/song2.mp3', lrc:''},
-    {title:'瞬间', artist:'早八8AM', src:'bgm/song3.mp3', lrc:''},
-    {title:'喜欢开始 遗憾终止', artist:'余一', src:'bgm/song4.mp3', lrc:''},
     {title:'星空裂痕', artist:'pro', src:'bgm/song5.mp3', lrc:''},
     {title:'多幸运', artist:'韩安旭', src:'bgm/song6.mp3', lrc:''},
     {title:'遇星', artist:'韩帅（HS）', src:'bgm/song7.mp3', lrc:''},
     {title:'眸cc', artist:'徐靖雯/海绵先生', src:'bgm/song8.mp3', lrc:''},
-    {title:'夜空中最亮的星', artist:'逃跑计划', src:'bgm/song10.mp3', lrc:''},
     {title:'晴天', artist:'周杰伦', src:'bgm/song11.mp3', lrc:''},
     {title:'起风了', artist:'买辣椒也用券', src:'bgm/song12.mp3', lrc:''},
     {title:'相拥星空', artist:'张洛一', src:'bgm/song13.m4a', lrc:''}
