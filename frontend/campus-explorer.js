@@ -54,7 +54,7 @@
     // 改用高德 1.4.x 传统栅格地图脚本，避免 JSAPI 2.0 WebGL 矢量底图
     // 在某些 Key/浏览器/域名组合下出现「控件可见、底图空白」的问题。
     var s = document.createElement('script');
-    s.src = 'https://webapi.amap.com/maps?v=1.4.15&key=' + encodeURIComponent(AMAP_KEY) + (AMAP_SEC ? '&jscode=' + encodeURIComponent(AMAP_SEC) : '') + '&plugin=AMap.ToolBar,AMap.Walking';
+    s.src = 'https://webapi.amap.com/maps?v=1.4.15&key=' + encodeURIComponent(AMAP_KEY) + (AMAP_SEC ? '&jscode=' + encodeURIComponent(AMAP_SEC) : '') + '&plugin=AMap.ToolBar,AMap.Walking,AMap.Panorama';
     s.async = true;
     s.onload = function () {
       console.log('[campus] AMap 1.4.x script loaded');
@@ -177,6 +177,46 @@
     setTimeout(function () { t.style.opacity = '0'; setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 250); }, 1600);
   }
 
+  /* 导航：跳转到高德（有 App 直接唤起导航，否则打开网页版） */
+  function navigateTo(l) {
+    var url = 'https://uri.amap.com/navigation?to=' + l.lng + ',' + l.lat + ',' +
+      encodeURIComponent(l.name) + '&mode=car&policy=1&src=liuyushan&coordinate=gaode&callnative=1';
+    window.open(url, '_blank');
+  }
+
+  /* 实景：高德全景（街景），支持点箭头在相邻点位间移动 */
+  var panoInstance = null;
+  function openPano(l) {
+    var modal = $('panoModal'); if (!modal) return;
+    var title = $('panoTitle'); if (title) title.textContent = l.name + ' · 实景';
+    var box = $('panoBox'); if (box) box.innerHTML = '<div class="pano-loading">实景加载中…</div>';
+    modal.hidden = false;
+    if (!window.AMap || !AMap.Panorama) {
+      if (box) box.innerHTML = '<div class="pano-empty">实景功能需等地图脚本加载完成后重试。</div>';
+      return;
+    }
+    if (panoInstance) { try { panoInstance.destroy(); } catch (e) {} panoInstance = null; }
+    try {
+      panoInstance = new AMap.Panorama('panoBox', {
+        position: [l.lng, l.lat],
+        zoom: 1,
+        linksControl: true,
+        keyboard: true,
+        scrollWheel: true,
+        showClose: false
+      });
+      panoInstance.on('error', function () {
+        var b = $('panoBox'); if (b) b.innerHTML = '<div class="pano-empty">该位置暂无可用的实景图，换个地标试试。</div>';
+      });
+    } catch (e) {
+      if (box) box.innerHTML = '<div class="pano-empty">实景加载失败：' + e.message + '。</div>';
+    }
+  }
+  function closePano() {
+    var modal = $('panoModal'); if (modal) modal.hidden = true;
+    if (panoInstance) { try { panoInstance.destroy(); } catch (e) {} panoInstance = null; }
+  }
+
   function openInfo(l) {
     if (!map) return;
     var html = '<div class="iw">' +
@@ -187,6 +227,8 @@
       '<div class="iw-btns">' +
       '<button class="iw-btn" data-act="from">设为起点</button>' +
       '<button class="iw-btn" data-act="to">设为终点</button>' +
+      '<button class="iw-btn iw-btn-nav" data-act="nav">导航前往</button>' +
+      '<button class="iw-btn iw-btn-pano" data-act="pano">看实景</button>' +
       '</div></div></div>';
     var iw = new AMap.InfoWindow({ content: html, offset: new AMap.Pixel(0, -18), isCustom: false });
     iw.open(map, [l.lng, l.lat]);
@@ -199,6 +241,8 @@
         var act = b.getAttribute('data-act');
         if (act === 'from') { routeStart = l; toast('起点：' + l.name); }
         else if (act === 'to') { routeEnd = l; toast('终点：' + l.name); }
+        else if (act === 'nav') { navigateTo(l); }
+        else if (act === 'pano') { openPano(l); }
       });
     }, 30);
   }
@@ -275,6 +319,10 @@
       });
     });
     var go = $('routeGo'); if (go) go.addEventListener('click', planRoute);
+    // 实景弹层关闭
+    var pc = $('panoClose'); if (pc) pc.addEventListener('click', closePano);
+    var pm = $('panoModal'); if (pm) pm.addEventListener('click', function (e) { if (e.target === pm) closePano(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closePano(); });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();

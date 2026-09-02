@@ -966,6 +966,18 @@ a.game-btn{display:block;text-decoration:none;text-align:center}
 .iw-btns{display:flex;gap:6px;flex-wrap:wrap}
 .iw-btn{font-size:12px;padding:5px 9px;border-radius:8px;border:1px solid var(--glass-border);background:rgba(255,255,255,.06);color:var(--white);cursor:pointer}
 .iw-btn.gold{border-color:rgba(212,175,55,.55);background:rgba(212,175,55,.15);color:var(--gold2)}
+.iw-btn-nav{border-color:rgba(0,130,255,.5);background:rgba(0,130,255,.16);color:#8fc4ff}
+.iw-btn-pano{border-color:rgba(212,175,55,.5);background:rgba(212,175,55,.12);color:var(--gold2)}
+
+/* 实景全景弹层 */
+.pano-modal{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;background:rgba(4,8,16,.78);backdrop-filter:blur(4px);padding:18px}
+.pano-modal[hidden]{display:none}
+.pano-modal-inner{width:min(960px,94vw);height:min(640px,86vh);background:#0b1220;border:1px solid var(--glass-border);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,.6)}
+.pano-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--glass-border);font-weight:700;color:var(--gold2)}
+.pano-close{width:30px;height:30px;border-radius:8px;border:1px solid var(--glass-border);background:rgba(255,255,255,.06);color:var(--white);cursor:pointer;font-size:14px}
+.pano-close:hover{background:rgba(255,255,255,.14)}
+.pano-box{flex:1;position:relative;background:#0b1220}
+.pano-loading,.pano-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:rgba(245,240,235,.7);font-size:14px;text-align:center;padding:24px}
 .route-bar{margin-top:14px;text-align:center}
 .route-go{background:linear-gradient(135deg,var(--primary),var(--gold));border:0;color:#fff;font-weight:700;padding:12px 22px;border-radius:999px;cursor:pointer;font-size:14px;box-shadow:0 6px 20px rgba(0,85,163,.35)}
 .route-panel{margin-top:12px}
