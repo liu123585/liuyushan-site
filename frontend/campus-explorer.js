@@ -44,13 +44,13 @@
     var box = $('amapContainer');
     if (!box) return;
     if (!AMAP_KEY) { console.log('[campus] no AMAP_KEY, abort'); showMsg('还未配置高德 Key：在 api-config.js 里填 window.__AMAP_KEY__ 即可开启立体校园地图（免费申请）。'); return; }
-    // 安全密钥必须在加载地图脚本前设置
-    if (AMAP_SEC) { window._AMapSecurityConfig = { securityJsCode: AMAP_SEC }; }
+    // 1.4.x 传统栅格地图：安全密钥通过 URL 的 jscode 参数传入。
+    // window._AMapSecurityConfig 是 JSAPI 2.0 的写法，1.4.x 无效。
 
     // 改用高德 1.4.x 传统栅格地图脚本，避免 JSAPI 2.0 WebGL 矢量底图
     // 在某些 Key/浏览器/域名组合下出现「控件可见、底图空白」的问题。
     var s = document.createElement('script');
-    s.src = 'https://webapi.amap.com/maps?v=1.4.15&key=' + encodeURIComponent(AMAP_KEY) + '&plugin=AMap.ToolBar,AMap.Walking';
+    s.src = 'https://webapi.amap.com/maps?v=1.4.15&key=' + encodeURIComponent(AMAP_KEY) + (AMAP_SEC ? '&jscode=' + encodeURIComponent(AMAP_SEC) : '') + '&plugin=AMap.ToolBar,AMap.Walking';
     s.async = true;
     s.onload = function () {
       console.log('[campus] AMap 1.4.x script loaded');
