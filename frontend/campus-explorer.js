@@ -39,46 +39,29 @@
   }
 
 
-  function loadAmapLoader() {
-    console.log('[campus] loadAmapLoader start');
-    return new Promise(function (resolve, reject) {
-      if (typeof AMapLoader !== 'undefined') { console.log('[campus] AMapLoader already defined'); return resolve(AMapLoader); }
-      var s = document.createElement('script');
-      s.src = 'https://webapi.amap.com/loader.js';
-      s.async = true;
-      s.onload = function () {
-        console.log('[campus] loader.js loaded. AMapLoader defined:', typeof AMapLoader);
-        if (typeof AMapLoader === 'undefined') return reject(new Error('高德 Loader 不可用'));
-        resolve(AMapLoader);
-      };
-      s.onerror = function () { console.error('[campus] loader.js load error'); reject(new Error('高德 Loader 脚本加载失败')); };
-      document.head.appendChild(s);
-    });
-  }
-
   function initAmap() {
     console.log('[campus] initAmap called. box:', !!$('amapContainer'), 'AMAP_KEY:', !!AMAP_KEY);
     var box = $('amapContainer');
     if (!box) return;
     if (!AMAP_KEY) { console.log('[campus] no AMAP_KEY, abort'); showMsg('还未配置高德 Key：在 api-config.js 里填 window.__AMAP_KEY__ 即可开启立体校园地图（免费申请）。'); return; }
-    // 安全密钥必须在加载地图前设置
+    // 安全密钥必须在加载地图脚本前设置
     if (AMAP_SEC) { window._AMapSecurityConfig = { securityJsCode: AMAP_SEC }; }
 
-    loadAmapLoader().then(function (Loader) {
-      console.log('[campus] Loader ready, calling load');
-      return Loader.load({
-        key: AMAP_KEY,
-        version: '2.0',
-        plugins: ['AMap.ToolBar', 'AMap.ControlBar', 'AMap.Walking', 'AMap.InfoWindow']
-      });
-    }).then(function (AMap) {
-      console.log('[campus] AMap loaded. building map');
-      window.AMap = AMap;
+    // 改用高德 1.4.x 传统栅格地图脚本，避免 JSAPI 2.0 WebGL 矢量底图
+    // 在某些 Key/浏览器/域名组合下出现「控件可见、底图空白」的问题。
+    var s = document.createElement('script');
+    s.src = 'https://webapi.amap.com/maps?v=1.4.15&key=' + encodeURIComponent(AMAP_KEY) + '&plugin=AMap.ToolBar,AMap.Walking';
+    s.async = true;
+    s.onload = function () {
+      console.log('[campus] AMap 1.4.x script loaded');
+      window.AMap = window.AMap || AMap;
       buildMap();
-    }).catch(function (err) {
-      console.error('[campus] AMap load error', err);
-      showMsg('地图加载失败：' + (err && err.message || '未知错误') + '。请检查 Key / 安全密钥 / 域名白名单是否配置正确。');
-    });
+    };
+    s.onerror = function () {
+      console.error('[campus] AMap 1.4.x script load error');
+      showMsg('高德地图脚本加载失败，请检查 Key / 安全密钥 / 域名白名单是否配置正确。');
+    };
+    document.head.appendChild(s);
   }
 
   function buildMap() {
