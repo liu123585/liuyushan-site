@@ -90,6 +90,17 @@
       var fb = $('mapFallback'); if (fb) fb.hidden = true;
       try { map.resize(); } catch (e) {}
       renderMarkers();
+      // 诊断：3 秒后若底图仍未渲染，给出可见提示，方便排查 Key/网络问题
+      setTimeout(function () {
+        var e = $('amapContainer'); if (!e) return;
+        var layers = e.querySelectorAll('.amap-layer').length;
+        var imgs = e.querySelectorAll('img').length;
+        var cv = e.querySelectorAll('canvas').length;
+        console.log('[campus] diag layers=', layers, 'imgs=', imgs, 'canvas=', cv);
+        if (layers === 0 && imgs === 0 && cv === 0) {
+          showMsg('底图加载失败：高德瓦片未返回。请确认高德 Key 已开通「Web端(JS API)」且 域名白名单 包含 site.liuyushan.top，并检查网络能否访问 is.autonavi.com。');
+        }
+      }, 3000);
     });
     map.on('error', function (e) {
       console.error('[campus] AMap error', e);
@@ -225,18 +236,27 @@
       mapInited = true;
       initAmap();
     }
+    // 关键修复：必须等地图容器真正可见（opacity:1）后再初始化。
+    // 否则高德在隐藏/位移状态（被 reveal 动画覆盖）下创建地图，底图会渲染成空白。
+    function waitVisibleThenInit() {
+      if (mapInited) return;
+      var w = document.querySelector('.map-wrap') || $('amapContainer');
+      var op = w ? getComputedStyle(w).opacity : '1';
+      if (op === '1') { initWhenReady(); }
+      else { setTimeout(waitVisibleThenInit, 150); }
+    }
     var wrap = document.querySelector('.map-wrap') || $('amapContainer');
     if (wrap && 'IntersectionObserver' in window) {
       var io = new IntersectionObserver(function (entries) {
         entries.forEach(function (en) {
-          if (en.isIntersecting) { initWhenReady(); io.disconnect(); }
+          if (en.isIntersecting) { waitVisibleThenInit(); io.disconnect(); }
         });
       }, { threshold: 0.15 });
       io.observe(wrap);
       // 兜底：6 秒内若仍未触发（如脚本加载极慢），也强制初始化
-      setTimeout(initWhenReady, 6000);
+      setTimeout(waitVisibleThenInit, 6000);
     } else {
-      initWhenReady();
+      waitVisibleThenInit();
     }
     window.addEventListener('resize', function () { if (map) { try { map.resize(); } catch (e) {} } });
 

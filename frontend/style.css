@@ -947,6 +947,8 @@ a.game-btn{display:block;text-decoration:none;text-align:center}
 /* ================= 立体校园地图 ================= */
 .map-wrap{position:relative;margin-top:18px;border-radius:16px;overflow:hidden;border:1px solid var(--glass-border);background:#0b1220}
 .amap-box{width:100%;height:460px}
+/* 禁用地图容器的 reveal 入场动画，避免高德在隐藏/位移状态下初始化导致底图空白 */
+.map-wrap.reveal{opacity:1!important;transform:none!important;transition:none!important}
 .map-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0d1a2e,#131a2c);padding:24px;text-align:center}
 .fb-inner{max-width:520px}
 .fb-ico{font-size:44px;margin-bottom:10px}
