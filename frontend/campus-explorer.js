@@ -54,7 +54,7 @@
   var map = null, walking = null, curPoly = null, markers = [];
   var routeStart = null, routeEnd = null;
   var pickMode = null, startMark = null, endMark = null;
-  var geolocation = null, locateMarker = null;
+  var geolocation = null, locateMarker = null, myPos = null;
 
   function $(id) { return document.getElementById(id); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -324,6 +324,7 @@
           var p = result.position;
           if (!p || typeof p.getLng !== 'function') { toast('定位结果异常'); return; }
           var lng = p.getLng(), lat = p.getLat();
+          myPos = [lng, lat];
           try { map.setZoomAndCenter(18, [lng, lat]); } catch (e) {}
           if (locateMarker) { try { map.remove(locateMarker); } catch (e) {} }
           locateMarker = new AMap.Marker({ position: [lng, lat], map: map, offset: new AMap.Pixel(-14, -14), content: '<div class="mk mk-locate" title="我的位置">📍</div>' });
@@ -346,11 +347,20 @@
     setTimeout(function () { t.style.opacity = '0'; setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 250); }, 1600);
   }
 
-  /* 导航：跳转到高德（有 App 直接唤起导航，否则打开网页版） */
-  function navigateTo(l) {
-    var url = 'https://uri.amap.com/navigation?to=' + l.lng + ',' + l.lat + ',' +
-      encodeURIComponent(l.name) + '&mode=car&policy=1&src=liuyushan&coordinate=gaode&callnative=1';
-    window.open(url, '_blank');
+  /* 智能步行导航：以「我的位置」（没定位就用地图中心）为起点，步行走到该地标，
+     在地图内画出路线并显示距离/用时，并附「用高德 App 导航」兜底链接 */
+  function smartNav(l) {
+    if (!map) return;
+    var start;
+    if (myPos) start = { lng: myPos[0], lat: myPos[1], name: '我的位置' };
+    else {
+      var c = map.getCenter();
+      start = { lng: c.getLng(), lat: c.getLat(), name: '地图中心' };
+    }
+    setEndpoint('start', start);
+    setEndpoint('end', l);
+    try { map.clearInfoWindow(); } catch (e) {}
+    planRoute();
   }
 
   /* 实景：展示地标的真实照片相册（高德街景在校园基本无数据，改为照片灯箱） */
@@ -391,7 +401,7 @@
       '<div class="iw-btns">' +
       '<button class="iw-btn" data-act="from">设为起点</button>' +
       '<button class="iw-btn" data-act="to">设为终点</button>' +
-      '<button class="iw-btn iw-btn-nav" data-act="nav">导航前往</button>' +
+      '<button class="iw-btn iw-btn-nav" data-act="nav">🚶 步行导航</button>' +
       '<button class="iw-btn iw-btn-pano" data-act="pano">看实景</button>' +
       '</div></div></div>';
     var iw = new AMap.InfoWindow({ content: html, offset: new AMap.Pixel(0, -18), isCustom: false });
@@ -405,7 +415,7 @@
         var act = b.getAttribute('data-act');
         if (act === 'from') setEndpoint('start', l);
         else if (act === 'to') setEndpoint('end', l);
-        else if (act === 'nav') { navigateTo(l); }
+        else if (act === 'nav') { smartNav(l); }
         else if (act === 'pano') { openPano(l); }
       });
     }, 30);
