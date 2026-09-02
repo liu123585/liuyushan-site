@@ -8,15 +8,8 @@
   var AMAP_SEC = window.__AMAP_SECURITY_CODE__ || '';
   console.log('[campus] loaded. AMAP_KEY present:', !!AMAP_KEY, 'SEC present:', !!AMAP_SEC);
 
-  /* 校园地标：坐标以国旗广场为基准（你校正后的 112.42311,34.60390），其他开元地标整体平移对齐 */
+  /* 校园地标：开元校区只保留已精确校准的国旗广场；其余开元地标未精校先隐藏，避免误导 */
   var LANDMARKS = [
-    { id: 'lib', name: '图书馆', campus: 'kaiyuan', lng: 112.42301, lat: 34.60390, cat: '学习', desc: '鼎形建筑，豫西最大的图书馆，藏书 450 万册，期末一座难求。', img: 'img/tsg.jpg', emoji: '📚' },
-    { id: 'th', name: '教学楼', campus: 'kaiyuan', lng: 112.42371, lat: 34.60250, cat: '学习', desc: '一~六号教学楼连成片，上课前看清楼号别跑错。', img: 'img/teaching_building.jpg', emoji: '🏫' },
-    { id: 'qh', name: '琴湖', campus: 'kaiyuan', lng: 112.42121, lat: 34.60470, cat: '风景', desc: '傍晚散步吹风的好地方，离宿舍区很近。', img: 'img/qinhu.jpg', emoji: '🌊' },
-    { id: 'canteen', name: '嘉园餐厅', campus: 'kaiyuan', lng: 112.42471, lat: 34.60170, cat: '吃喝', desc: '开元最大的食堂之一，一楼平价、二楼风味窗口多。', img: 'img/jiayuan_canteen.jpg', emoji: '🍜' },
-    { id: 'dorm', name: '宿舍区', campus: 'kaiyuan', lng: 112.42521, lat: 34.60120, cat: '生活', desc: '嘉园、菁园、乾园等园区，空调独卫看分配运气。', img: 'img/dorm1.jpg', emoji: '🛏️' },
-    { id: 'gate', name: '开元校门', campus: 'kaiyuan', lng: 112.42321, lat: 34.60770, cat: '地标', desc: '开元大道 263 号，新生报到处就在这片。', img: 'img/campus2.jpg', emoji: '🏛️' },
-    { id: 'field', name: '运动场', campus: 'kaiyuan', lng: 112.42171, lat: 34.60070, cat: '运动', desc: '操场加篮球场，夜跑和打球的人不少。', img: 'img/nyzt1.jpg', emoji: '🏃' },
     { id: 'flag', name: '国旗广场', campus: 'kaiyuan', lng: 112.42311, lat: 34.60390, cat: '地标', desc: '校园正中央的升旗广场，开学典礼、重大活动都在这里举行，是开元校区的几何中心。', img: 'img/campus2.jpg', emoji: '🚩' },
     { id: 'xy', name: '西苑校区', campus: 'xiyuan', lng: 112.37384, lat: 34.661337, cat: '校区', desc: '老校区，秋天梧桐大道很出片，工科强院聚集地。', img: 'img/xiyuan_campus.jpg', emoji: '🌳' },
     { id: 'bearing', name: '中国轴承陈列馆', campus: 'xiyuan', lng: 112.3785, lat: 34.6575, cat: '特色', desc: '轴承强校的门面，馆里能看到不少轴承实物。', img: 'img/gkzt.jpg', emoji: '⚙️' },
@@ -24,13 +17,6 @@
   ];
   /* 每个地标的真实照片相册（复用站点已有素材），"看实景"会打开照片灯箱 */
   var GAL = {
-    lib: ['img/tsg.jpg', 'img/library_cover.jpg', 'img/map_library.jpg'],
-    th: ['img/teaching_building.jpg'],
-    qh: ['img/qinhu.jpg'],
-    canteen: ['img/jiayuan_canteen.jpg', 'img/jiayuan_canteen_real.jpg', 'img/jiayuan_canteen_area.png', 'img/jiayuan_canteen_interior.png', 'img/jiayuan_canteen2.png'],
-    dorm: ['img/dorm1.jpg', 'img/dorm_real_1.jpg', 'img/dorm_real_2.jpg', 'img/jiayuan_dorm_real.jpg', 'img/jingyuan_dorm_real.jpg', 'img/dorm_exterior1.jpg', 'img/dorm_interior.jpg'],
-    gate: ['img/campus2.jpg'],
-    field: ['img/nyzt1.jpg', 'img/nyzt2.jpg', 'img/ztyc.jpg'],
     flag: ['img/campus2.jpg'],
     xy: ['img/xiyuan_campus.jpg'],
     bearing: ['img/gkzt.jpg'],
