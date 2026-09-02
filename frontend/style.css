@@ -1011,32 +1011,7 @@ a.game-btn{display:block;text-decoration:none;text-align:center}
 .step-d{color:var(--grey);font-size:12px}
 .route-empty,.route-loading{text-align:center;padding:16px;color:rgba(21,35,61,.55);font-size:13px}
 
-/* ================= 新生大数据画像 ================= */
-.insights-box{margin-top:14px}
-.ins-empty{text-align:center;padding:34px;color:rgba(21,35,61,.55);font-size:14px;line-height:1.9;background:var(--glass);border:1px solid var(--hair);border-radius:14px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
-.ins-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
-.ins-kpi{background:var(--glass);border:1px solid var(--hair);border-radius:14px;padding:16px;text-align:center;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
-.kpi-n{font-size:26px;font-weight:800;background:linear-gradient(135deg,var(--primary2),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent;word-break:break-all}
-.kpi-l{font-size:12px;color:var(--grey);margin-top:4px}
-.ins-panel{background:var(--glass);border:1px solid var(--hair);border-radius:14px;padding:16px 18px;margin-bottom:14px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
-.ins-panel h4{font-size:15px;margin-bottom:12px;color:var(--primary)}
-.ins-grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.bars{display:flex;flex-direction:column;gap:9px}
-.bar-row{display:flex;align-items:center;gap:10px;font-size:13px}
-.bar-k{flex:0 0 96px;color:rgba(21,35,61,.85);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.bar-track{flex:1;height:9px;border-radius:999px;background:rgba(0,85,163,.1);overflow:hidden}
-.bar-track i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--primary2),var(--gold))}
-.bar-v{flex:0 0 28px;text-align:right;color:var(--gold);font-weight:700}
-.cloud{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;padding:6px 0}
-.cw{color:var(--primary);font-weight:700;opacity:1}
-.match-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
-.match-row select{flex:1;min-width:150px;background:#ffffff;color:rgba(21,35,61,.9);border:1px solid var(--hair);border-radius:10px;padding:9px 10px;font-size:13px}
-.match-result{font-size:14px;color:rgba(21,35,61,.8)}
-.match-result b{color:var(--primary);font-size:16px}
-
 @media(max-width:860px){
-  .ins-kpis{grid-template-columns:repeat(2,1fr)}
-  .ins-grid2{grid-template-columns:1fr}
   .amap-box{height:360px}
 }
 
