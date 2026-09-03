@@ -445,26 +445,45 @@ function rafThrottle(fn){var scheduled=false,lastArgs;return function(){lastArgs
   updateProgress();
 })();
 
-// ===== 播放器收纳：点音符钮展开，点 ❯ 收进侧边 =====
+// ===== 播放器收纳：点音符钮展开，点 ❯ 收进侧边；播放时自动缩回 =====
 (function(){
   var tab=document.getElementById('musicTab'),
       pl=document.getElementById('musicPlayer'),
-      fold=document.getElementById('mpFold');
+      fold=document.getElementById('mpFold'),
+      audio=document.getElementById('bgmAudio');
   if(!tab||!pl)return;
+  var timer=null;
   function open(){
     pl.classList.remove('mp-hidden');
     pl.classList.remove('open');void pl.offsetWidth;
     if(typeof pl.__initDrag==='function')pl.__initDrag();
     pl.classList.add('open');
     tab.classList.add('hidden');
+    if(audio && !audio.paused) startIdleTimer();
   }
   function close(){
     pl.classList.add('mp-hidden');
     pl.classList.remove('open');
     tab.classList.remove('hidden');
+    clearIdleTimer();
   }
+  function startIdleTimer(){
+    clearIdleTimer();
+    timer=setTimeout(function(){
+      if(!pl.classList.contains('mp-hidden') && audio && !audio.paused) close();
+    },6000);
+  }
+  function clearIdleTimer(){ if(timer){clearTimeout(timer);timer=null;} }
   tab.addEventListener('click',open);
   if(fold)fold.addEventListener('click',function(e){e.stopPropagation();close();});
+  if(audio){
+    audio.addEventListener('play',startIdleTimer);
+    audio.addEventListener('pause',clearIdleTimer);
+  }
+  pl.addEventListener('pointerdown',clearIdleTimer,true);
+  pl.addEventListener('pointermove',clearIdleTimer,true);
+  pl.addEventListener('pointerup',startIdleTimer,true);
+  pl.addEventListener('click',clearIdleTimer,true);
 })();
 
 // ===== 校区切换 =====

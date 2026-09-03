@@ -1120,7 +1120,10 @@ ul.lug-list{margin-top:6px}
   .section-title{margin-bottom:14px}
   .section-desc{margin-bottom:22px;max-width:100%}
   .stats-band{padding:16px 4vw}
-  .hero{height:100svh;min-height:560px}
+  /* 手机端首屏不再强制 100vh，按内容自适应；校徽去白边、缩小 */
+  .hero{height:auto;min-height:0;padding:84px 16px 70px}
+  .hero .float-deco{opacity:.45;font-size:22px}
+  .hero-content img{width:72px!important;height:72px!important;padding:0!important;background:transparent!important;border-width:1.5px!important;box-shadow:0 0 18px rgba(212,175,55,.3)!important}
   /* 面板、倒计时等大卡片压缩内边距 */
   .panel-card{padding:18px 16px;border-radius:16px}
   .panel-card h3{font-size:17px}
