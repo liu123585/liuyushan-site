@@ -737,13 +737,15 @@ footer .welcome{
 .music-player.playing .mp-lyrics{opacity:1;transform:translateY(0)}
 @keyframes eqBounce{0%,100%{height:4px}50%{height:16px}}
 
-/* ===== 播放器收纳：默认只露一个小音符钮，需要时点开 ===== */
+/* ===== 播放器收纳：360 悬浮球（可拖动、松手贴边吸附） ===== */
 .music-tab{position:fixed;left:20px;bottom:calc(80px + env(safe-area-inset-bottom,0px));z-index:197;
-  width:48px;height:48px;border-radius:50%;border:1px solid rgba(184,134,11,.45);cursor:pointer;
+  width:48px;height:48px;border-radius:50%;border:1px solid rgba(184,134,11,.45);cursor:grab;
   background:rgba(255,255,255,.97);color:var(--gold);font-size:22px;font-weight:700;
   display:flex;align-items:center;justify-content:center;
   box-shadow:0 8px 28px rgba(20,40,80,.16);
+  touch-action:none;user-select:none;-webkit-user-select:none;
   transition:transform .2s,opacity .25s,box-shadow .3s;-webkit-tap-highlight-color:transparent}
+.music-tab.grabbing{cursor:grabbing}
 .music-tab:hover{box-shadow:0 10px 34px rgba(212,175,55,.4)}
 .music-tab:active{transform:scale(.88)}
 .music-tab.hidden{opacity:0;pointer-events:none;transform:scale(.3)}

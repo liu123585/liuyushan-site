@@ -445,23 +445,54 @@ function rafThrottle(fn){var scheduled=false,lastArgs;return function(){lastArgs
   updateProgress();
 })();
 
-// ===== 播放器收纳：点音符钮展开，点 ❯ 收进侧边；播放时自动缩回 =====
+// ===== 播放器收纳：360 悬浮球模式 =====
+// 收起态 = 一个可拖动、松手自动贴边的小球（就像 360 悬浮球）；
+// 点小球展开播放面板，面板会从小球所在位置弹开；播放中 6 秒无操作自动收成小球。
 (function(){
   var tab=document.getElementById('musicTab'),
       pl=document.getElementById('musicPlayer'),
       fold=document.getElementById('mpFold'),
       audio=document.getElementById('bgmAudio');
   if(!tab||!pl)return;
-  var timer=null;
+
+  var KEY='haust_mp_pos', timer=null,
+      ballDrag=false, ballMoved=false, movedResetTimer=null,
+      bdx=0, bdy=0, sx=0, sy=0;
+
+  function savePos(el){
+    try{ localStorage.setItem(KEY, JSON.stringify({x:parseFloat(el.style.left)||0, y:parseFloat(el.style.top)||0})); }catch(_){}
+  }
+  function freePos(el){
+    el.style.right='auto'; el.style.bottom='auto'; el.style.transform='none';
+  }
+
+  // 播放面板弹出位置：贴着小球放，放不下则往屏幕内侧让
+  function placePlayerNearBall(){
+    var r=tab.getBoundingClientRect();
+    var pw=pl.offsetWidth||280, ph=pl.offsetHeight||64;
+    var x=Math.max(6, Math.min(r.left, window.innerWidth-pw-6));
+    var y=Math.max(6, Math.min(r.top, window.innerHeight-ph-6));
+    pl.style.left=x+'px'; pl.style.top=y+'px'; freePos(pl);
+    savePos(pl);
+  }
   function open(){
     pl.classList.remove('mp-hidden');
-    pl.classList.remove('open');void pl.offsetWidth;
-    if(typeof pl.__initDrag==='function')pl.__initDrag();
+    pl.classList.remove('open'); void pl.offsetWidth;
+    placePlayerNearBall();
+    if(typeof pl.__initDrag==='function') pl.__initDrag();
     pl.classList.add('open');
     tab.classList.add('hidden');
     if(audio && !audio.paused) startIdleTimer();
   }
+  // 收起：小球回到面板当前所在位置的边缘，吸附屏幕左右边
   function close(){
+    var l=parseFloat(pl.style.left), t=parseFloat(pl.style.top);
+    if(!isFinite(l)||!isFinite(t)){ l=20; t=0; }
+    var bw=tab.offsetWidth||48, bh=tab.offsetHeight||48;
+    var x=(l+bw/2)<=window.innerWidth/2 ? 10 : window.innerWidth-bw-10;
+    var y=Math.max(8, Math.min(t, window.innerHeight-bh-8));
+    tab.style.left=x+'px'; tab.style.top=y+'px'; freePos(tab);
+    savePos(tab);
     pl.classList.add('mp-hidden');
     pl.classList.remove('open');
     tab.classList.remove('hidden');
@@ -474,7 +505,6 @@ function rafThrottle(fn){var scheduled=false,lastArgs;return function(){lastArgs
     },6000);
   }
   function clearIdleTimer(){ if(timer){clearTimeout(timer);timer=null;} }
-  tab.addEventListener('click',open);
   if(fold)fold.addEventListener('click',function(e){e.stopPropagation();close();});
   if(audio){
     audio.addEventListener('play',startIdleTimer);
@@ -484,6 +514,71 @@ function rafThrottle(fn){var scheduled=false,lastArgs;return function(){lastArgs
   pl.addEventListener('pointermove',clearIdleTimer,true);
   pl.addEventListener('pointerup',startIdleTimer,true);
   pl.addEventListener('click',clearIdleTimer,true);
+
+  // ---------- 小球拖动 + 松手贴边吸附 ----------
+  function resetMovedFlag(){
+    if(movedResetTimer)clearTimeout(movedResetTimer);
+    movedResetTimer=setTimeout(function(){ballMoved=false;},400);
+  }
+  tab.addEventListener('pointerdown',function(e){
+    if(e.pointerType==='mouse'&&e.button!==0)return;
+    ballDrag=true; ballMoved=false;
+    if(movedResetTimer){clearTimeout(movedResetTimer);movedResetTimer=null;}
+    var r=tab.getBoundingClientRect();
+    freePos(tab);
+    if(tab.style.left===''||tab.style.left===null){ tab.style.left=r.left+'px'; tab.style.top=r.top+'px'; }
+    else { tab.style.left=(parseFloat(tab.style.left)||r.left)+'px'; tab.style.top=(parseFloat(tab.style.top)||r.top)+'px'; }
+    bdx=e.clientX-r.left; bdy=e.clientY-r.top;
+    sx=e.clientX; sy=e.clientY;
+    tab.style.transition='none';
+    tab.classList.add('grabbing');
+    try{ tab.setPointerCapture(e.pointerId); }catch(_){}
+    e.preventDefault();
+  });
+  tab.addEventListener('pointermove',function(e){
+    if(!ballDrag)return;
+    var bw=tab.offsetWidth||48, bh=tab.offsetHeight||48;
+    var x=Math.max(4, Math.min(e.clientX-bdx, window.innerWidth-bw-4));
+    var y=Math.max(4, Math.min(e.clientY-bdy, window.innerHeight-bh-4));
+    tab.style.left=x+'px'; tab.style.top=y+'px';
+    if(Math.abs(e.clientX-sx)>4||Math.abs(e.clientY-sy)>4) ballMoved=true;
+  });
+  function ballUp(){
+    if(!ballDrag)return;
+    ballDrag=false;
+    tab.classList.remove('grabbing');
+    if(ballMoved){
+      // 贴边吸附：靠近哪条竖边就贴哪条，Y 保持并限制在视口内
+      var bw=tab.offsetWidth||48, bh=tab.offsetHeight||48;
+      var cx=(parseFloat(tab.style.left)||0)+bw/2;
+      var x=cx<window.innerWidth/2 ? 10 : window.innerWidth-bw-10;
+      var y=Math.max(8, Math.min(parseFloat(tab.style.top)||0, window.innerHeight-bh-8));
+      tab.style.transition='left .18s ease, top .18s ease';
+      tab.style.left=x+'px'; tab.style.top=y+'px';
+      savePos(tab);
+      setTimeout(function(){ tab.style.transition=''; },250);
+      resetMovedFlag(); // 拖完松手可能紧接着触发 click，让 click 处理判断要不要吞掉
+    }
+  }
+  tab.addEventListener('pointerup',ballUp);
+  tab.addEventListener('pointercancel',function(){ballUp();resetMovedFlag();});
+  // 拖动结束后的 click：拖动超过阈值就吞掉（否则一拖就误展开）
+  tab.addEventListener('click',function(e){
+    if(ballMoved){ ballMoved=false; e.stopPropagation(); e.preventDefault(); return; }
+    open();
+  },true);
+  // 窗口尺寸变化（旋转/缩放）后：小球仍在边缘、不跑出屏幕
+  window.addEventListener('resize',function(){
+    if(tab.classList.contains('hidden'))return;
+    var bw=tab.offsetWidth||48, bh=tab.offsetHeight||48;
+    var l=parseFloat(tab.style.left), t=parseFloat(tab.style.top);
+    if(!isFinite(l))return;
+    var cx=l+bw/2;
+    var x=cx<window.innerWidth/2?10:Math.max(10,window.innerWidth-bw-10);
+    var y=Math.max(8,Math.min(t,window.innerHeight-bh-8));
+    tab.style.left=x+'px'; tab.style.top=y+'px'; freePos(tab);
+    savePos(tab);
+  });
 })();
 
 // ===== 校区切换 =====
