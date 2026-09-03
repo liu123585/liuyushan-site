@@ -399,6 +399,8 @@ function rafThrottle(fn){var scheduled=false,lastArgs;return function(){lastArgs
   function setState(p){
     player.classList.toggle('playing',p);
     if(btn)btn.textContent=p?'⏸':'▶';
+    var tabEl=document.getElementById('musicTab');
+    if(tabEl){tabEl.classList.toggle('playing',p);tabEl.textContent=p?'♫':'♪';}
     if(!p&&lrcTimer){clearInterval(lrcTimer);lrcTimer=null;}
     if(p&&lrcLines.length&&!lrcTimer) lrcTimer=setInterval(updateLyrics,300);
   }
@@ -443,6 +445,27 @@ function rafThrottle(fn){var scheduled=false,lastArgs;return function(){lastArgs
   updateProgress();
 })();
 
+// ===== 播放器收纳：点音符钮展开，点 ❯ 收进侧边 =====
+(function(){
+  var tab=document.getElementById('musicTab'),
+      pl=document.getElementById('musicPlayer'),
+      fold=document.getElementById('mpFold');
+  if(!tab||!pl)return;
+  function open(){
+    pl.classList.remove('mp-hidden');
+    pl.classList.remove('open');void pl.offsetWidth;
+    if(typeof pl.__initDrag==='function')pl.__initDrag();
+    pl.classList.add('open');
+    tab.classList.add('hidden');
+  }
+  function close(){
+    pl.classList.add('mp-hidden');
+    pl.classList.remove('open');
+    tab.classList.remove('hidden');
+  }
+  tab.addEventListener('click',open);
+  if(fold)fold.addEventListener('click',function(e){e.stopPropagation();close();});
+})();
 
 // ===== 校区切换 =====
 (function(){

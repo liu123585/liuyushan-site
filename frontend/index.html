@@ -881,8 +881,9 @@
   <span class="fab-icon">↑</span>
 </button>
 
-<!-- ===== BGM 播放器（多曲 + 歌词 + 进度条） ===== -->
-<div class="music-player" id="musicPlayer" title="点击播放 / 暂停背景音乐">
+<!-- ===== BGM 播放器（默认收进侧边，点音符钮展开） ===== -->
+<button class="music-tab" id="musicTab" aria-label="展开背景音乐播放器" title="背景音乐">♪</button>
+<div class="music-player mp-hidden" id="musicPlayer" title="点击播放 / 暂停背景音乐">
   <div class="mp-progress" id="mpProgress">
     <div class="mp-track" id="mpTrack"><div class="mp-played" id="mpPlayed"></div></div>
   </div>
@@ -896,6 +897,7 @@
     <button class="mp-next" id="mpNext" aria-label="下一首">›</button>
   </div>
   <div class="eq"><span></span><span></span><span></span><span></span></div>
+  <button class="mp-fold" id="mpFold" aria-label="收起播放器" title="收起播放器">❯</button>
   <div class="mp-lyrics" id="mpLyrics"></div>
   <audio id="bgmAudio" preload="auto"></audio>
 </div>
