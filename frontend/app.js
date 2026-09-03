@@ -445,9 +445,11 @@ function rafThrottle(fn){var scheduled=false,lastArgs;return function(){lastArgs
   updateProgress();
 })();
 
-// ===== 播放器收纳：360 悬浮球模式 =====
-// 收起态 = 一个可拖动、松手自动贴边的小球（就像 360 悬浮球）；
-// 点小球展开播放面板，面板会从小球所在位置弹开；播放中 6 秒无操作自动收成小球。
+// ===== 播放器收纳：360 悬浮球（完全收进屏幕边缘，只露一条小弧） =====
+// 常态：小球藏在屏幕左/右边缘外，屏内只露出 ~20px 小弧（像 360 悬浮球收起来那样）；
+// 按住露出的部分往屏内拖 → 拉出来可自由移动，松手自动滑回最近边缘重新藏好；
+// 点一下露出的弧条 → 直接展开播放面板（面板在球所在边缘弹出）。
+// 播放中 6 秒无操作 / 点 ❯ → 面板自动收起并藏进侧边。
 (function(){
   var tab=document.getElementById('musicTab'),
       pl=document.getElementById('musicPlayer'),
@@ -455,7 +457,11 @@ function rafThrottle(fn){var scheduled=false,lastArgs;return function(){lastArgs
       audio=document.getElementById('bgmAudio');
   if(!tab||!pl)return;
 
-  var KEY='haust_mp_pos', timer=null,
+  var KEY='haust_mp_pos',           // 播放面板位置（与 makeDraggable 共用）
+      KEY_D='haust_mt_dock',        // 悬浮球停靠状态
+      VIS=20,                       // 收到侧边后屏内露出的宽度(px)
+      dockSide='left', dockY=0,     // 当前停靠：左/右边缘 + 垂直位置
+      timer=null,
       ballDrag=false, ballMoved=false, movedResetTimer=null,
       bdx=0, bdy=0, sx=0, sy=0;
 
@@ -465,34 +471,46 @@ function rafThrottle(fn){var scheduled=false,lastArgs;return function(){lastArgs
   function freePos(el){
     el.style.right='auto'; el.style.bottom='auto'; el.style.transform='none';
   }
-
-  // 播放面板弹出位置：贴着小球放，放不下则往屏幕内侧让
-  function placePlayerNearBall(){
-    var r=tab.getBoundingClientRect();
-    var pw=pl.offsetWidth||280, ph=pl.offsetHeight||64;
-    var x=Math.max(6, Math.min(r.left, window.innerWidth-pw-6));
-    var y=Math.max(6, Math.min(r.top, window.innerHeight-ph-6));
-    pl.style.left=x+'px'; pl.style.top=y+'px'; freePos(pl);
-    savePos(pl);
+  function clampY(y){
+    var h=tab.offsetHeight||48;
+    return Math.max(8, Math.min(y, window.innerHeight-h-8));
   }
+  // 小球藏进侧边：露出 VIS 宽度的弧条；side:'left'|'right'
+  function dockBall(side,y,animate){
+    var w=tab.offsetWidth||48;
+    y=clampY(y);
+    dockSide=side; dockY=y;
+    var x= side==='left' ? (VIS-w) : (window.innerWidth-VIS);
+    if(animate) tab.style.transition='left .22s ease, top .22s ease';
+    tab.style.left=x+'px'; tab.style.top=y+'px'; freePos(tab);
+    if(animate) setTimeout(function(){ tab.style.transition=''; },320);
+    try{ localStorage.setItem(KEY_D, JSON.stringify({side:side,y:y})); }catch(_){}
+  }
+  function dockSideFromX(cx){
+    return cx < window.innerWidth/2 ? 'left' : 'right';
+  }
+  // 播放面板弹出位置：按小球"完整停在边缘"的位置弹开，放不下往内侧让
   function open(){
     pl.classList.remove('mp-hidden');
     pl.classList.remove('open'); void pl.offsetWidth;
-    placePlayerNearBall();
+    var pw=pl.offsetWidth||300, ph=pl.offsetHeight||64;
+    var bw=tab.offsetWidth||48;
+    var bx= dockSide==='left' ? 10 : window.innerWidth-bw-10;
+    var x=Math.max(6, Math.min(bx, window.innerWidth-pw-6));
+    var y=Math.max(6, Math.min(dockY, window.innerHeight-ph-6));
+    pl.style.left=x+'px'; pl.style.top=y+'px'; freePos(pl);
+    savePos(pl);
     if(typeof pl.__initDrag==='function') pl.__initDrag();
     pl.classList.add('open');
     tab.classList.add('hidden');
     if(audio && !audio.paused) startIdleTimer();
   }
-  // 收起：小球回到面板当前所在位置的边缘，吸附屏幕左右边
+  // 收起：面板藏掉，小球收进面板当前所在边缘（并垂直对齐面板中部）
   function close(){
     var l=parseFloat(pl.style.left), t=parseFloat(pl.style.top);
     if(!isFinite(l)||!isFinite(t)){ l=20; t=0; }
-    var bw=tab.offsetWidth||48, bh=tab.offsetHeight||48;
-    var x=(l+bw/2)<=window.innerWidth/2 ? 10 : window.innerWidth-bw-10;
-    var y=Math.max(8, Math.min(t, window.innerHeight-bh-8));
-    tab.style.left=x+'px'; tab.style.top=y+'px'; freePos(tab);
-    savePos(tab);
+    var pw=pl.offsetWidth||320, ph=pl.offsetHeight||64, bh=tab.offsetHeight||48;
+    dockBall(dockSideFromX(l+pw/2), t+(ph-bh)/2, false);
     pl.classList.add('mp-hidden');
     pl.classList.remove('open');
     tab.classList.remove('hidden');
@@ -515,7 +533,7 @@ function rafThrottle(fn){var scheduled=false,lastArgs;return function(){lastArgs
   pl.addEventListener('pointerup',startIdleTimer,true);
   pl.addEventListener('click',clearIdleTimer,true);
 
-  // ---------- 小球拖动 + 松手贴边吸附 ----------
+  // ---------- 悬浮球：按住拉出 / 松手藏回侧边 / 轻点展开 ----------
   function resetMovedFlag(){
     if(movedResetTimer)clearTimeout(movedResetTimer);
     movedResetTimer=setTimeout(function(){ballMoved=false;},400);
@@ -526,8 +544,8 @@ function rafThrottle(fn){var scheduled=false,lastArgs;return function(){lastArgs
     if(movedResetTimer){clearTimeout(movedResetTimer);movedResetTimer=null;}
     var r=tab.getBoundingClientRect();
     freePos(tab);
-    if(tab.style.left===''||tab.style.left===null){ tab.style.left=r.left+'px'; tab.style.top=r.top+'px'; }
-    else { tab.style.left=(parseFloat(tab.style.left)||r.left)+'px'; tab.style.top=(parseFloat(tab.style.top)||r.top)+'px'; }
+    tab.style.left=(parseFloat(tab.style.left)||r.left)+'px';
+    tab.style.top=(parseFloat(tab.style.top)||r.top)+'px';
     bdx=e.clientX-r.left; bdy=e.clientY-r.top;
     sx=e.clientX; sy=e.clientY;
     tab.style.transition='none';
@@ -537,9 +555,9 @@ function rafThrottle(fn){var scheduled=false,lastArgs;return function(){lastArgs
   });
   tab.addEventListener('pointermove',function(e){
     if(!ballDrag)return;
-    var bw=tab.offsetWidth||48, bh=tab.offsetHeight||48;
-    var x=Math.max(4, Math.min(e.clientX-bdx, window.innerWidth-bw-4));
-    var y=Math.max(4, Math.min(e.clientY-bdy, window.innerHeight-bh-4));
+    var w=tab.offsetWidth||48, h=tab.offsetHeight||48;
+    var x=Math.max(4, Math.min(e.clientX-bdx, window.innerWidth-w-4));
+    var y=Math.max(4, Math.min(e.clientY-bdy, window.innerHeight-h-4));
     tab.style.left=x+'px'; tab.style.top=y+'px';
     if(Math.abs(e.clientX-sx)>4||Math.abs(e.clientY-sy)>4) ballMoved=true;
   });
@@ -548,37 +566,35 @@ function rafThrottle(fn){var scheduled=false,lastArgs;return function(){lastArgs
     ballDrag=false;
     tab.classList.remove('grabbing');
     if(ballMoved){
-      // 贴边吸附：靠近哪条竖边就贴哪条，Y 保持并限制在视口内
-      var bw=tab.offsetWidth||48, bh=tab.offsetHeight||48;
-      var cx=(parseFloat(tab.style.left)||0)+bw/2;
-      var x=cx<window.innerWidth/2 ? 10 : window.innerWidth-bw-10;
-      var y=Math.max(8, Math.min(parseFloat(tab.style.top)||0, window.innerHeight-bh-8));
-      tab.style.transition='left .18s ease, top .18s ease';
-      tab.style.left=x+'px'; tab.style.top=y+'px';
-      savePos(tab);
-      setTimeout(function(){ tab.style.transition=''; },250);
-      resetMovedFlag(); // 拖完松手可能紧接着触发 click，让 click 处理判断要不要吞掉
+      var w=tab.offsetWidth||48, h=tab.offsetHeight||48;
+      var cx=(parseFloat(tab.style.left)||0)+w/2;
+      var y=Math.max(8, Math.min(parseFloat(tab.style.top)||0, window.innerHeight-h-8));
+      dockBall(dockSideFromX(cx), y, true);
+      resetMovedFlag(); // 拖完松手可能紧接着触发 click，交给 click 判断是否吞掉
     }
   }
   tab.addEventListener('pointerup',ballUp);
   tab.addEventListener('pointercancel',function(){ballUp();resetMovedFlag();});
-  // 拖动结束后的 click：拖动超过阈值就吞掉（否则一拖就误展开）
+  // 拖动后松手触发的 click 要吞掉（否则一拖就误展开面板）；轻点则展开
   tab.addEventListener('click',function(e){
     if(ballMoved){ ballMoved=false; e.stopPropagation(); e.preventDefault(); return; }
     open();
   },true);
-  // 窗口尺寸变化（旋转/缩放）后：小球仍在边缘、不跑出屏幕
+  // 窗口尺寸变化（旋转/缩放）：小球按停靠状态重新收好，不跑出屏幕
   window.addEventListener('resize',function(){
     if(tab.classList.contains('hidden'))return;
-    var bw=tab.offsetWidth||48, bh=tab.offsetHeight||48;
-    var l=parseFloat(tab.style.left), t=parseFloat(tab.style.top);
-    if(!isFinite(l))return;
-    var cx=l+bw/2;
-    var x=cx<window.innerWidth/2?10:Math.max(10,window.innerWidth-bw-10);
-    var y=Math.max(8,Math.min(t,window.innerHeight-bh-8));
-    tab.style.left=x+'px'; tab.style.top=y+'px'; freePos(tab);
-    savePos(tab);
+    dockBall(dockSide, dockY, false);
   });
+
+  // ---------- 初始化：读上次停靠位置；没有则沿用 CSS 默认左下角 ----------
+  var r0=tab.getBoundingClientRect();
+  dockY= (r0.top>0 && r0.top<window.innerHeight) ? r0.top : Math.max(8, window.innerHeight-150);
+  try{
+    var d=JSON.parse(localStorage.getItem(KEY_D)||'null');
+    if(d && (d.side==='left'||d.side==='right') && typeof d.y==='number'){
+      dockBall(d.side, d.y, false);
+    }
+  }catch(_){}
 })();
 
 // ===== 校区切换 =====
