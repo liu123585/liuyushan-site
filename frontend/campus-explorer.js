@@ -354,20 +354,11 @@
     var dest = curCampus === 'xiyuan'
       ? { name: '河南科技大学西苑校区', lng: CENTER.xiyuan[0], lat: CENTER.xiyuan[1] }
       : { name: '河南科技大学开元校区（国旗广场）', lng: CENTER.kaiyuan[0], lat: CENTER.kaiyuan[1] };
-    function open(from) {
-      var link = 'https://uri.amap.com/navigation?to=' + dest.lng + ',' + dest.lat + ',' + encodeURIComponent(dest.name) +
-        (from ? '&from=' + from.lng + ',' + from.lat + ',' + encodeURIComponent('我的位置') : '') +
-        '&mode=car&policy=1&callnative=1';
-      window.open(link, '_blank');
-    }
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        function (pos) { open({ lng: pos.coords.longitude, lat: pos.coords.latitude }); },
-        function () { open(null); }
-      );
-    } else {
-      open(null);
-    }
+    // 同步打开（必须在点击事件内直接触发，否则浏览器会拦截弹窗导致"点了没反应"）。
+    // 起点不传，由高德自动定位用户当前位置。
+    var link = 'https://uri.amap.com/navigation?to=' + dest.lng + ',' + dest.lat + ',' + encodeURIComponent(dest.name) +
+      '&mode=car&policy=1&callnative=1';
+    window.open(link, '_blank', 'noopener');
   }
 
   /* 实景：展示地标的真实照片相册（高德街景在校园基本无数据，改为照片灯箱） */

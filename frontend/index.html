@@ -601,6 +601,58 @@
       </ul>
     </div>
 
+    <!-- 行前行李分类清单：证件/床上用品/衣物/生活/数码/应急 -->
+    <div class="panel-card reveal" id="cardLuggage">
+      <h3>🎒 行前行李分类清单</h3>
+      <p class="hint">照着高德开学指南的分类思路帮你分好类：证件、床上用品、衣物、生活、数码、应急，逐类打勾，出发前不落东西</p>
+      <div class="military-count" id="lugCount">已备齐 0 / 0</div>
+      <div class="check-bar"><i id="lugBar"></i></div>
+      <div class="lug-cat">证件 · 报到必带</div>
+      <ul class="check-list lug-list" data-key="haust_luggage">
+        <li><label class="check-item"><input type="checkbox" data-i="0"><span>录取通知书原件及复印件</span></label></li>
+        <li><label class="check-item"><input type="checkbox" data-i="1"><span>身份证及正反面复印件（多备几张）</span></label></li>
+        <li><label class="check-item"><input type="checkbox" data-i="2"><span>高中纸质档案（切勿拆封）</span></label></li>
+        <li><label class="check-item"><input type="checkbox" data-i="3"><span>党团组织关系介绍信 / 团员证</span></label></li>
+        <li><label class="check-item"><input type="checkbox" data-i="4"><span>一寸、两寸免冠照片若干（底色白/蓝）</span></label></li>
+        <li><label class="check-item"><input type="checkbox" data-i="5"><span>随录取通知书寄来的银行卡</span></label></li>
+      </ul>
+      <div class="lug-cat">床上用品</div>
+      <ul class="check-list lug-list" data-key="haust_luggage">
+        <li><label class="check-item"><input type="checkbox" data-i="6"><span>床单 / 被套 / 枕套（可自带可购）</span></label></li>
+        <li><label class="check-item"><input type="checkbox" data-i="7"><span>枕头、被芯（学校发的或自带）</span></label></li>
+        <li><label class="check-item"><input type="checkbox" data-i="8"><span>凉席 / 床垫（按宿舍床 0.9m 宽参考）</span></label></li>
+        <li><label class="check-item"><input type="checkbox" data-i="9"><span>蚊帐 / 床头小夜灯（可选）</span></label></li>
+      </ul>
+      <div class="lug-cat">衣物鞋袜</div>
+      <ul class="check-list lug-list" data-key="haust_luggage">
+        <li><label class="check-item"><input type="checkbox" data-i="10"><span>夏秋衣物（洛阳 9 月白天仍热）</span></label></li>
+        <li><label class="check-item"><input type="checkbox" data-i="11"><span>薄外套 / 长袖（备早晚降温）</span></label></li>
+        <li><label class="check-item"><input type="checkbox" data-i="12"><span>内衣袜子多备几套</span></label></li>
+        <li><label class="check-item"><input type="checkbox" data-i="13"><span>运动鞋 / 拖鞋 / 军训鞋垫</span></label></li>
+        <li><label class="check-item"><input type="checkbox" data-i="14"><span>雨伞（洛阳多阵雨）</span></label></li>
+      </ul>
+      <div class="lug-cat">洗漱 · 生活用品</div>
+      <ul class="check-list lug-list" data-key="haust_luggage">
+        <li><label class="check-item"><input type="checkbox" data-i="15"><span>洗漱三件套 + 毛巾浴巾</span></label></li>
+        <li><label class="check-item"><input type="checkbox" data-i="16"><span>脸盆 / 水桶 / 衣架夹子</span></label></li>
+        <li><label class="check-item"><input type="checkbox" data-i="17"><span>洗衣液 / 香皂 / 纸巾湿巾</span></label></li>
+        <li><label class="check-item"><input type="checkbox" data-i="18"><span>水杯、梳子、指甲刀、小锁</span></label></li>
+      </ul>
+      <div class="lug-cat">电子 · 数码</div>
+      <ul class="check-list lug-list" data-key="haust_luggage">
+        <li><label class="check-item"><input type="checkbox" data-i="19"><span>手机充电器 + 数据线 + 充电宝</span></label></li>
+        <li><label class="check-item"><input type="checkbox" data-i="20"><span>插线板（注意宿舍限电功率）</span></label></li>
+        <li><label class="check-item"><input type="checkbox" data-i="21"><span>耳机 / 平板 / 电脑（按需）</span></label></li>
+      </ul>
+      <div class="lug-cat">应急 · 药品</div>
+      <ul class="check-list lug-list" data-key="haust_luggage">
+        <li><label class="check-item"><input type="checkbox" data-i="22"><span>感冒退烧药 / 肠胃药</span></label></li>
+        <li><label class="check-item"><input type="checkbox" data-i="23"><span>创可贴 / 碘伏棉签 / 藿香正气水</span></label></li>
+        <li><label class="check-item"><input type="checkbox" data-i="24"><span>防晒霜 + 晒后修复（军训必备）</span></label></li>
+        <li><label class="check-item"><input type="checkbox" data-i="25"><span>少量现金零钱（应急）</span></label></li>
+      </ul>
+    </div>
+
     <!-- 来校交通 -->
     <div class="panel-card reveal" id="cardTraffic">
       <h3>🚉 怎么来科大</h3>
@@ -619,6 +671,11 @@
         <div class="traffic-from">✈️ 北郊机场</div>
         <div class="traffic-main"><b>迎新大巴</b>：报到日一般也设接站点，留意到达厅指引（以学校通知为准）</div>
         <div class="traffic-route">自行前往：机场大巴到市区约 20 元再转打车；直达打车约 60–80 元到开元</div>
+      </div>
+      <div class="traffic-card">
+        <div class="traffic-from">🧭 自己找路 · 认路小贴士</div>
+        <div class="traffic-main"><b>跟着高德走</b>：到洛阳后打开高德地图搜目的地就能实时公交 / 地铁 / 步行导航——<br>开元校区搜「河南科技大学开元校区」（开元大道 263 号，校门口即大北门）；<br>西苑校区搜「河南科技大学西苑校区」，出 <b>地铁 1 号线长安路站 C 口</b> 步行即达</div>
+        <div class="traffic-route">坐大巴认准「河南科技大学」接站牌；打车请认准正规出租车或网约车平台。高德 App 里的大一新生开学指南也能用，路线实时更新。</div>
       </div>
       <p class="tool-note">迎新时间 / 接站点位以录取通知书、学院群、学校官微通知为准；独自打车请认准正规出租车或网约车平台。</p>
     </div>
@@ -721,6 +778,17 @@
       <h3>雷霆战机</h3>
       <p class="hint">学长做的横版射击小游戏，下课来两把</p>
       <a class="game-btn" href="https://game.liuyushan.top" target="_blank" rel="noopener">打开游戏 →</a>
+    </div>
+
+    <!-- 闪星勇者：学长另一款独立游戏（Windows / 安卓 双平台下载） -->
+    <div class="panel-card reveal" id="cardFlash">
+      <h3>闪星勇者 <span class="game-tag">学长第二款游戏</span></h3>
+      <p class="hint">扮演小勇者「闪闪」，闯过 8 大关卡击败暗影巨兽！收集星币进化枪械，还能放出星影分身帮你挡子弹——电脑、安卓都能玩 🎮</p>
+      <div class="dl-stack">
+        <a class="game-btn dl-win" href="https://github.com/liu123585/liuyushan-site/releases/download/flash-star-v1.0/SparkysQuest-v1.0-win-x64.exe" target="_blank" rel="noopener">🖥️ Windows 版下载（EXE · 约 190 MB）</a>
+        <a class="game-btn dl-android" href="https://github.com/liu123585/liuyushan-site/releases/download/flash-star-v1.0/SparkysQuest-v1.0-android.apk" target="_blank" rel="noopener">📱 安卓版下载（APK · 约 80 MB）</a>
+      </div>
+      <p class="flash-note">Windows 版解压即玩；安卓版下载后点开安装，若提示“未知来源”属正常，允许安装即可。</p>
     </div>
 
   </div>

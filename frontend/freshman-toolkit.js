@@ -60,4 +60,36 @@
       });
     });
   });
+
+  /* ===== 行前行李分类清单 =====
+     多个 ul.lug-list 合并为一个清单（data-key 相同），进度统一显示在 #lugCount / #lugBar */
+  var lugLists = document.querySelectorAll('ul.lug-list');
+  if (lugLists.length) {
+    var KEY2 = 'haust_luggage';
+    var boxes2 = [];
+    lugLists.forEach(function (l) {
+      boxes2 = boxes2.concat(Array.prototype.slice.call(l.querySelectorAll('input[type=checkbox]')));
+    });
+    if (!boxes2.length) return;
+    var count2 = document.getElementById('lugCount');
+    var bar2 = document.getElementById('lugBar');
+    function load2() {
+      try { return JSON.parse(localStorage.getItem(KEY2) || '[]'); } catch (_) { return []; }
+    }
+    var saved2 = load2();
+    function update2() {
+      var n = 0;
+      boxes2.forEach(function (b) { if (b.checked) n++; });
+      if (count2) count2.textContent = '已备齐 ' + n + ' / ' + boxes2.length;
+      if (bar2) bar2.style.width = (boxes2.length ? (n / boxes2.length * 100) : 0) + '%';
+      var arr = [];
+      boxes2.forEach(function (b) { if (b.checked) arr.push(b.getAttribute('data-i')); });
+      try { localStorage.setItem(KEY2, JSON.stringify(arr)); } catch (_) {}
+    }
+    boxes2.forEach(function (b) {
+      if (saved2.indexOf(b.getAttribute('data-i')) >= 0) b.checked = true;
+      b.addEventListener('change', update2);
+    });
+    update2();
+  }
 })();

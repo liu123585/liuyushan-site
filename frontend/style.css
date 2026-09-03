@@ -783,6 +783,12 @@ img{max-width:100%}
 .game-btn:active{transform:scale(.97)}
 .game-btn.ghost{background:transparent;border:1px solid var(--hair);color:var(--white);box-shadow:none;font-weight:600}
 a.game-btn{display:block;text-decoration:none;text-align:center}
+.game-tag{display:inline-block;vertical-align:2px;margin-left:6px;font-size:11px;font-weight:700;color:var(--gold);background:rgba(212,175,55,.12);border:1px solid rgba(212,175,55,.4);border-radius:20px;padding:1px 10px;letter-spacing:1px}
+.dl-stack{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+.dl-stack .game-btn{margin-top:0}
+.dl-win{background:linear-gradient(135deg,#0288d1,#00b0a0);box-shadow:0 6px 20px rgba(2,136,209,.3)}
+.dl-android{background:linear-gradient(135deg,#e8800c,#43a047);box-shadow:0 6px 20px rgba(232,128,12,.3)}
+.flash-note{font-size:12px;color:var(--grey);line-height:1.7;margin-top:12px}
 
 /* 今天吃什么 */
 .eat-wheel{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;justify-content:center}
@@ -1064,6 +1070,8 @@ a.game-btn{display:block;text-decoration:none;text-align:center}
 .military-count{margin-top:12px;font-size:13px;color:var(--primary);font-weight:700}
 .check-bar{height:8px;border-radius:8px;background:rgba(0,85,163,.1);overflow:hidden;margin-top:8px}
 .check-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--primary2),var(--gold));transition:width .3s}
+.lug-cat{margin-top:14px;font-size:13px;font-weight:700;color:var(--gold2);letter-spacing:1px;border-left:3px solid var(--gold);padding-left:8px;line-height:1.4}
+ul.lug-list{margin-top:6px}
 .traffic-card{background:rgba(0,85,163,.05);border:1px solid var(--hair);border-radius:12px;padding:12px 14px;margin-top:10px}
 .traffic-from{font-weight:700;color:var(--primary);font-size:14px;margin-bottom:5px}
 .traffic-main{font-size:13px;color:var(--white);line-height:1.7;margin:5px 0 9px;padding:8px 10px;border-radius:10px;background:linear-gradient(135deg,rgba(184,134,11,.16),rgba(30,136,229,.12));border:1px solid rgba(184,134,11,.4)}
