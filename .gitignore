@@ -20,3 +20,6 @@ __pycache__/
 
 # 游戏安装包（单文件 >100MB，GitHub 拒绝 push；改由 EdgeOne 控制台手动上传到站点 /download/）
 frontend/download/
+
+# EdgeOne CLI 本地 token（敏感，不可提交）
+frontend/.edgeone/
