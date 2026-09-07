@@ -80,6 +80,10 @@
     .btn:hover { transform: scale(1.05); }
     .btn.blue { background: linear-gradient(90deg, #5b8def, #6fd1c9); box-shadow: 0 12px 30px rgba(120,150,255,.4); }
     .hidden { display: none !important; }
+    .vol-row { display: flex; align-items: center; gap: 12px; justify-content: center; margin: 8px 0 16px;
+      font-size: 14px; color: rgba(60,80,120,.85); }
+    .vol-row input[type=range] { width: 180px; accent-color: #6fb1ff; cursor: pointer; }
+    .vol-row span:last-child { min-width: 44px; text-align: left; font-weight: 700; color: #2f6bff; }
 
     /* 竖屏提示：触摸设备请横屏游玩 */
     #rotateHint { display: none; position: absolute; inset: 0; z-index: 80; flex-direction: column;
@@ -169,6 +173,11 @@
           历史最佳：<span id="bestScore">0</span>
         </div><br/>
         <button class="btn" id="continueBtn" style="display:none;background:linear-gradient(90deg,#5b9bff,#46d6c4)">继续冒险</button><br/>
+        <div class="vol-row">
+          <span>🎵 BGM 音量</span>
+          <input type="range" id="bgmVolTitle" min="0" max="100" value="40" />
+          <span id="bgmVolTitleTxt">40%</span>
+        </div>
         <button class="btn" id="startBtn">从头开始</button>
         <div id="levelSelect" class="lvl-select" style="display:none"></div>
       </div>
@@ -216,6 +225,11 @@
           <kbd>M</kbd> 静音 · <kbd>P</kbd>/<kbd>Esc</kbd> 暂停 · <kbd>R</kbd> 重来本关<br/>
           手机上：左下 ◀ ▶ 移动，右下 跳/开火/冲/分身（开火与跳都是大按钮，最顺手）
         </div><br/>
+        <div class="vol-row">
+          <span>🎵 BGM 音量</span>
+          <input type="range" id="bgmVolPause" min="0" max="100" value="40" />
+          <span id="bgmVolPauseTxt">40%</span>
+        </div>
         <button class="btn" id="resumeBtn">继续游戏</button>
       </div>
     </div>

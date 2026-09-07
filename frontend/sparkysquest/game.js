@@ -148,6 +148,8 @@ function tap(...names) { return names.some(n => pressed[n]); }
 
 // ---------- 音频 ----------
 let actx = null, muted = false;
+let bgmVolume = 0.4; // 0~1，用户可调 BGM 音量（默认偏低，避免吵）
+try { const _v = parseFloat(localStorage.getItem('sparky_bgmvol')); if (!isNaN(_v)) bgmVolume = Math.max(0, Math.min(1, _v)); } catch (e) {}
 let bgm = null;
 function ensureAudio() {
   if (!actx) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
@@ -209,7 +211,7 @@ function startSynthBgm(theme) {
   if (!actx) return false;
   const m = BGM[theme] || BGM.meadow;
   bgm = { mode: 'synth', theme, song: 0, audio: null, gain: actx.createGain(), step: 0, next: actx.currentTime + 0.06, timer: null };
-  bgm.gain.gain.value = muted ? 0 : 0.11; bgm.gain.connect(actx.destination);
+  bgm.gain.gain.value = muted ? 0 : bgmVolume * 0.22; bgm.gain.connect(actx.destination);
   bgm.timer = setInterval(() => {
     if (!actx || muted || !bgm) return;
     while (bgm.next < actx.currentTime + 0.12) {
@@ -233,17 +235,28 @@ function setBgm(song, theme, force) {
   if (!force && bgm && bgm.song === song && (bgm.mode === 'synth' ? !!bgm.timer : (bgm.audio && !bgm.audio.paused))) return;
   stopBgm();
   const path = 'songs/' + String(song).padStart(2, '0') + '.mp3';
-  const a = new Audio(path); a.loop = true; a.volume = muted ? 0 : 0.5;
+  const a = new Audio(path); a.loop = true; a.volume = muted ? 0 : Math.min(0.95, bgmVolume);
   let fell = false;
   const fallback = () => { if (fell) return; fell = true; try { a.pause(); } catch (e) {} startSynthBgm(theme); };
   a.addEventListener('error', fallback);
   const pr = a.play(); if (pr && pr.catch) pr.catch(fallback);
   bgm = { mode: 'mp3', theme, song, audio: a, gain: null, step: 0, next: 0, timer: null };
 }
+function applyBgmVolume() {
+  if (!bgm) return;
+  if (bgm.mode === 'mp3' && bgm.audio) bgm.audio.volume = muted ? 0 : Math.min(0.95, bgmVolume);
+  if (bgm.gain) bgm.gain.gain.value = muted ? 0 : bgmVolume * 0.22;
+}
 function toggleMute() {
   muted = !muted;
-  if (bgm && bgm.mode === 'mp3' && bgm.audio) bgm.audio.volume = muted ? 0 : 0.5;
-  if (bgm && bgm.gain) bgm.gain.gain.value = muted ? 0 : 0.11;
+  applyBgmVolume();
+}
+function setBgmVol(pct) {
+  bgmVolume = Math.max(0, Math.min(1, pct / 100));
+  try { localStorage.setItem('sparky_bgmvol', String(bgmVolume)); } catch (e) {}
+  applyBgmVolume();
+  const sync = (id, txtId) => { const el = document.getElementById(id); if (el) el.value = Math.round(bgmVolume * 100); const t = document.getElementById(txtId); if (t) t.textContent = Math.round(bgmVolume * 100) + '%'; };
+  sync('bgmVolTitle', 'bgmVolTitleTxt'); sync('bgmVolPause', 'bgmVolPauseTxt');
 }
 
 // ---------- 关卡数据 ----------
@@ -2349,6 +2362,16 @@ document.getElementById('continueBtn').onclick = continueGame;
 document.getElementById('nextBtn').onclick = nextStage;
 document.getElementById('retryBtn').onclick = restartFromOver;
 document.getElementById('againBtn').onclick = playAgain;
+// BGM 音量滑块绑定（标题页 + 暂停页共用）
+(function bindBgmVol() {
+  const init = (id) => {
+    const el = document.getElementById(id); if (!el) return;
+    el.value = Math.round(bgmVolume * 100);
+    const t = document.getElementById(id + 'Txt'); if (t) t.textContent = Math.round(bgmVolume * 100) + '%';
+    el.addEventListener('input', () => setBgmVol(+el.value));
+  };
+  init('bgmVolTitle'); init('bgmVolPause');
+})();
 document.getElementById('resumeBtn').onclick = resumeGame;
 // 暂停按钮：手机和电脑进入游戏后都能点
 const pauseBtnEl = document.getElementById('btnPause');
