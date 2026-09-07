@@ -248,17 +248,14 @@ function toggleMute() {
 
 // ---------- 关卡数据 ----------
 // 主题：meadow / cave / sky / boss
-function L(opts) { return Object.assign({ platforms: [], enemies: [], coins: [], stars: [], spikes: [], bounces: [], powers: [], signs: [], chests: [], portals: [], blocks: [], keys: [], gates: [], spawn: [80, 420], goal: null, boss: false, song: 1, theme: 'meadow' }, opts); }
+function L(opts) { return Object.assign({ platforms: [], enemies: [], coins: [], stars: [], spikes: [], bounces: [], powers: [], signs: [], chests: [], portals: [], blocks: [], keys: [], gates: [], checkpoints: [], spawn: [80, 420], goal: null, boss: false, song: 1, theme: 'meadow' }, opts); }
 
 const LEVELS = [
   // 第一关 · 微光草原
   L({
     name: '第一关 · 微光草原', theme: 'meadow', song: 1, w: 3300,
     platforms: [
-      { x: 0, y: 480, w: 720, h: 90 },
-      { x: 850, y: 480, w: 620, h: 90 },
-      { x: 1560, y: 480, w: 520, h: 90 },
-      { x: 2200, y: 480, w: 1100, h: 90 },
+      { x: 0, y: 480, w: 3300, h: 90 },
       { x: 480, y: 360, w: 170, h: 22 },
       { x: 1000, y: 330, w: 170, h: 22 },
       { x: 1720, y: 350, w: 170, h: 22 },
@@ -296,12 +293,7 @@ const LEVELS = [
   L({
     name: '第二关 · 星夜洞窟', theme: 'cave', song: 4, w: 3700,
     platforms: [
-      { x: 0, y: 480, w: 560, h: 90 },
-      { x: 700, y: 480, w: 420, h: 90 },
-      { x: 1240, y: 480, w: 380, h: 90 },
-      { x: 1760, y: 480, w: 520, h: 90 },
-      { x: 2380, y: 480, w: 460, h: 90 },
-      { x: 2960, y: 480, w: 740, h: 90 },
+      { x: 0, y: 480, w: 3700, h: 90 },
       { x: 360, y: 360, w: 160, h: 22 },
       { x: 900, y: 330, w: 150, h: 22 },
       { x: 1450, y: 340, w: 160, h: 22 },
@@ -340,9 +332,7 @@ const LEVELS = [
     name: '第三关 · 云端天梯', theme: 'sky', song: 8, w: 4000,
     platforms: [
       // 底部连续地面（中间留 2 个断崖缺口）
-      { x: 0, y: 480, w: 1850, h: 90 },
-      { x: 2080, y: 480, w: 970, h: 90 },
-      { x: 3250, y: 480, w: 750, h: 90 },
+      { x: 0, y: 480, w: 4000, h: 90 },
       // 断崖1 的衔接移动平台 + 断崖2 的衔接固定平台
       { x: 1900, y: 420, w: 180, h: 22, move: { axis: 'x', range: 90, speed: 1.0 } },
       { x: 3080, y: 410, w: 160, h: 22 },
@@ -387,12 +377,7 @@ const LEVELS = [
   L({
     name: '第四关 · 水晶回廊', theme: 'crystal', song: 3, w: 3600,
     platforms: [
-      { x: 0, y: 480, w: 520, h: 90 },
-      { x: 690, y: 480, w: 330, h: 90 },
-      { x: 1190, y: 480, w: 310, h: 90 },
-      { x: 1670, y: 480, w: 310, h: 90 },
-      { x: 2150, y: 480, w: 350, h: 90 },
-      { x: 2670, y: 480, w: 930, h: 90 },
+      { x: 0, y: 480, w: 3600, h: 90 },
       { x: 560, y: 380, w: 170, h: 22, move: { axis: 'x', range: 110, speed: 1.0 } },
       { x: 1060, y: 350, w: 160, h: 22, move: { axis: 'x', range: 130, speed: 1.15 } },
       { x: 1560, y: 330, w: 170, h: 22 },
@@ -428,13 +413,7 @@ const LEVELS = [
   L({
     name: '第五关 · 暮色果园', theme: 'sunset', song: 6, w: 3400,
     platforms: [
-      { x: 0, y: 480, w: 460, h: 90 },
-      { x: 620, y: 480, w: 280, h: 90 },
-      { x: 1060, y: 480, w: 300, h: 90 },
-      { x: 1520, y: 480, w: 260, h: 90 },
-      { x: 1940, y: 480, w: 300, h: 90 },
-      { x: 2400, y: 480, w: 280, h: 90 },
-      { x: 2840, y: 480, w: 560, h: 90 },
+      { x: 0, y: 480, w: 3400, h: 90 },
       { x: 150, y: 370, w: 170, h: 22 },
       { x: 1130, y: 340, w: 170, h: 22 },
       { x: 2020, y: 330, w: 180, h: 22 },
@@ -457,19 +436,14 @@ const LEVELS = [
     bounces: [ { x: 360, y: 462, w: 70, h: 14 }, { x: 1180, y: 462, w: 70, h: 14 }, { x: 2500, y: 462, w: 70, h: 14 } ],
     powers: [ { x: 1150, y: 300, w: 26, h: 26, kind: 'rapid', name: '连发', icon: 'R', col: '#ffb04a' } ],
     crates: [ { x: 1160, y: 290, kind: 'shotgun' }, { x: 2480, y: 90, kind: 'laser' } ],
+    chests: [ { x: 2450, y: 114 } ],
     goal: { x: 3330, y: 380 },
   }),
   // 第六关 · 翠影密林（敌人密集，最适合用分身诱敌）
   L({
     name: '第六关 · 翠影密林', theme: 'forest', song: 9, w: 3800,
     platforms: [
-      { x: 0, y: 480, w: 500, h: 90 },
-      { x: 660, y: 480, w: 320, h: 90 },
-      { x: 1140, y: 480, w: 320, h: 90 },
-      { x: 1620, y: 480, w: 320, h: 90 },
-      { x: 2100, y: 480, w: 320, h: 90 },
-      { x: 2580, y: 480, w: 320, h: 90 },
-      { x: 3060, y: 480, w: 740, h: 90 },
+      { x: 0, y: 480, w: 3800, h: 90 },
       { x: 200, y: 360, w: 170, h: 22 },
       { x: 800, y: 340, w: 170, h: 22 },
       { x: 1280, y: 330, w: 170, h: 22 },
@@ -507,15 +481,7 @@ const LEVELS = [
   L({
     name: '第七关 · 星轨高塔', theme: 'crystal', song: 10, w: 4200,
     platforms: [
-      { x: 0, y: 480, w: 480, h: 90 },
-      { x: 640, y: 480, w: 260, h: 90 },
-      { x: 1060, y: 480, w: 260, h: 90 },
-      { x: 1480, y: 480, w: 260, h: 90 },
-      { x: 1900, y: 480, w: 260, h: 90 },
-      { x: 2320, y: 480, w: 260, h: 90 },
-      { x: 2740, y: 480, w: 260, h: 90 },
-      { x: 3160, y: 480, w: 260, h: 90 },
-      { x: 3580, y: 480, w: 620, h: 90 },
+      { x: 0, y: 480, w: 4200, h: 90 },
       { x: 560, y: 380, w: 160, h: 22, move: { axis: 'x', range: 100, speed: 1.0 } },
       { x: 980, y: 360, w: 160, h: 22, move: { axis: 'x', range: 110, speed: 1.1 } },
       { x: 1400, y: 340, w: 160, h: 22, move: { axis: 'y', range: 80, speed: 1.0 } },
@@ -552,6 +518,7 @@ const LEVELS = [
     portals: [ { ax: 980, ay: 308, bx: 3080, by: 298 } ],
     blocks: [ { x: 1220, y: 170 }, { x: 1254, y: 170 } ],
     signs: [ { x: 980, y: 350, text: '传送门：直达高塔顶端 →', arrow: 'down' } ],
+    chests: [ { x: 1200, y: 174 } ],
     goal: { x: 4130, y: 380 },
   }),
   // 第八关 · 暗影巨兽（BOSS）
@@ -576,15 +543,7 @@ const LEVELS = [
   L({
     name: '第九关 · 熔岩裂谷', theme: 'sunset', song: 7, w: 4400,
     platforms: [
-      { x: 0, y: 480, w: 480, h: 90 },
-      { x: 640, y: 480, w: 300, h: 90 },
-      { x: 1080, y: 480, w: 300, h: 90 },
-      { x: 1520, y: 480, w: 300, h: 90 },
-      { x: 1960, y: 480, w: 300, h: 90 },
-      { x: 2400, y: 480, w: 300, h: 90 },
-      { x: 2840, y: 480, w: 300, h: 90 },
-      { x: 3280, y: 480, w: 300, h: 90 },
-      { x: 3720, y: 480, w: 680, h: 90 },
+      { x: 0, y: 480, w: 4400, h: 90 },
       { x: 360, y: 360, w: 160, h: 22, move: { axis: 'x', range: 120, speed: 1.2 } },
       { x: 800, y: 340, w: 160, h: 22, move: { axis: 'y', range: 90, speed: 1.1 } },
       { x: 1240, y: 330, w: 160, h: 22, move: { axis: 'x', range: 130, speed: 1.3 } },
@@ -656,17 +615,7 @@ const LEVELS = [
   L({
     name: '第十一关 · 星海迷城', theme: 'crystal', song: 5, w: 4800,
     platforms: [
-      { x: 0, y: 480, w: 460, h: 90 },
-      { x: 620, y: 480, w: 280, h: 90 },
-      { x: 1040, y: 480, w: 280, h: 90 },
-      { x: 1460, y: 480, w: 280, h: 90 },
-      { x: 1880, y: 480, w: 280, h: 90 },
-      { x: 2300, y: 480, w: 280, h: 90 },
-      { x: 2720, y: 480, w: 280, h: 90 },
-      { x: 3140, y: 480, w: 280, h: 90 },
-      { x: 3560, y: 480, w: 280, h: 90 },
-      { x: 3980, y: 480, w: 280, h: 90 },
-      { x: 4400, y: 480, w: 400, h: 90 },
+      { x: 0, y: 480, w: 4800, h: 90 },
       { x: 360, y: 360, w: 160, h: 22, move: { axis: 'x', range: 130, speed: 1.4 } },
       { x: 800, y: 340, w: 160, h: 22, move: { axis: 'y', range: 100, speed: 1.3 } },
       { x: 1240, y: 330, w: 160, h: 22, move: { axis: 'x', range: 140, speed: 1.5 } },
@@ -866,9 +815,11 @@ function makeBoss(spec) {
 }
 
 // ---------- 关卡加载 ----------
-function startStage(n) {
+function startStage(n, spawnOverride, opts) {
+  opts = opts || {};
   G.stage = n;
   const def = LEVELS[n - 1];
+  const spawn = spawnOverride || def.spawn;
   G.level = { w: def.w, theme: def.theme, platforms: def.platforms.map(p => {
     const np = { ...p };
     if (np.move) { np.baseX = np.x; np.baseY = np.y; np.ox = 0; np.oy = 0; np.dx = 0; np.dy = 0; np.mt = rand(0, 6); }
@@ -877,10 +828,10 @@ function startStage(n) {
   const p = G.player || makePlayer();
   if (!G.player) G.player = p;
   // 保留成长，重置位置/状态
-  p.x = def.spawn[0]; p.y = def.spawn[1]; p.vx = 0; p.vy = 0; p.facing = 1;
+  p.x = spawn[0]; p.y = spawn[1]; p.vx = 0; p.vy = 0; p.facing = 1;
   p.onGround = false; p.attacking = false; p.atkT = 0; p.invuln = 0.6; p.jumps = 0;
   p.hp = p.maxHp; p.squash = 1; p.sqv = 0;
-  G.lastSafe = { x: def.spawn[0], y: def.spawn[1] };
+  G.lastSafe = { x: spawn[0], y: spawn[1] };
   equipGun(p); // 每关开局装备天赋枪并补满弹药
   G.hintUntil = performance.now() + 9000; // 开局 9 秒显示操作提示
   G.echo = { recording: false, recT: 0, frames: [], play: null, cool: 0 };
@@ -899,6 +850,23 @@ function startStage(n) {
   }
   G.projectiles = []; G.particles = []; G.floats = [];
   G.coins = def.coins.map(c => ({ x: c[0], y: c[1], w: 18, h: 18, t: rand(0, 6), got: false }));
+  // 拾取物上移：贴地的星币吸到最近的悬空平台顶（满足“币放在平台上而非地面”）
+  (function () {
+    const grounds = G.level.platforms.filter(pl => pl.h > 60);
+    const mGY = grounds.length ? Math.max.apply(null, grounds.map(pl => pl.y)) : 480;
+    const ledges = G.level.platforms.filter(pl => pl.h <= 30 && pl.y < mGY - 50 && !pl.move);
+    for (const c of G.coins) {
+      if (c.y >= mGY - 60) {
+        let best = null, bd = 1e9;
+        for (const pl of ledges) {
+          const inX = c.x >= pl.x - 12 && c.x <= pl.x + pl.w + 12;
+          const d = inX ? 0 : Math.abs(c.x - (pl.x + pl.w / 2));
+          if (d < bd) { bd = d; best = pl; }
+        }
+        c.y = best ? best.y - 20 : 300;
+      }
+    }
+  })();
   G.stars = def.stars.map(c => ({ x: c[0], y: c[1], w: 22, h: 22, t: rand(0, 6), got: false }));
   G.bounces = (def.bounces || []).map(b => ({ ...b, cool: 0, t: rand(0, 6) }));
   G.powers = (def.powers || []).map(b => ({ ...b, got: false, t: rand(0, 6), vy: -120 }));
@@ -911,14 +879,37 @@ function startStage(n) {
   G.gates = (def.gates || []).map(o => ({ x: o.x, y: o.y, w: o.w || 26, h: o.h || 120, req: o.req || 1, open: false }));
   G.keys = 0;
   G.boss = def.boss ? makeBoss(def) : null;
+  // 存档点：默认在关卡 45% / 80% 处各一个（Boss 关仅门口一个），也可由关卡 checkpoints 覆盖
+  let cps = (def.checkpoints && def.checkpoints.length) ? def.checkpoints : null;
+  if (!cps) {
+    if (def.boss) cps = [ { x: Math.round(def.w * 0.45), y: 420 } ];
+    else cps = [ { x: Math.round(def.w * 0.45), y: 420 }, { x: Math.round(def.w * 0.8), y: 420 } ];
+  }
+  G.checkpoints = cps.map(c => ({ x: c.x, y: c.y, activated: false }));
+  for (const c of G.checkpoints) if (Math.abs(c.x - spawn[0]) < 60) c.activated = true;
+  G.checkpoint = { x: spawn[0], y: spawn[1], activated: true };
   G.cam.x = clamp(p.x - VW / 2, 0, G.level.w - VW); G.cam.y = 0;
   G.shake = 0; G.hitstop = 0; G.combo = 0; G.comboT = 0;
   ensureAudio();
-  setBgm(def.song, def.theme);
+  // BGM 随机：每关进入随机选一首（避开上一关那首）；Boss 关也随机。在存档点复活时保留当前曲目
+  if (opts.keepBgm && bgm) {
+    // 保留当前 BGM，不强行换歌
+  } else {
+    let song = 1 + (Math.random() * 12 | 0);
+    if (song === (G._lastSong || 0)) song = (song % 12) + 1;
+    G._lastSong = song;
+    setBgm(song, def.theme);
+  }
   setState('playing');
 }
 
 function restartStage() { startStage(G.stage); }
+function reviveAtCheckpoint() {
+  const cp = G.checkpoint || { x: (G.level && G.level.w ? G.level.w * 0.45 : 400), y: 420 };
+  addFloat(G.player.x + G.player.w / 2, G.player.y - 16, '在存档点复活', '#7fe7c4');
+  G.player.hp = G.player.maxHp; G.player.shieldT = 0; G.player.rapidT = 0; G.player.magnetT = 0;
+  startStage(G.stage, [cp.x, cp.y - 12], { keepBgm: true });
+}
 
 // ---------- 碰撞 ----------
 function moveAndCollide(e, dt) {
@@ -1412,7 +1403,7 @@ function damagePlayer(dmg, srcX) {
   p.vx = sign(p.x - srcX) * 320; p.vy = -300;
   G.shake = 0; SFX.hurt();
   burst(p.x + p.w / 2, p.y + p.h / 2, '#ff6b6b', 12);
-  if (p.hp <= 0) { p.hp = 0; gameOver(); }
+  if (p.hp <= 0) { p.hp = 0; reviveAtCheckpoint(); }
 }
 
 // ---------- 收集 ----------
@@ -1490,6 +1481,19 @@ function updateCollect(dt) {
     }
   }
 }
+function updateCheckpoints() {
+  if (!G.checkpoints) return;
+  const p = G.player;
+  for (const c of G.checkpoints) {
+    if (c.activated) continue;
+    if (aabb(p, { x: c.x - 30, y: c.y - 120, w: 60, h: 210 })) {
+      c.activated = true;
+      G.checkpoint = { x: c.x, y: c.y, activated: true };
+      addFloat(c.x, c.y - 34, '✦ 存档点已激活', '#7fe7c4');
+      SFX.key();
+    }
+  }
+}
 function applyPower(p, kind) {
   if (kind === 'rapid') p.rapidT = 9;
   else if (kind === 'shield') p.shieldT = 9;
@@ -1560,6 +1564,7 @@ function frame(now) {
       if (G.state === 'playing') updateBoss(dt);
       if (G.state === 'playing') updateProjectiles(dt);
       if (G.state === 'playing') updateCollect(dt);
+      if (G.state === 'playing') updateCheckpoints();
       if (G.state === 'playing') updateCrates(dt);
       if (G.state === 'playing') checkGoal();
       updateParticles(dt);
@@ -1590,6 +1595,7 @@ function render() {
   drawBounces();
   drawSpikes();
   drawCoins();
+  drawCheckpoints();
   drawStars();
   drawPowers();
   drawCrates();
@@ -1836,6 +1842,34 @@ function drawBlocks() {
     ctx.strokeStyle = '#8a6a2a'; ctx.lineWidth = 2; rr(ctx, b.x, b.y + t, b.w, b.h, 4); ctx.stroke();
     ctx.strokeStyle = '#a07a32'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(b.x, b.y + t); ctx.lineTo(b.x + b.w, b.y + t + b.h); ctx.moveTo(b.x + b.w, b.y + t); ctx.lineTo(b.x, b.y + t + b.h); ctx.stroke();
+  }
+}
+function drawCheckpoints() {
+  if (!G.checkpoints) return;
+  for (const c of G.checkpoints) {
+    const sx = c.x - G.cam.x, sy = c.y - G.cam.y;
+    if (sx < -50 || sx > VW + 50) continue;
+    // 旗杆
+    ctx.fillStyle = c.activated ? '#7fe7c4' : '#5b6472';
+    ctx.fillRect(sx - 2, sy - 70, 4, 70);
+    // 旗子
+    ctx.beginPath();
+    ctx.moveTo(sx + 2, sy - 70);
+    ctx.lineTo(sx + 26, sy - 60);
+    ctx.lineTo(sx + 2, sy - 50);
+    ctx.closePath();
+    ctx.fillStyle = c.activated ? '#46d6a0' : '#7a8290';
+    ctx.fill();
+    if (c.activated) {
+      const t = G.time * 3;
+      ctx.strokeStyle = 'rgba(127,231,196,' + (0.35 + 0.3 * Math.sin(t)) + ')';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(sx, sy - 24, 15 + 3 * Math.sin(t), 0, Math.PI * 2); ctx.stroke();
+    } else {
+      ctx.fillStyle = 'rgba(150,160,175,0.85)';
+      ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('存档点', sx + 14, sy - 78);
+    }
   }
 }
 function drawCoins() {
