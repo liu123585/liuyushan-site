@@ -704,6 +704,62 @@ const LEVELS = [
 ];
 
 function coinRow(x, y, n, gap) { const a = []; for (let i = 0; i < n; i++) a.push([x + i * gap, y]); return a; }
+const POWER_POOL = [
+  { kind: 'rapid', name: '连发', icon: 'R', col: '#ffb04a' },
+  { kind: 'shield', name: '护盾', icon: 'S', col: '#5fd0ff' },
+  { kind: 'magnet', name: '吸币', icon: 'M', col: '#b06bff' },
+  { kind: 'heal', name: '回血', icon: '+', col: '#ff6b8b' },
+  { kind: 'bomb', name: '清屏', icon: 'B', col: '#ffd166' },
+];
+const CRATE_POOL = ['hmg', 'shotgun', 'rocket', 'laser'];
+function seededRng(seed) { let s = (seed >>> 0) || 1; return function () { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; }
+// 程序化丰富每关：补充悬空平台/星币/道具/箱子/宝箱/尖刺/弹跳/存档点（确定性种子，复活时一致不卡关）
+function enrichStage(G, def, n) {
+  const rng = seededRng(((n + 1) * 2654435761) >>> 0);
+  const w = def.w;
+  const grounds = G.level.platforms.filter(pl => pl.h > 60);
+  const groundY = grounds.length ? Math.max.apply(null, grounds.map(pl => pl.y)) : 480;
+  const clampX = (x) => clamp(x, 360, w - 200);
+  const nPlat = Math.max(2, Math.min(9, Math.round((w - 800) / 620)));
+  for (let i = 0; i < nPlat; i++) {
+    const frac = (i + 0.5) / nPlat;
+    let x = 650 + frac * (w - 1300) + (rng() - 0.5) * 150;
+    x = clamp(x, 320, w - 240);
+    const y = Math.round(130 + rng() * 300);
+    const pw = Math.round(100 + rng() * 80);
+    const move = rng() < 0.22 ? { axis: 'y', range: 40 + rng() * 50, speed: 0.9 + rng() * 0.5 } : null;
+    const pl = { x: Math.round(x), y, w: pw, h: 22, move };
+    if (move) { pl.baseX = pl.x; pl.baseY = pl.y; pl.ox = 0; pl.oy = 0; pl.dx = 0; pl.dy = 0; pl.mt = rand(0, 6); }
+    G.level.platforms.push(pl);
+    const cn = Math.max(2, Math.floor(pw / 42));
+    for (let k = 0; k < cn; k++) G.coins.push({ x: pl.x + 14 + k * 38, y: pl.y - 26, w: 18, h: 18, t: rand(0, 6), got: false });
+    const r2 = rng();
+    if (r2 < 0.34) {
+      const sp = POWER_POOL[(n + i) % POWER_POOL.length];
+      G.powers.push({ x: pl.x + pl.w / 2 - 13, y: pl.y - 34, w: 26, h: 26, kind: sp.kind, name: sp.name, icon: sp.icon, col: sp.col, got: false, t: rand(0, 6) });
+    } else if (r2 < 0.5) {
+      const ck = CRATE_POOL[(n + i) % CRATE_POOL.length];
+      G.crates.push({ x: pl.x + pl.w / 2 - 14, y: pl.y - 28, w: 28, h: 24, kind: ck, t: rand(0, 6), got: false });
+    } else if (r2 < 0.6) {
+      G.chests.push({ x: pl.x + pl.w / 2 - 15, y: pl.y - 28, w: 30, h: 26, opened: false, t: rand(0, 6) });
+    }
+    if (rng() < 0.4) G.enemies.push(makeEnemy({ type: 'bee', x: pl.x + pl.w / 2, y: pl.y - 90 }));
+    if (rng() < 0.3) G.stars.push({ x: pl.x + pl.w / 2, y: pl.y - 60, w: 22, h: 22, t: rand(0, 6), got: false });
+  }
+  if (!def.boss) {
+    const spikeN = Math.min(4, Math.max(1, Math.round((w - 1000) / 1400)));
+    for (let i = 0; i < spikeN; i++) {
+      const sx = clampX(500 + rng() * (w - 1000));
+      G.spikes.push({ x: Math.round(sx), y: groundY - 18, w: 40 + Math.round(rng() * 30) });
+    }
+    const bounceN = 1 + Math.round(rng() * 1.4);
+    for (let i = 0; i < bounceN; i++) {
+      const bx = clampX(700 + rng() * (w - 1100));
+      G.bounces.push({ x: Math.round(bx), y: groundY - 16, w: 70, h: 14, cool: 0, t: rand(0, 6) });
+    }
+    if (w > 2600) G.checkpoints.push({ x: Math.round(w * 0.65), y: 420, activated: false });
+  }
+}
 
 // ---------- 升级 ----------
 const UPGRADES = [
@@ -899,6 +955,7 @@ function startStage(n, spawnOverride, opts) {
     else cps = [ { x: Math.round(def.w * 0.45), y: 420 }, { x: Math.round(def.w * 0.8), y: 420 } ];
   }
   G.checkpoints = cps.map(c => ({ x: c.x, y: c.y, activated: false }));
+  enrichStage(G, def, n);
   for (const c of G.checkpoints) if (Math.abs(c.x - spawn[0]) < 60) c.activated = true;
   G.checkpoint = { x: spawn[0], y: spawn[1], activated: true };
   G.cam.x = clamp(p.x - VW / 2, 0, G.level.w - VW); G.cam.y = 0;
@@ -1664,14 +1721,13 @@ function drawTitleBg() {
 }
 
 const THEMES = {
-  meadow: { sky: ['#bfe8ff', '#e8fff0'], hill: ['#a8e6a1', '#cdeeb0'], cloud: 'rgba(255,255,255,.9)' },
-  cave:   { sky: ['#3a4d8c', '#7a6fd0'], hill: ['#5b6fc7', '#8a7fe0'], cloud: 'rgba(255,255,255,.5)' },
-  sky:    { sky: ['#a6d8ff', '#ffe6f7'], hill: ['#ffd6f0', '#cdeaff'], cloud: 'rgba(255,255,255,.95)' },
-  boss:   { sky: ['#5a3d7a', '#ff9ec7'], hill: ['#7b5aa6', '#a06bc7'], cloud: 'rgba(255,220,245,.45)' },
-  // 新增关卡主题
-  crystal: { sky: ['#d6f4ff', '#efe6ff'], hill: ['#b8d8ff', '#dcd0ff'], cloud: 'rgba(255,255,255,.85)' },
-  sunset:  { sky: ['#ffd9a0', '#ffc2da'], hill: ['#ffb37a', '#ff9ec0'], cloud: 'rgba(255,245,235,.9)' },
-  forest:  { sky: ['#cdeecd', '#f0ffe8'], hill: ['#8fd48a', '#bfe8a8'], cloud: 'rgba(255,255,255,.85)' },
+  meadow:  { sky: ['#7fd4ff', '#b6ffce'], hill: ['#54e08a', '#a6f57a'], cloud: 'rgba(255,255,255,.92)', plat: ['#8dff9e', '#23b85f'] },
+  cave:    { sky: ['#5466ff', '#b06bff'], hill: ['#7b8cff', '#b07bff'], cloud: 'rgba(230,225,255,.6)',  plat: ['#b59bff', '#6a3fd6'] },
+  sky:     { sky: ['#5fc2ff', '#ff9ee0'], hill: ['#ff9ee0', '#8fd4ff'], cloud: 'rgba(255,255,255,.95)', plat: ['#bfe6ff', '#4fa8ff'] },
+  boss:    { sky: ['#6a3dff', '#ff5bb8'], hill: ['#9b5bff', '#ff5bb0'], cloud: 'rgba(255,220,245,.5)',  plat: ['#ff9bdd', '#a83fb5'] },
+  crystal: { sky: ['#4fe0ff', '#c08bff'], hill: ['#7fd0ff', '#c79bff'], cloud: 'rgba(255,255,255,.88)', plat: ['#aef0ff', '#3fb8e0'] },
+  sunset:  { sky: ['#ff944d', '#ff5bb8'], hill: ['#ff8a5b', '#ff5bb0'], cloud: 'rgba(255,245,235,.92)',plat: ['#ffc09a', '#ff5b8a'] },
+  forest:  { sky: ['#7fe87f', '#d6ffb0'], hill: ['#33d06a', '#9bf07a'], cloud: 'rgba(255,255,255,.88)', plat: ['#9bf07a', '#1fae5a'] },
 };
 function drawBackground() {
   const t = THEMES[G.level.theme] || THEMES.meadow;
@@ -1693,12 +1749,14 @@ function drawBackground() {
   }
 }
 function drawPlatforms() {
+  const t = THEMES[G.level.theme] || THEMES.meadow;
+  const pc = t.plat || ['#cfe6ff', '#9cc2ec'];
   for (const p of G.level.platforms) {
     if (p.y > VH + 4) continue;
     const moving = !!p.move;
     const grd = ctx.createLinearGradient(0, p.y, 0, p.y + p.h);
-    grd.addColorStop(0, moving ? '#bfe9ff' : '#cfe6ff');
-    grd.addColorStop(1, moving ? '#7fb6ef' : '#9cc2ec');
+    grd.addColorStop(0, pc[0]);
+    grd.addColorStop(1, pc[1]);
     ctx.fillStyle = grd; rr(ctx, p.x, p.y, p.w, p.h, 10); ctx.fill();
     ctx.fillStyle = moving ? 'rgba(150,232,255,.95)' : 'rgba(255,255,255,.92)';
     rr(ctx, p.x, p.y - 5, p.w, 12, 8); ctx.fill();
@@ -1715,13 +1773,13 @@ function drawPlatforms() {
 }
 function drawSpikes() {
   for (const s of G.level.spikes || []) {
-    ctx.fillStyle = '#9aa3b5';
+    ctx.fillStyle = '#ff8a8a';
     const n = Math.floor(s.w / 16);
     for (let i = 0; i < n; i++) {
       const x = s.x + i * 16;
       ctx.beginPath(); ctx.moveTo(x, s.y + 18); ctx.lineTo(x + 8, s.y); ctx.lineTo(x + 16, s.y + 18); ctx.closePath(); ctx.fill();
     }
-    ctx.fillStyle = '#7d869b'; ctx.fillRect(s.x, s.y + 16, s.w, 4);
+    ctx.fillStyle = '#e06b6b'; ctx.fillRect(s.x, s.y + 16, s.w, 4);
   }
 }
 function drawBounces() {
