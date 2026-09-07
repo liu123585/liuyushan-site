@@ -572,6 +572,173 @@ const LEVELS = [
     crates: [ { x: 720, y: 300, kind: 'hmg' }, { x: 700, y: 170, kind: 'rocket' } ],
     goal: null,
   }),
+  // 第九关 · 熔岩裂谷（敌人密布 + 大量移动平台 + 传送门 + 钥匙门）
+  L({
+    name: '第九关 · 熔岩裂谷', theme: 'sunset', song: 7, w: 4400,
+    platforms: [
+      { x: 0, y: 480, w: 480, h: 90 },
+      { x: 640, y: 480, w: 300, h: 90 },
+      { x: 1080, y: 480, w: 300, h: 90 },
+      { x: 1520, y: 480, w: 300, h: 90 },
+      { x: 1960, y: 480, w: 300, h: 90 },
+      { x: 2400, y: 480, w: 300, h: 90 },
+      { x: 2840, y: 480, w: 300, h: 90 },
+      { x: 3280, y: 480, w: 300, h: 90 },
+      { x: 3720, y: 480, w: 680, h: 90 },
+      { x: 360, y: 360, w: 160, h: 22, move: { axis: 'x', range: 120, speed: 1.2 } },
+      { x: 800, y: 340, w: 160, h: 22, move: { axis: 'y', range: 90, speed: 1.1 } },
+      { x: 1240, y: 330, w: 160, h: 22, move: { axis: 'x', range: 130, speed: 1.3 } },
+      { x: 1680, y: 320, w: 160, h: 22, move: { axis: 'y', range: 100, speed: 1.2 } },
+      { x: 2120, y: 320, w: 160, h: 22, move: { axis: 'x', range: 120, speed: 1.35 } },
+      { x: 2560, y: 330, w: 160, h: 22, move: { axis: 'y', range: 90, speed: 1.3 } },
+      { x: 3000, y: 330, w: 160, h: 22, move: { axis: 'x', range: 130, speed: 1.4 } },
+      { x: 3440, y: 320, w: 160, h: 22, move: { axis: 'y', range: 100, speed: 1.35 } },
+      { x: 1300, y: 200, w: 180, h: 22 },
+      { x: 2200, y: 180, w: 180, h: 22 },
+      { x: 3100, y: 200, w: 180, h: 22 },
+    ],
+    enemies: [
+      { type: 'slime', x: 300, y: 444 },
+      { type: 'turret', x: 700, y: 444 },
+      { type: 'bee', x: 900, y: 230 },
+      { type: 'roller', x: 1150, y: 446 },
+      { type: 'turret', x: 1560, y: 444 },
+      { type: 'bee', x: 1750, y: 220 },
+      { type: 'slime', x: 2000, y: 444 },
+      { type: 'turret', x: 2400, y: 444 },
+      { type: 'bee', x: 2600, y: 230 },
+      { type: 'roller', x: 2900, y: 446 },
+      { type: 'turret', x: 3300, y: 444 },
+      { type: 'bee', x: 3500, y: 220 },
+      { type: 'slime', x: 3800, y: 444 },
+      { type: 'turret', x: 4000, y: 444 },
+      { type: 'bee', x: 4200, y: 220 },
+      { type: 'roller', x: 4300, y: 446 },
+    ],
+    coins: coinRow(300, 450, 4, 70).concat(coinRow(1340, 170, 3, 55), coinRow(2240, 150, 3, 55), coinRow(3140, 170, 3, 55), coinRow(820, 300, 3, 55), coinRow(1700, 280, 3, 55), coinRow(2580, 290, 3, 55), coinRow(3460, 280, 3, 55)),
+    stars: [ [1340, 170], [2240, 150], [3140, 170] ],
+    spikes: [ { x: 560, y: 462, w: 80 }, { x: 1000, y: 462, w: 80 }, { x: 1440, y: 462, w: 80 }, { x: 1880, y: 462, w: 80 }, { x: 2320, y: 462, w: 80 }, { x: 2760, y: 462, w: 80 }, { x: 3200, y: 462, w: 80 } ],
+    bounces: [ { x: 450, y: 462, w: 70, h: 14 }, { x: 1850, y: 462, w: 70, h: 14 }, { x: 3300, y: 462, w: 70, h: 14 } ],
+    powers: [ { x: 1300, y: 160, w: 26, h: 26, kind: 'bomb', name: '清屏弹', icon: 'B', col: '#ffb547' }, { x: 3100, y: 160, w: 26, h: 26, kind: 'shield', name: '护盾', icon: 'S', col: '#5b9bff' } ],
+    crates: [ { x: 800, y: 300, kind: 'hmg' }, { x: 2200, y: 140, kind: 'rocket' }, { x: 3100, y: 160, kind: 'laser' } ],
+    portals: [ { ax: 1240, ay: 298, bx: 3000, by: 298 } ],
+    keys: [ { x: 1300, y: 160 } ],
+    gates: [ { x: 3080, y: 360, w: 26, h: 120 } ],
+    chests: [ { x: 1300, y: 174 }, { x: 2200, y: 154 } ],
+    signs: [ { x: 1240, y: 290, text: '传送门 + 钥匙门\n层层设防', arrow: 'down' } ],
+    goal: { x: 4330, y: 380 },
+  }),
+  // 第十关 · 暗影巨兽·再临（BOSS，血量更高）
+  L({
+    name: '第十关 · 暗影巨兽·再临', theme: 'boss', song: 11, w: 1800, boss: true, bossHp: 78,
+    platforms: [
+      { x: 0, y: 480, w: 1800, h: 90 },
+      { x: 200, y: 350, w: 220, h: 22 },
+      { x: 1380, y: 350, w: 220, h: 22 },
+      { x: 700, y: 250, w: 280, h: 22 },
+      { x: 360, y: 170, w: 200, h: 22 },
+      { x: 1240, y: 170, w: 200, h: 22 },
+    ],
+    enemies: [
+      { type: 'slime', x: 400, y: 444 },
+      { type: 'bee', x: 900, y: 220 },
+      { type: 'slime', x: 1400, y: 444 },
+    ],
+    coins: coinRow(260, 320, 3, 70).concat(coinRow(1440, 320, 3, 70), coinRow(800, 220, 3, 70), coinRow(420, 140, 3, 70), coinRow(1300, 140, 3, 70)),
+    stars: [ [800, 220], [440, 140], [1320, 140] ],
+    spikes: [],
+    bounces: [ { x: 800, y: 462, w: 70, h: 14 } ],
+    powers: [ { x: 220, y: 320, w: 26, h: 26, kind: 'rapid', name: '连发', icon: 'R', col: '#ffb04a' }, { x: 1380, y: 320, w: 26, h: 26, kind: 'heal', name: '回血', icon: 'H', col: '#ff6b8b' } ],
+    crates: [ { x: 800, y: 300, kind: 'hmg' }, { x: 800, y: 180, kind: 'rocket' } ],
+    goal: null,
+  }),
+  // 第十一关 · 星海迷城（超密机关 + 海量敌人 + 多传送门 + 双钥匙门）
+  L({
+    name: '第十一关 · 星海迷城', theme: 'crystal', song: 5, w: 4800,
+    platforms: [
+      { x: 0, y: 480, w: 460, h: 90 },
+      { x: 620, y: 480, w: 280, h: 90 },
+      { x: 1040, y: 480, w: 280, h: 90 },
+      { x: 1460, y: 480, w: 280, h: 90 },
+      { x: 1880, y: 480, w: 280, h: 90 },
+      { x: 2300, y: 480, w: 280, h: 90 },
+      { x: 2720, y: 480, w: 280, h: 90 },
+      { x: 3140, y: 480, w: 280, h: 90 },
+      { x: 3560, y: 480, w: 280, h: 90 },
+      { x: 3980, y: 480, w: 280, h: 90 },
+      { x: 4400, y: 480, w: 400, h: 90 },
+      { x: 360, y: 360, w: 160, h: 22, move: { axis: 'x', range: 130, speed: 1.4 } },
+      { x: 800, y: 340, w: 160, h: 22, move: { axis: 'y', range: 100, speed: 1.3 } },
+      { x: 1240, y: 330, w: 160, h: 22, move: { axis: 'x', range: 140, speed: 1.5 } },
+      { x: 1680, y: 320, w: 160, h: 22, move: { axis: 'y', range: 110, speed: 1.4 } },
+      { x: 2120, y: 320, w: 160, h: 22, move: { axis: 'x', range: 130, speed: 1.55 } },
+      { x: 2560, y: 330, w: 160, h: 22, move: { axis: 'y', range: 100, speed: 1.5 } },
+      { x: 3000, y: 330, w: 160, h: 22, move: { axis: 'x', range: 140, speed: 1.6 } },
+      { x: 3440, y: 320, w: 160, h: 22, move: { axis: 'y', range: 110, speed: 1.55 } },
+      { x: 3880, y: 330, w: 160, h: 22, move: { axis: 'x', range: 130, speed: 1.6 } },
+      { x: 4320, y: 320, w: 160, h: 22, move: { axis: 'y', range: 100, speed: 1.5 } },
+      { x: 1400, y: 200, w: 180, h: 22 },
+      { x: 2400, y: 180, w: 180, h: 22 },
+      { x: 3400, y: 200, w: 180, h: 22 },
+      { x: 4300, y: 200, w: 180, h: 22 },
+    ],
+    enemies: [
+      { type: 'slime', x: 300, y: 444 },
+      { type: 'turret', x: 680, y: 444 },
+      { type: 'bee', x: 900, y: 230 },
+      { type: 'roller', x: 1100, y: 446 },
+      { type: 'turret', x: 1500, y: 444 },
+      { type: 'bee', x: 1700, y: 220 },
+      { type: 'slime', x: 1950, y: 444 },
+      { type: 'turret', x: 2350, y: 444 },
+      { type: 'bee', x: 2550, y: 230 },
+      { type: 'roller', x: 2800, y: 446 },
+      { type: 'turret', x: 3200, y: 444 },
+      { type: 'bee', x: 3400, y: 220 },
+      { type: 'slime', x: 3650, y: 444 },
+      { type: 'turret', x: 4050, y: 444 },
+      { type: 'bee', x: 4250, y: 220 },
+      { type: 'roller', x: 4500, y: 446 },
+      { type: 'bee', x: 4600, y: 220 },
+      { type: 'turret', x: 4700, y: 444 },
+    ],
+    coins: coinRow(300, 450, 4, 70).concat(coinRow(1440, 170, 3, 55), coinRow(2440, 150, 3, 55), coinRow(3440, 170, 3, 55), coinRow(4340, 170, 3, 55), coinRow(820, 300, 3, 55), coinRow(1700, 280, 3, 55), coinRow(2580, 290, 3, 55), coinRow(3460, 280, 3, 55), coinRow(4400, 280, 3, 55)),
+    stars: [ [1440, 170], [2440, 150], [3440, 170], [4340, 170] ],
+    spikes: [ { x: 520, y: 462, w: 80 }, { x: 940, y: 462, w: 80 }, { x: 1360, y: 462, w: 80 }, { x: 1780, y: 462, w: 80 }, { x: 2200, y: 462, w: 80 }, { x: 2620, y: 462, w: 80 }, { x: 3040, y: 462, w: 80 }, { x: 3460, y: 462, w: 80 }, { x: 3880, y: 462, w: 80 }, { x: 4300, y: 462, w: 80 } ],
+    bounces: [ { x: 400, y: 462, w: 70, h: 14 }, { x: 1600, y: 462, w: 70, h: 14 }, { x: 2800, y: 462, w: 70, h: 14 }, { x: 4000, y: 462, w: 70, h: 14 } ],
+    powers: [ { x: 1400, y: 160, w: 26, h: 26, kind: 'bomb', name: '清屏弹', icon: 'B', col: '#ffb547' }, { x: 3400, y: 160, w: 26, h: 26, kind: 'magnet', name: '磁铁', icon: 'M', col: '#46d6c4' }, { x: 4340, y: 160, w: 26, h: 26, kind: 'heal', name: '回血', icon: 'H', col: '#ff6b8b' } ],
+    crates: [ { x: 800, y: 300, kind: 'hmg' }, { x: 2400, y: 140, kind: 'rocket' }, { x: 3440, y: 160, kind: 'laser' }, { x: 4340, y: 160, kind: 'shotgun' } ],
+    portals: [ { ax: 1240, ay: 298, bx: 3000, by: 298 }, { ax: 3440, ay: 168, bx: 4320, by: 168 } ],
+    keys: [ { x: 1400, y: 160 }, { x: 3400, y: 160 } ],
+    gates: [ { x: 3080, y: 360, w: 26, h: 120 }, { x: 4280, y: 360, w: 26, h: 120 } ],
+    chests: [ { x: 1400, y: 174 }, { x: 2400, y: 154 }, { x: 3400, y: 174 }, { x: 4340, y: 174 } ],
+    signs: [ { x: 1240, y: 290, text: '双钥匙门！\n集齐才能通关', arrow: 'down' } ],
+    goal: { x: 4730, y: 380 },
+  }),
+  // 第十二关 · 暗影巨兽·真身（最终 BOSS，三阶段弹幕狂潮）
+  L({
+    name: '第十二关 · 暗影巨兽·真身', theme: 'boss', song: 12, w: 1900, boss: true, bossHp: 100,
+    platforms: [
+      { x: 0, y: 480, w: 1900, h: 90 },
+      { x: 200, y: 350, w: 240, h: 22 },
+      { x: 1460, y: 350, w: 240, h: 22 },
+      { x: 720, y: 250, w: 320, h: 22 },
+      { x: 360, y: 160, w: 220, h: 22 },
+      { x: 1320, y: 160, w: 220, h: 22 },
+    ],
+    enemies: [
+      { type: 'slime', x: 400, y: 444 },
+      { type: 'bee', x: 900, y: 220 },
+      { type: 'turret', x: 1400, y: 444 },
+    ],
+    coins: coinRow(280, 320, 3, 70).concat(coinRow(1520, 320, 3, 70), coinRow(820, 220, 3, 70), coinRow(440, 130, 3, 70), coinRow(1400, 130, 3, 70)),
+    stars: [ [820, 220], [460, 130], [1420, 130] ],
+    spikes: [],
+    bounces: [ { x: 820, y: 462, w: 70, h: 14 } ],
+    powers: [ { x: 240, y: 320, w: 26, h: 26, kind: 'rapid', name: '连发', icon: 'R', col: '#ffb04a' }, { x: 1460, y: 320, w: 26, h: 26, kind: 'heal', name: '回血', icon: 'H', col: '#ff6b8b' }, { x: 820, y: 160, w: 26, h: 26, kind: 'shield', name: '护盾', icon: 'S', col: '#5b9bff' } ],
+    crates: [ { x: 820, y: 300, kind: 'laser' }, { x: 820, y: 180, kind: 'rocket' } ],
+    goal: null,
+  }),
 ];
 
 function coinRow(x, y, n, gap) { const a = []; for (let i = 0; i < n; i++) a.push([x + i * gap, y]); return a; }
@@ -689,10 +856,11 @@ function makeEnemy(spec) {
   if (spec.type === 'roller') return Object.assign(base, { type: 'roller', w: 34, h: 34, hp: 3, speed: 150, dir: Math.random() < 0.5 ? -1 : 1, dmgT: 0, spin: 0 });
   return base;
 }
-function makeBoss() {
+function makeBoss(spec) {
+  const hp = (spec && spec.bossHp) || 55;
   return {
     type: 'boss', x: 680, y: 200, w: 130, h: 130, vx: 0, vy: 0, onGround: false,
-    hp: 55, maxHp: 55, flash: 0, invuln: 0, phase: 1, timer: 2, action: 'idle',
+    hp, maxHp: hp, flash: 0, invuln: 0, phase: 1, timer: 2, action: 'idle',
     landed: false, wasAir: false, dmgT: 0, id: 'boss', hopT: 0,
   };
 }
@@ -718,6 +886,17 @@ function startStage(n) {
   G.echo = { recording: false, recT: 0, frames: [], play: null, cool: 0 };
 
   G.enemies = def.enemies.map(makeEnemy);
+  // 随关卡递增的“增援”：越后面的关卡敌人越多（第1关几乎不变，后期大幅增多）
+  if (!def.boss) {
+    const extra = Math.min(16, Math.round(G.stage * 1.6));
+    const pool = ['slime', 'bee', 'turret', 'roller'];
+    for (let i = 0; i < extra; i++) {
+      const ty = pool[(Math.random() * pool.length) | 0];
+      const x = 420 + Math.random() * Math.max(200, def.w - 840);
+      const y = ty === 'bee' ? 110 + Math.random() * 200 : 444;
+      G.enemies.push(makeEnemy({ type: ty, x, y }));
+    }
+  }
   G.projectiles = []; G.particles = []; G.floats = [];
   G.coins = def.coins.map(c => ({ x: c[0], y: c[1], w: 18, h: 18, t: rand(0, 6), got: false }));
   G.stars = def.stars.map(c => ({ x: c[0], y: c[1], w: 22, h: 22, t: rand(0, 6), got: false }));
@@ -731,7 +910,7 @@ function startStage(n) {
   G.keyItems = (def.keys || []).map(o => ({ x: o.x, y: o.y, w: 22, h: 22, t: rand(0, 6), got: false }));
   G.gates = (def.gates || []).map(o => ({ x: o.x, y: o.y, w: o.w || 26, h: o.h || 120, req: o.req || 1, open: false }));
   G.keys = 0;
-  G.boss = def.boss ? makeBoss() : null;
+  G.boss = def.boss ? makeBoss(def) : null;
   G.cam.x = clamp(p.x - VW / 2, 0, G.level.w - VW); G.cam.y = 0;
   G.shake = 0; G.hitstop = 0; G.combo = 0; G.comboT = 0;
   ensureAudio();
@@ -1315,6 +1494,12 @@ function applyPower(p, kind) {
   if (kind === 'rapid') p.rapidT = 9;
   else if (kind === 'shield') p.shieldT = 9;
   else if (kind === 'magnet') p.magnetT = 9;
+  else if (kind === 'heal') { p.hp = Math.min(p.maxHp, p.hp + 3); addFloat(p.x, p.y - 30, '+3❤', '#ff6b8b'); }
+  else if (kind === 'bomb') { // 清屏弹：炸飞当前关卡所有普通敌人
+    for (const e of G.enemies) { if (!e.dead && e.type !== 'boss') { e.dead = true; burst(e.x + e.w / 2, e.y + e.h / 2, '#ffd166', 14); } }
+    G.shake = 8; if (SFX.boom) SFX.boom(); else SFX.hit();
+    addFloat(p.x, p.y - 30, '清屏!', '#ffd166');
+  }
 }
 
 // ---------- 终点 ----------
