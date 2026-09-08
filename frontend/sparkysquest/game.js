@@ -27,24 +27,43 @@ function rr(ctx, x, y, w, h, r) {
 // ---------- 画布 ----------
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
-function fitCanvas() {
-  const vw = window.innerWidth;
-  let vh = window.innerHeight;
-  // 视觉视口高度不含 Safari 地址栏/系统条，横屏下最准
+const wrap = document.getElementById('wrap');
+function viewportH() {
+  let h = window.innerHeight;
+  // 视觉视口高度不含 Safari 地址栏/标签栏/系统条，横屏下最准
   if (window.visualViewport && window.visualViewport.height) {
-    vh = Math.min(vh, window.visualViewport.height);
+    h = Math.min(h, window.visualViewport.height);
   }
-  // 上下各留 2% 余量，避免画面被地址栏 / Home 指示条贴边遮挡
-  const padY = Math.round(vh * 0.02);
-  const availH = vh - padY * 2;
-  let w = Math.min(vw, availH * 16 / 9);
+  return h;
+}
+function fitLayout() {
+  if (!wrap) return;
+  const realH = viewportH();
+  // 接管 #wrap 高度，让它严格等于真实可视高度，而不是不靠谱的 CSS svh
+  wrap.style.height = Math.floor(realH) + 'px';
+  // 按钮尺寸/间距也按真实高度重算，避免 CSS vh 参考 layout viewport 导致按钮太大/溢出
+  const clamp = (v, min, max) => Math.max(min, Math.min(max, Math.round(v)));
+  document.documentElement.style.setProperty('--pd', clamp(realH * 0.03, 10, 26) + 'px');
+  document.documentElement.style.setProperty('--gp', clamp(realH * 0.02, 6, 18) + 'px');
+  document.documentElement.style.setProperty('--bs', clamp(realH * 0.17, 52, 96) + 'px');
+  document.documentElement.style.setProperty('--bj', clamp(realH * 0.21, 62, 116) + 'px');
+}
+function fitCanvas() {
+  if (!wrap) return;
+  const availW = wrap.clientWidth;
+  const availH = wrap.clientHeight;
+  // 上下各留 1% 余量，避免贴边
+  const padY = Math.round(availH * 0.01);
+  const maxH = availH - padY * 2;
+  let w = Math.min(availW, maxH * 16 / 9);
   let h = w * 9 / 16;
   canvas.style.width = Math.floor(w) + 'px';
   canvas.style.height = Math.floor(h) + 'px';
 }
 function resize() {
-  // 内部分辨率固定；显示尺寸用 JS 精确算像素，兼容各机型、避开 vh/dvh/svh 在 Safari 的差异
+  // 内部分辨率固定；显示尺寸与布局全部交给 JS，绕开 Safari 各种 vh 单位差异
   canvas.width = VW; canvas.height = VH;
+  fitLayout();
   fitCanvas();
 }
 window.addEventListener('resize', resize);
