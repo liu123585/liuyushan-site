@@ -6,6 +6,7 @@
 
 // ---------- 基础工具 ----------
 const VW = 960, VH = 540;
+const SPIKE_H = 32; // 地刺高度（加大，视觉更醒目、判定更清晰）
 const clamp = (v, a, b) => v < a ? a : (v > b ? b : v);
 const lerp = (a, b, t) => a + (b - a) * t;
 const rand = (a, b) => a + Math.random() * (b - a);
@@ -747,7 +748,7 @@ function enrichStage(G, def, n) {
     const spikeN = Math.min(4, Math.max(1, Math.round((w - 1000) / 1400)));
     for (let i = 0; i < spikeN; i++) {
       const sx = clampX(500 + rng() * (w - 1000));
-      G.spikes.push({ x: Math.round(sx), y: groundY - 18, w: 40 + Math.round(rng() * 30) });
+      G.spikes.push({ x: Math.round(sx), y: groundY - SPIKE_H, w: 90 + Math.round(rng() * 60), h: SPIKE_H });
     }
     const bounceN = 1 + Math.round(rng() * 1.4);
     for (let i = 0; i < bounceN; i++) {
@@ -756,6 +757,52 @@ function enrichStage(G, def, n) {
     }
     if (w > 2600) G.checkpoints.push({ x: Math.round(w * 0.65), y: 420, activated: false });
   }
+}
+
+// 所有可拾取物都必须「站在平台上」：吸附到最近平台顶面；若附近确实没有平台，
+// 就在它脚下就地生成一个支撑小平台，杜绝物品凭空悬在空中。
+function supportPickups() {
+  const plats = G.level.platforms;
+  // 找能托住它的台面：优先物品「下方」的平台，其次才是最近的
+  const findTop = (cx, y) => {
+    let best = null, bd = 1e9;
+    for (const pl of plats) {
+      if (cx < pl.x - 24 || cx > pl.x + pl.w + 24) continue;
+      const below = pl.y >= y - 12;
+      const d = Math.abs(pl.y - y) + (below ? 0 : 500);
+      if (d < bd) { bd = d; best = pl; }
+    }
+    return best;
+  };
+  const overlapped = (x, y, w) => {
+    for (const pl of plats) {
+      if (x + w > pl.x - 30 && x < pl.x + pl.w + 30 && Math.abs(pl.y - y) < 40) return true;
+    }
+    return false;
+  };
+  const fix = (arr, ph) => {
+    if (!arr) return;
+    for (const it of arr) {
+      const h = ph || it.h || 22;
+      const cx = it.x + (it.w || 20) / 2;
+      const pl = findTop(cx, it.y);
+      if (pl) { it.y = Math.round(pl.y - h - 6); continue; }
+      // 没有可依附的平台 → 生成一个支撑小平台托住它
+      const pw = 58, phh = 20;
+      const nx = Math.round(cx - pw / 2), ny = Math.round(it.y + h + 8);
+      if (overlapped(nx, ny, pw)) { // 已有相近台面就直接用它，避免堆平台
+        const pl2 = findTop(cx, ny);
+        if (pl2) { it.y = Math.round(pl2.y - h - 6); continue; }
+      }
+      plats.push({ x: nx, y: ny, w: pw, h: phh });
+      it.y = Math.round(ny - h - 6);
+    }
+  };
+  fix(G.coins, 18);
+  fix(G.stars, 22);
+  fix(G.powers, 26);
+  fix(G.crates, 24);
+  fix(G.chests, 26);
 }
 
 // ---------- 升级 ----------
@@ -952,8 +999,13 @@ function startStage(n, spawnOverride, opts) {
     else cps = [ { x: Math.round(def.w * 0.45), y: 420 }, { x: Math.round(def.w * 0.8), y: 420 } ];
   }
   G.checkpoints = cps.map(c => ({ x: c.x, y: c.y, activated: false }));
-  G.spikes = []; // enrichStage 会 push 尖刺，必须先初始化
+  // 地刺：先加载关卡自带的（加宽加高，底部仍贴原地面），enrichStage 会再补充
+  G.spikes = (def.spikes || []).map(s => ({
+    x: s.x, y: s.y - (SPIKE_H - 18), w: Math.max(90, Math.round(s.w * 1.3)), h: SPIKE_H,
+  }));
   enrichStage(G, def, n);
+  G.level.spikes = G.spikes; // 统一引用，保证绘制与伤害判定都能读到
+  supportPickups(); // 拾取物一律落到平台顶上，空中不再漂浮食物/道具
   for (const c of G.checkpoints) if (Math.abs(c.x - spawn[0]) < 60) c.activated = true;
   G.checkpoint = { x: spawn[0], y: spawn[1], activated: true };
   G.cam.x = clamp(p.x - VW / 2, 0, G.level.w - VW); G.cam.y = 0;
@@ -1093,7 +1145,7 @@ function updatePlayer(dt) {
 
   // 尖刺伤害
   if (G.level.spikes) for (const s of G.level.spikes) {
-    if (p.invuln <= 0 && aabb(p, { x: s.x, y: s.y, w: s.w, h: 18 })) damagePlayer(1, s.x + s.w / 2);
+    if (p.invuln <= 0 && aabb(p, { x: s.x, y: s.y, w: s.w, h: s.h || SPIKE_H })) damagePlayer(1, s.x + s.w / 2);
   }
 
   // 攻击：合金弹头式按住开火键连发（J / 鼠标左键＝主攻击），见下方 fireWeapon。
@@ -1834,13 +1886,22 @@ function drawPlatforms() {
 }
 function drawSpikes() {
   for (const s of G.level.spikes || []) {
+    const sh = s.h || SPIKE_H;      // 尖刺高度（默认 SPIKE_H，显著加高）
+    const tw = 26;                  // 单个尖刺宽度（加大）
+    const n = Math.max(1, Math.floor(s.w / tw));
     ctx.fillStyle = '#ff8a8a';
-    const n = Math.floor(s.w / 16);
     for (let i = 0; i < n; i++) {
-      const x = s.x + i * 16;
-      ctx.beginPath(); ctx.moveTo(x, s.y + 18); ctx.lineTo(x + 8, s.y); ctx.lineTo(x + 16, s.y + 18); ctx.closePath(); ctx.fill();
+      const x = s.x + i * tw;
+      ctx.beginPath(); ctx.moveTo(x, s.y + sh); ctx.lineTo(x + tw / 2, s.y); ctx.lineTo(x + tw, s.y + sh); ctx.closePath(); ctx.fill();
     }
-    ctx.fillStyle = '#e06b6b'; ctx.fillRect(s.x, s.y + 16, s.w, 4);
+    // 高光与底座，让尖刺更醒目
+    ctx.fillStyle = 'rgba(255,255,255,.45)';
+    for (let i = 0; i < n; i++) {
+      const x = s.x + i * tw;
+      ctx.beginPath(); ctx.moveTo(x + tw / 2, s.y); ctx.lineTo(x + tw / 2 - 4, s.y + sh); ctx.lineTo(x + tw / 2 - 1, s.y + sh); ctx.closePath(); ctx.fill();
+    }
+    ctx.fillStyle = '#c94f4f'; ctx.fillRect(s.x, s.y + sh - 4, s.w, 6);
+    ctx.fillStyle = '#e06b6b'; ctx.fillRect(s.x, s.y + sh - 9, s.w, 5);
   }
 }
 function drawBounces() {
