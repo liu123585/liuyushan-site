@@ -6,10 +6,10 @@
   <title>闪星勇者 Sparky's Quest</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { width: 100%; height: 100%; overflow: hidden; background: #eaf4ff;
+    html, body { width: 100%; height: 100%; height: 100dvh; overflow: hidden; background: #eaf4ff;
       color: #2a3a5e; font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
       touch-action: none; overscroll-behavior: none; -webkit-user-select: none; user-select: none; }
-    #wrap { position: relative; width: 100%; height: 100%; display: flex;
+    #wrap { position: relative; width: 100%; height: 100%; height: 100dvh; display: flex;
       align-items: center; justify-content: center; }
     canvas { display: block; background: #eaf4ff; image-rendering: auto;
       box-shadow: 0 0 60px rgba(120,160,255,.25); border-radius: 6px; touch-action: none;
@@ -86,8 +86,8 @@
     .vol-row input[type=range] { width: 180px; accent-color: #6fb1ff; cursor: pointer; }
     .vol-row span:last-child { min-width: 44px; text-align: left; font-weight: 700; color: #2f6bff; }
 
-    /* 竖屏提示：触摸设备请横屏游玩 */
-    #rotateHint { display: none; position: absolute; inset: 0; z-index: 80; flex-direction: column;
+    /* 竖屏提示：请横屏游玩（JS 控制显示，fixed 全屏覆盖） */
+    #rotateHint { display: none; position: fixed; inset: 0; z-index: 80; flex-direction: column;
       align-items: center; justify-content: center; text-align: center; padding: 24px; gap: 16px;
       background: linear-gradient(135deg, #cfe6ff, #eaf4ff); color: #2a3a5e; }
     #rotateHint .ric { width: 46px; height: 78px; border: 5px solid #2a3a5e; border-radius: 12px;
@@ -97,10 +97,6 @@
     #rotateHint .rt { font-size: 22px; font-weight: 800; letter-spacing: 2px; }
     #rotateHint .rs { font-size: 14px; color: rgba(60,80,120,.75); line-height: 1.9; }
     @keyframes rot { 0%,100% { transform: rotate(-15deg); } 50% { transform: rotate(75deg); } }
-    @media (orientation: portrait) and (pointer: coarse) {
-      #rotateHint { display: flex !important; }
-      #wrap > *:not(#rotateHint) { display: none !important; }
-    }
     @media (max-height: 560px) {
       .title { font-size: 44px; letter-spacing: 6px; }
       .sub { font-size: 13px; margin-bottom: 12px; }
@@ -128,13 +124,6 @@
 <body>
   <div id="wrap">
   <canvas id="canvas"></canvas>
-
-  <!-- 竖屏提示：触摸设备请横屏 -->
-  <div id="rotateHint">
-    <div class="ric"></div>
-    <div class="rt">请横屏游玩</div>
-    <div class="rs">把手机横过来，<br/>获得最棒的横版闯关体验</div>
-  </div>
 
     <!-- 触屏操作按钮（仅手机/触摸设备显示） -->
     <div id="btnLeft"   class="touch-btn">◀</div>
@@ -236,6 +225,29 @@
     </div>
   </div>
 
+  <!-- 竖屏提示：请横屏游玩（由 JS 实时控制，全屏覆盖） -->
+  <div id="rotateHint">
+    <div class="ric"></div>
+    <div class="rt">请横屏游玩</div>
+    <div class="rs">把手机横过来，<br/>获得最棒的横版闯关体验</div>
+  </div>
+
+  <script>
+    (function () {
+      const hint = document.getElementById('rotateHint');
+      function update() {
+        const portrait = window.innerWidth < window.innerHeight;
+        if (portrait) {
+          hint.style.display = 'flex';
+        } else {
+          hint.style.display = 'none';
+        }
+      }
+      update();
+      window.addEventListener('resize', update);
+      window.addEventListener('orientationchange', update);
+    })();
+  </script>
   <script src="game.js"></script>
 </body>
 </html>
