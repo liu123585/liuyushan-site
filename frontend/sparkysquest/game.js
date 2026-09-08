@@ -28,9 +28,14 @@ function rr(ctx, x, y, w, h, r) {
 // ---------- 画布 ----------
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
+// 渲染缩放：内部分辨率按倍率放大，画面更细腻（世界坐标仍按 VW/VH，不影响玩法）
+const RS = Math.min(2, Math.max(1.5, window.devicePixelRatio || 1));
 function resize() {
   // 仅设置内部分辨率；显示尺寸交给 CSS 控制，避免 JS 内联尺寸把游戏画面搞坏
-  canvas.width = VW; canvas.height = VH;
+  canvas.width = Math.round(VW * RS); canvas.height = Math.round(VH * RS);
+  ctx.imageSmoothingEnabled = true;
+  if ('imageSmoothingQuality' in ctx) ctx.imageSmoothingQuality = 'high';
+  ctx.setTransform(RS, 0, 0, RS, 0, 0);
 }
 window.addEventListener('resize', resize);
 resize();
@@ -490,7 +495,7 @@ const LEVELS = [
   }),
   // 第七关 · 星轨高塔（移动平台 + 弹跳板综合挑战）
   L({
-    name: '第七关 · 星轨高塔', theme: 'crystal', song: 10, w: 4200,
+    name: '第七关 · 星轨高塔', theme: 'starway', song: 10, w: 4200,
     platforms: [
       { x: 0, y: 480, w: 4200, h: 90 },
       { x: 560, y: 380, w: 160, h: 22, move: { axis: 'x', range: 100, speed: 1.0 } },
@@ -552,7 +557,7 @@ const LEVELS = [
   }),
   // 第九关 · 熔岩裂谷（敌人密布 + 大量移动平台 + 传送门 + 钥匙门）
   L({
-    name: '第九关 · 熔岩裂谷', theme: 'sunset', song: 7, w: 4400,
+    name: '第九关 · 熔岩裂谷', theme: 'lava', song: 7, w: 4400,
     platforms: [
       { x: 0, y: 480, w: 4400, h: 90 },
       { x: 360, y: 360, w: 160, h: 22, move: { axis: 'x', range: 120, speed: 1.2 } },
@@ -600,7 +605,7 @@ const LEVELS = [
   }),
   // 第十关 · 暗影巨兽·再临（BOSS，血量更高）
   L({
-    name: '第十关 · 暗影巨兽·再临', theme: 'boss', song: 11, w: 1800, boss: true, bossHp: 78,
+    name: '第十关 · 暗影巨兽·再临', theme: 'boss2', song: 11, w: 1800, boss: true, bossHp: 78,
     platforms: [
       { x: 0, y: 480, w: 1800, h: 90 },
       { x: 200, y: 350, w: 220, h: 22 },
@@ -624,7 +629,7 @@ const LEVELS = [
   }),
   // 第十一关 · 星海迷城（超密机关 + 海量敌人 + 多传送门 + 双钥匙门）
   L({
-    name: '第十一关 · 星海迷城', theme: 'crystal', song: 5, w: 4800,
+    name: '第十一关 · 星海迷城', theme: 'starsea', song: 5, w: 4800,
     platforms: [
       { x: 0, y: 480, w: 4800, h: 90 },
       { x: 360, y: 360, w: 160, h: 22, move: { axis: 'x', range: 130, speed: 1.4 } },
@@ -677,7 +682,7 @@ const LEVELS = [
   }),
   // 第十二关 · 暗影巨兽·真身（最终 BOSS，三阶段弹幕狂潮）
   L({
-    name: '第十二关 · 暗影巨兽·真身', theme: 'boss', song: 12, w: 1900, boss: true, bossHp: 100,
+    name: '第十二关 · 暗影巨兽·真身', theme: 'boss3', song: 12, w: 1900, boss: true, bossHp: 100,
     platforms: [
       { x: 0, y: 480, w: 1900, h: 90 },
       { x: 200, y: 350, w: 240, h: 22 },
@@ -1703,6 +1708,7 @@ function frame(now) {
 
 // ---------- 渲染 ----------
 function render() {
+  ctx.setTransform(RS, 0, 0, RS, 0, 0); // 每帧锁定缩放，避免 save/restore 丢失变换
   ctx.clearRect(0, 0, VW, VH);
   if (G.state === 'title' || !G.level) { drawTitleBg(); return; }
   const sh = G.shake;
@@ -1778,6 +1784,15 @@ const THEMES = {
   crystal: { sky: ['#4fe0ff', '#c08bff'], hill: ['#7fd0ff', '#c79bff'], cloud: 'rgba(255,255,255,.88)', plat: ['#aef0ff', '#3fb8e0'], accent: '#7fe0ff', accent2: '#cfeaff' },
   sunset:  { sky: ['#ff944d', '#ff5bb8'], hill: ['#ff8a5b', '#ff5bb0'], cloud: 'rgba(255,245,235,.92)',plat: ['#ffc09a', '#ff5b8a'], accent: '#ff7a3d', accent2: '#ffd166' },
   forest:  { sky: ['#7fe87f', '#d6ffb0'], hill: ['#33d06a', '#9bf07a'], cloud: 'rgba(255,255,255,.88)', plat: ['#9bf07a', '#1fae5a'], accent: '#2fae5a', accent2: '#9bf07a' },
+  // 第七关 · 星轨高塔：深邃夜空 + 金色星轨
+  starway: { sky: ['#0e1745', '#3a2a7a'], hill: ['#1c2a63', '#4a3a9a'], cloud: 'rgba(210,220,255,.5)', plat: ['#6d7bd6', '#2b2f7a'], accent: '#ffd166', accent2: '#8fa8ff' },
+  // 第九关 · 熔岩裂谷：焦黑岩壁 + 橙红熔岩
+  lava:    { sky: ['#2b0d16', '#8f2b1e'], hill: ['#4a1420', '#b03a1e'], cloud: 'rgba(255,190,120,.45)', plat: ['#7a3a2a', '#3a1410'], accent: '#ff7a3d', accent2: '#ffd166' },
+  // 第十一关 · 星海迷城：靛紫星海 + 青色辉光
+  starsea: { sky: ['#0b1030', '#3d1a6b'], hill: ['#171a4d', '#5b2a9a'], cloud: 'rgba(160,220,255,.5)', plat: ['#3fa9c9', '#1d3f8a'], accent: '#7fe0ff', accent2: '#c79bff' },
+  // Boss 变体：再临（血色）/ 真身（深渊）
+  boss2:   { sky: ['#4a0d2a', '#c7245c'], hill: ['#7a1440', '#ff4d7d'], cloud: 'rgba(255,200,220,.45)', plat: ['#ff6fae', '#8a1f4a'], accent: '#ff4d7d', accent2: '#ffd166' },
+  boss3:   { sky: ['#12021f', '#4a0a5e'], hill: ['#2a0640', '#7a1a8f'], cloud: 'rgba(220,180,255,.4)', plat: ['#a05bff', '#3a0a55'], accent: '#c05bff', accent2: '#ff5bb0' },
 };
 function drawBackground() {
   const t = THEMES[G.level.theme] || THEMES.meadow;
@@ -1801,7 +1816,11 @@ function drawBackground() {
 }
 // 主题专属背景装饰（确定性平铺，随相机视差）
 function drawThemeDeco(t) {
-  const th = G.level.theme;
+  const rawTh = G.level.theme;
+  let th = rawTh;
+  // 新主题先复用相近的既有装饰骨架，下面再叠加各自专属元素
+  if (th === 'starway' || th === 'starsea') th = 'sky';
+  else if (th === 'boss2' || th === 'boss3') th = 'boss';
   const W = VW, H = VH;
   const grounds = G.level.platforms.filter(p => p.h > 60);
   const gy = grounds.length ? Math.max.apply(null, grounds.map(p => p.y)) : 480;
@@ -1818,7 +1837,7 @@ function drawThemeDeco(t) {
     ctx.fillStyle = fg; ctx.fillRect(0, H - 170, W, 170);
   } else if (th === 'sky') {
     for (let i = 0; i < 26; i++) { const x = (i * 137 + 40) % (W + 80) - 40; const y = (i * 71 % (H - 120)) + 20; const a = 0.35 + 0.4 * Math.sin(G.time * 2 + i); ctx.fillStyle = 'rgba(255,255,255,' + a.toFixed(2) + ')'; ctx.beginPath(); ctx.arc(x, y, 1.6, 0, 7); ctx.fill(); }
-    drawRainbow(W * 0.5, 150, 90);
+    if (rawTh === 'sky') drawRainbow(W * 0.5, 150, 90); // 彩虹只给真正的云端天梯
   } else if (th === 'boss') {
     let fg = ctx.createRadialGradient(W / 2, H * 0.4, 40, W / 2, H * 0.4, W * 0.8); fg.addColorStop(0, 'rgba(60,10,40,0)'); fg.addColorStop(1, 'rgba(60,10,40,.4)');
     ctx.fillStyle = fg; ctx.fillRect(0, 0, W, H);
@@ -1836,6 +1855,50 @@ function drawThemeDeco(t) {
     for (let i = -1; i < 8; i++) { const x = i * 240 - ((G.cam.x * 0.3) % 240); ctx.fillStyle = 'rgba(20,80,40,.28)'; rr(ctx, x, 0, 46, H, 12); ctx.fill(); }
     for (let i = -1; i < 14; i++) { const x = i * 130 - ((G.cam.x * 0.5) % 130); drawVine(x, 0, 70 + ((i * 41) % 60)); }
     for (let i = 0; i < 10; i++) { const x = (i * 197 % (W + 60)) - 30; const y = (i * 113 % (H - 100)) + 30; let lg = ctx.createRadialGradient(x, y, 2, x, y, 40); lg.addColorStop(0, 'rgba(220,255,180,.18)'); lg.addColorStop(1, 'rgba(220,255,180,0)'); ctx.fillStyle = lg; ctx.beginPath(); ctx.arc(x, y, 40, 0, 7); ctx.fill(); }
+  }
+  // ---- 新主题专属叠加装饰 ----
+  if (rawTh === 'lava') {
+    // 熔岩：地面裂缝透出橙红岩浆光，空中飘着上升火星
+    for (let i = -1; i < 10; i++) {
+      const x = i * 170 - ((G.cam.x * 0.5) % 170);
+      let lg = ctx.createLinearGradient(0, gy - 6, 0, gy + 40);
+      lg.addColorStop(0, 'rgba(255,150,60,.9)'); lg.addColorStop(1, 'rgba(255,60,20,0)');
+      ctx.fillStyle = lg;
+      ctx.beginPath(); ctx.moveTo(x, gy + 2); ctx.lineTo(x + 28, gy + 2); ctx.lineTo(x + 14, gy + 36); ctx.closePath(); ctx.fill();
+    }
+    let hg = ctx.createLinearGradient(0, H - 120, 0, H); hg.addColorStop(0, 'rgba(255,80,20,0)'); hg.addColorStop(1, 'rgba(255,80,20,.28)');
+    ctx.fillStyle = hg; ctx.fillRect(0, H - 120, W, 120);
+    for (let i = 0; i < 16; i++) {
+      const x = ((i * 127 + 30 - G.cam.x * 0.3) % (W + 60) + W + 60) % (W + 60) - 30;
+      const y = H - ((G.time * 40 + i * 37) % (H - 140));
+      ctx.fillStyle = 'rgba(255,190,90,' + (0.25 + 0.35 * Math.abs(Math.sin(G.time * 2 + i))).toFixed(2) + ')';
+      ctx.beginPath(); ctx.arc(x, y, 1.8, 0, 7); ctx.fill();
+    }
+  } else if (rawTh === 'starway') {
+    // 星轨：缓慢旋转的金色同心弧 + 闪烁星点
+    ctx.save(); ctx.translate(W * 0.5, H * 0.62); ctx.rotate(G.time * 0.06);
+    for (let r = 90; r <= 300; r += 70) {
+      ctx.strokeStyle = 'rgba(255,209,102,' + (0.10 + 0.05 * Math.sin(G.time + r)).toFixed(2) + ')';
+      ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 1.4); ctx.stroke();
+    }
+    ctx.restore();
+    for (let i = 0; i < 34; i++) {
+      const x = (i * 113 + 20) % (W + 40) - 20, y = (i * 67 % (H - 80)) + 20;
+      const a = 0.3 + 0.6 * Math.abs(Math.sin(G.time * 2.2 + i));
+      ctx.fillStyle = 'rgba(255,225,150,' + a.toFixed(2) + ')'; ctx.beginPath(); ctx.arc(x, y, 1.7, 0, 7); ctx.fill();
+    }
+  } else if (rawTh === 'starsea') {
+    // 星海：青紫星云 + 横向流动的星点
+    for (let i = 0; i < 5; i++) {
+      const x = ((i * 220 - G.cam.x * 0.12) % (W + 200) + W + 200) % (W + 200) - 100, y = 120 + (i * 73 % 180);
+      let ng = ctx.createRadialGradient(x, y, 4, x, y, 130); ng.addColorStop(0, 'rgba(120,220,255,.16)'); ng.addColorStop(1, 'rgba(120,220,255,0)');
+      ctx.fillStyle = ng; ctx.beginPath(); ctx.arc(x, y, 130, 0, 7); ctx.fill();
+    }
+    for (let i = 0; i < 40; i++) {
+      const x = ((i * 97 + G.time * 12) % (W + 40) + W + 40) % (W + 40) - 20, y = (i * 59 % (H - 60)) + 16;
+      const a = 0.25 + 0.55 * Math.abs(Math.sin(G.time * 1.8 + i * 1.7));
+      ctx.fillStyle = 'rgba(190,235,255,' + a.toFixed(2) + ')'; ctx.beginPath(); ctx.arc(x, y, 1.5, 0, 7); ctx.fill();
+    }
   }
   ctx.restore();
 }
