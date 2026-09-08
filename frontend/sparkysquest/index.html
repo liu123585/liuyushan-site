@@ -13,8 +13,7 @@
       align-items: center; justify-content: center; }
     canvas { display: block; background: #eaf4ff; image-rendering: auto;
       box-shadow: 0 0 60px rgba(120,160,255,.25); border-radius: 6px; touch-action: none;
-      width: min(100vw, calc(100vh * 16 / 9));
-      height: min(100vh, calc(100vw * 9 / 16)); }
+      max-width: 100%; max-height: 100%; width: auto; height: auto; aspect-ratio: 16 / 9; }
 
     /* 触屏操作按钮：仅触摸设备且在游戏中显示 */
     .touch-btn { display: none; position: absolute; z-index: 30; align-items: center; justify-content: center;
@@ -23,6 +22,8 @@
       box-shadow: 0 6px 18px rgba(80,110,200,.35); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
     .touch-btn:active { background: rgba(120,150,255,.6); transform: scale(.94); }
     body.touch.in-game .touch-btn { display: flex; }
+    /* 兜底：触屏设备（pointer:coarse）在游戏中同样显示按钮，避免 JS 触屏判定漏判时仍无按键 */
+    @media (pointer: coarse) { body.in-game .touch-btn { display: flex; } }
     /* 手机按键：尺寸随屏幕高度自适应（横屏时高度是限制维度），保证小屏也不溢出 */
     :root {
       --bs: clamp(56px, 17vh, 96px);     /* 普通动作按钮 */

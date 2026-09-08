@@ -28,11 +28,9 @@ function rr(ctx, x, y, w, h, r) {
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 function resize() {
-  const ww = window.innerWidth, wh = window.innerHeight;
-  const s = Math.min(ww / VW, wh / VH);
+  // 仅设置内部分辨率；显示尺寸交给 CSS（max-width/max-height + 16:9 比例）控制，
+  // 避免内联 style 覆盖导致手机端画面溢出屏幕
   canvas.width = VW; canvas.height = VH;
-  canvas.style.width = (VW * s) + 'px';
-  canvas.style.height = (VH * s) + 'px';
 }
 window.addEventListener('resize', resize);
 resize();
@@ -118,7 +116,7 @@ canvas.addEventListener('mouseup', () => { keys['j'] = false; });
 
 // ---------- 触屏控制（手机 / 平板） ----------
 // 复用键盘输入管线：触摸按钮 = 派发对应的键盘事件，这样移动/跳跃/开火/星影逻辑完全一致。
-const isTouch = (typeof navigator !== 'undefined') && (('ontouchstart' in window) || (navigator.maxTouchPoints || 0) > 0);
+const isTouch = (typeof navigator !== 'undefined') && (('ontouchstart' in window) || (navigator.maxTouchPoints || 0) > 0 || (typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches));
 const touchMap = { btnLeft: 'arrowleft', btnRight: 'arrowright', btnJump: ' ', btnShoot: 'j', btnDash: 'shift', btnEcho: 'f' };
 function fireKey(key, isDown) {
   try { window.dispatchEvent(new KeyboardEvent(isDown ? 'keydown' : 'keyup', { key })); } catch (e) {}
