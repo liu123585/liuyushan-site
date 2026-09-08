@@ -28,6 +28,14 @@ function rr(ctx, x, y, w, h, r) {
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 const wrap = document.getElementById('wrap');
+// 临时调试：左上角显示真实视口数值，定位横屏被截根因（修好后删除）
+const dbg = document.createElement('div');
+dbg.style.cssText = 'position:fixed;left:4px;top:4px;z-index:9999;background:rgba(0,0,0,.55);color:#6f6;font:11px/1.3 monospace;padding:4px 6px;white-space:pre;pointer-events:none';
+document.body.appendChild(dbg);
+function showDbg() {
+  const vvh = (window.visualViewport && window.visualViewport.height) ? Math.round(window.visualViewport.height) : '-';
+  dbg.textContent = 'innerH=' + window.innerHeight + '\nvvH=' + vvh + '\nwrapH=' + (wrap ? wrap.clientHeight : '-') + '\ncanvas=' + canvas.style.width + 'x' + canvas.style.height;
+}
 function viewportH() {
   let h = window.innerHeight;
   // 视觉视口高度不含 Safari 地址栏/标签栏/系统条，横屏下最准
@@ -65,6 +73,7 @@ function resize() {
   canvas.width = VW; canvas.height = VH;
   fitLayout();
   fitCanvas();
+  showDbg();
 }
 window.addEventListener('resize', resize);
 if (window.visualViewport) window.visualViewport.addEventListener('resize', resize);
