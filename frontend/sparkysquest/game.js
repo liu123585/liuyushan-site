@@ -27,12 +27,29 @@ function rr(ctx, x, y, w, h, r) {
 // ---------- 画布 ----------
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
+function fitCanvas() {
+  const vw = window.innerWidth;
+  let vh = window.innerHeight;
+  // 视觉视口高度不含 Safari 地址栏/系统条，横屏下最准
+  if (window.visualViewport && window.visualViewport.height) {
+    vh = Math.min(vh, window.visualViewport.height);
+  }
+  // 上下各留 2% 余量，避免画面被地址栏 / Home 指示条贴边遮挡
+  const padY = Math.round(vh * 0.02);
+  const availH = vh - padY * 2;
+  let w = Math.min(vw, availH * 16 / 9);
+  let h = w * 9 / 16;
+  canvas.style.width = Math.floor(w) + 'px';
+  canvas.style.height = Math.floor(h) + 'px';
+}
 function resize() {
-  // 仅设置内部分辨率；显示尺寸交给 CSS（max-width/max-height + 16:9 比例）控制，
-  // 避免内联 style 覆盖导致手机端画面溢出屏幕
+  // 内部分辨率固定；显示尺寸用 JS 精确算像素，兼容各机型、避开 vh/dvh/svh 在 Safari 的差异
   canvas.width = VW; canvas.height = VH;
+  fitCanvas();
 }
 window.addEventListener('resize', resize);
+if (window.visualViewport) window.visualViewport.addEventListener('resize', resize);
+window.addEventListener('orientationchange', resize);
 resize();
 
 // ---------- 精灵图（美术资产，由 sprites/*.png 加载，加载时裁剪紧贴包围盒并生成受击白剪影）----------
