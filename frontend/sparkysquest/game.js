@@ -28,16 +28,40 @@ function rr(ctx, x, y, w, h, r) {
 // ---------- 画布 ----------
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
-// 渲染缩放：内部分辨率按倍率放大，画面更细腻（世界坐标仍按 VW/VH，不影响玩法）
-const RS = Math.min(2, Math.max(1.5, window.devicePixelRatio || 1));
+// 渲染缩放：按「实际显示尺寸 × 屏幕像素比」匹配物理像素，手机端更清晰、桌面端不浪费性能
+// 世界坐标仍按 VW/VH，不影响玩法
+let RS = 2;
+function computeRS() {
+  const cw = canvas.clientWidth || VW;
+  const dpr = window.devicePixelRatio || 1;
+  const need = (cw * dpr) / VW;
+  return Math.max(1.25, Math.min(2.5, need));
+}
 function resize() {
   // 仅设置内部分辨率；显示尺寸交给 CSS 控制，避免 JS 内联尺寸把游戏画面搞坏
+  RS = computeRS();
   canvas.width = Math.round(VW * RS); canvas.height = Math.round(VH * RS);
   ctx.imageSmoothingEnabled = true;
   if ('imageSmoothingQuality' in ctx) ctx.imageSmoothingQuality = 'high';
   ctx.setTransform(RS, 0, 0, RS, 0, 0);
 }
+// 移动端防缩放：iOS Safari 会忽略 user-scalable=no，必须 JS 兜底
+// 1) 禁掉双指捏合（iOS 私有 gesture 事件）2) 300ms 内二次点击阻止默认行为（禁双击放大）
+(function disableZoom() {
+  const stop = (e) => { if (e.cancelable) e.preventDefault(); };
+  ['gesturestart', 'gesturechange', 'gestureend'].forEach(ev =>
+    document.addEventListener(ev, stop, { passive: false }));
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', (e) => {
+    const now = Date.now();
+    if (now - lastTouchEnd <= 320) stop(e);
+    lastTouchEnd = now;
+  }, { passive: false });
+})();
 window.addEventListener('resize', resize);
+// 手机横竖屏切换 / 地址栏收展后重算渲染分辨率，保证画面始终匹配物理像素
+window.addEventListener('orientationchange', () => setTimeout(resize, 120));
+if (window.visualViewport) window.visualViewport.addEventListener('resize', resize);
 resize();
 
 // ---------- 精灵图（美术资产，由 sprites/*.png 加载，加载时裁剪紧贴包围盒并生成受击白剪影）----------
