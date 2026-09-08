@@ -173,18 +173,34 @@ function joyDirSet(nd) {
   if (nd !== 0) fireKey(nd < 0 ? 'arrowleft' : 'arrowright', true);
   joyDir = nd;
 }
+const JOY_UP = 0.5;              // 摇杆上推超过半径一半即视为「跳」
+let joyUp = false, joyJumpT = 0;
 function joyMove(x, y) {
   let dx = x - joyCX, dy = y - joyCY;
   const d = Math.hypot(dx, dy) || 1;
   if (d > joyR) { dx = dx / d * joyR; dy = dy / d * joyR; }   // 限制在底盘内
   if (joyKnob) joyKnob.style.transform = 'translate(' + dx.toFixed(1) + 'px,' + dy.toFixed(1) + 'px)';
-  const nx = dx / joyR;
+  const nx = dx / joyR, ny = dy / joyR;
   joyDirSet(nx < -JOY_DEAD ? -1 : (nx > JOY_DEAD ? 1 : 0));
+  // 摇杆上推 = 跳跃（右下角跳跃键仍然保留，两种方式都能跳）
+  const up = ny < -JOY_UP;
+  const now = performance.now();
+  if (up) {
+    const grounded = !!(typeof G !== 'undefined' && G.player && G.player.onGround);
+    // 刚上推立刻跳；按住不放且已落地时按节奏续跳，避免连点
+    if ((!joyUp || grounded) && now - joyJumpT > (grounded ? 260 : 420)) {
+      fireKey(' ', true);
+      setTimeout(() => fireKey(' ', false), 90);
+      joyJumpT = now;
+    }
+    joyUp = true;
+  } else joyUp = false;
 }
 function joyEnd() {
   if (!joyBase) return;
   joyBase.classList.remove('on');
   joyId = null;
+  joyUp = false;
   joyDirSet(0);
 }
 if (isTouch) {
@@ -1037,6 +1053,7 @@ function startStage(n, spawnOverride, opts) {
   G.lastSafe = { x: spawn[0], y: spawn[1] };
   equipGun(p); // 每关开局装备天赋枪并补满弹药
   G.hintUntil = performance.now() + 9000; // 开局 9 秒显示操作提示
+  G.signHint = null;                      // 清掉上一关残留的引导横幅
   G.echo = { recording: false, recT: 0, frames: [], play: null, cool: 0 };
 
   G.enemies = def.enemies.map(makeEnemy);
@@ -1076,8 +1093,9 @@ function startStage(n, spawnOverride, opts) {
   G.crates = (def.crates || []).map(c => ({ x: c.x, y: c.y, w: 28, h: 24, kind: c.kind, t: rand(0, 6), got: false }));
   G.signs = (def.signs || []).map(s => ({ ...s, t: rand(0, 6) }));
   G.chests = (def.chests || []).map(c => ({ x: c.x, y: c.y, w: 30, h: 26, opened: false, t: rand(0, 6) }));
-  G.portals = (def.portals || []).map(o => ({ ax: o.ax, ay: o.ay, bx: o.bx, by: o.by, w: o.w || 36, h: o.h || 52, cool: 0 }));
-  G.blocks = (def.blocks || []).map(o => ({ x: o.x, y: o.y, w: o.w || 34, h: o.h || 30, t: rand(0, 6), broken: false }));
+  // 传送门与「踩上去会碎、把人摔下去」的可破坏木箱已移除：体验太劝退，一律不生成
+  G.portals = [];
+  G.blocks = [];
   G.keyItems = (def.keys || []).map(o => ({ x: o.x, y: o.y, w: 22, h: 22, t: rand(0, 6), got: false }));
   G.gates = (def.gates || []).map(o => ({ x: o.x, y: o.y, w: o.w || 26, h: o.h || 120, req: o.req || 1, open: false }));
   G.keys = 0;
@@ -1775,6 +1793,17 @@ function frame(now) {
       if (G.state === 'playing') updateProjectiles(dt);
       if (G.state === 'playing') updateCollect(dt);
       if (G.state === 'playing') updateCheckpoints();
+      // 引导提示：靠近即弹出顶部横幅，看完自动消失（不再立一块常驻木牌）
+      if (G.signs && G.signs.length) {
+        const pl2 = G.player;
+        for (const s of G.signs) {
+          if (s.seen) continue;
+          if (Math.abs((pl2.x + pl2.w / 2) - s.x) < 120 && Math.abs((pl2.y + pl2.h / 2) - s.y) < 140) {
+            s.seen = true;
+            G.signHint = { text: s.text, until: performance.now() + 4200 };
+          }
+        }
+      }
       if (G.state === 'playing') updateCrates(dt);
       if (G.state === 'playing') checkGoal();
       updateParticles(dt);
@@ -2092,21 +2121,25 @@ function drawArrow(cx, cy, dir) {
   ctx.closePath(); ctx.fill();
 }
 function drawSigns() {
+  // 引导提示不再做成常驻木牌：靠近后以顶部横幅弹出，几秒后自动淡出消失
+  if (!G.signHint) return;
+  const left = G.signHint.until - performance.now();
+  if (left <= 0) { G.signHint = null; return; }
+  const lines = String(G.signHint.text).split('\n');
+  ctx.save();
+  ctx.setTransform(RS, 0, 0, RS, 0, 0); // 固定在屏幕上，不随相机移动
+  ctx.globalAlpha = Math.min(1, left / 700);
+  ctx.font = 'bold 17px sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  for (const s of G.signs) {
-    const lines = String(s.text).split('\n');
-    ctx.font = 'bold 14px sans-serif';
-    let w = 0; for (const l of lines) w = Math.max(w, ctx.measureText(l).width);
-    const padX = 13, padY = 9, lh = 19;
-    const bw = w + padX * 2, bh = lines.length * lh + padY * 2;
-    const x = s.x - bw / 2, y = s.y - bh;
-    ctx.fillStyle = '#6f4a26'; ctx.fillRect(s.x - 3, s.y - 6, 6, 12); // 杆
-    ctx.fillStyle = 'rgba(38,28,18,.86)'; rr(ctx, x, y, bw, bh, 9); ctx.fill();
-    ctx.strokeStyle = '#ffd27a'; ctx.lineWidth = 2.5; rr(ctx, x, y, bw, bh, 9); ctx.stroke();
-    ctx.fillStyle = '#fff4d6';
-    lines.forEach((l, i) => ctx.fillText(l, s.x, y + padY + lh * i + lh / 2));
-    if (s.arrow) drawArrow(s.x, s.y + 8, s.arrow);
-  }
+  let w = 0; for (const l of lines) w = Math.max(w, ctx.measureText(l).width);
+  const padX = 22, padY = 13, lh = 25;
+  const bw = Math.min(VW - 60, w + padX * 2), bh = lines.length * lh + padY * 2;
+  const x = (VW - bw) / 2, y = 92;
+  ctx.fillStyle = 'rgba(28,24,48,.88)'; rr(ctx, x, y, bw, bh, 16); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,214,130,.95)'; ctx.lineWidth = 2.5; rr(ctx, x, y, bw, bh, 16); ctx.stroke();
+  ctx.fillStyle = '#fff4d6';
+  lines.forEach((l, i) => ctx.fillText(l, VW / 2, y + padY + lh * i + lh / 2));
+  ctx.restore();
   ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
 }
 function drawChests() {
