@@ -2228,28 +2228,41 @@ function drawCheckpoints() {
   if (!G.checkpoints) return;
   for (const c of G.checkpoints) {
     const sx = c.x - G.cam.x, sy = c.y - G.cam.y;
-    if (sx < -50 || sx > VW + 50) continue;
+    if (sx < -60 || sx > VW + 60) continue;
+    const on = !!c.activated;
+    // 地面光晕：常亮（不再用 sin 做忽明忽暗的脉冲）
+    const glow = ctx.createRadialGradient(sx, sy - 4, 2, sx, sy - 4, 46);
+    glow.addColorStop(0, on ? 'rgba(70,214,160,.40)' : 'rgba(150,185,240,.30)');
+    glow.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(sx, sy - 4, 46, 0, Math.PI * 2); ctx.fill();
     // 旗杆
-    ctx.fillStyle = c.activated ? '#7fe7c4' : '#5b6472';
-    ctx.fillRect(sx - 2, sy - 70, 4, 70);
-    // 旗子
+    ctx.fillStyle = on ? '#37c98d' : '#93a9c6';
+    ctx.fillRect(sx - 3, sy - 72, 5, 72);
+    // 旗面：常亮实体色，未激活也足够醒目
     ctx.beginPath();
-    ctx.moveTo(sx + 2, sy - 70);
-    ctx.lineTo(sx + 26, sy - 60);
-    ctx.lineTo(sx + 2, sy - 50);
+    ctx.moveTo(sx + 3, sy - 72);
+    ctx.lineTo(sx + 31, sy - 61);
+    ctx.lineTo(sx + 3, sy - 50);
     ctx.closePath();
-    ctx.fillStyle = c.activated ? '#46d6a0' : '#7a8290';
+    ctx.fillStyle = on ? '#46d6a0' : '#dbe8f7';
     ctx.fill();
-    if (c.activated) {
-      const t = G.time * 3;
-      ctx.strokeStyle = 'rgba(127,231,196,' + (0.35 + 0.3 * Math.sin(t)) + ')';
-      ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(sx, sy - 24, 15 + 3 * Math.sin(t), 0, Math.PI * 2); ctx.stroke();
-    } else {
-      ctx.fillStyle = 'rgba(150,160,175,0.85)';
-      ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
-      ctx.fillText('存档点', sx + 14, sy - 78);
+    ctx.strokeStyle = on ? '#1f9e6d' : '#7e97b8'; ctx.lineWidth = 2; ctx.stroke();
+    // 顶部状态灯：激活打勾、未激活空心圈，均为常亮
+    ctx.strokeStyle = on ? 'rgba(45,205,145,.95)' : 'rgba(125,155,205,.9)';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(sx, sy - 84, 7.5, 0, Math.PI * 2); ctx.stroke();
+    if (on) {
+      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(sx - 3.6, sy - 84); ctx.lineTo(sx - 1, sy - 81.4); ctx.lineTo(sx + 4.2, sy - 87.2); ctx.stroke();
     }
+    // 文字常显（带描边，保证在任何背景上都看得清）
+    ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
+    const label = on ? '已存档' : '存档点';
+    ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,255,255,.9)';
+    ctx.strokeText(label, sx, sy - 98);
+    ctx.fillStyle = on ? '#1f9e6d' : '#54708f';
+    ctx.fillText(label, sx, sy - 98);
+    ctx.textAlign = 'left';
   }
 }
 function drawCoins() {
