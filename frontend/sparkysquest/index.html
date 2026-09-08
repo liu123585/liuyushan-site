@@ -6,14 +6,15 @@
   <title>闪星勇者 Sparky's Quest</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { width: 100%; height: 100%; height: 100dvh; overflow: hidden; background: #eaf4ff;
+    html, body { width: 100%; height: 100%; height: 100svh; overflow: hidden; background: #eaf4ff;
       color: #2a3a5e; font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
       touch-action: none; overscroll-behavior: none; -webkit-user-select: none; user-select: none; }
-    #wrap { position: relative; width: 100%; height: 100%; height: 100dvh; display: flex;
+    #wrap { position: relative; width: 100%; height: 100%; height: 100svh; display: flex;
       align-items: center; justify-content: center; }
     canvas { display: block; background: #eaf4ff; image-rendering: auto;
       box-shadow: 0 0 60px rgba(120,160,255,.25); border-radius: 6px; touch-action: none;
-      max-width: 100%; max-height: 100%; width: auto; height: auto; aspect-ratio: 16 / 9; }
+      width: min(100vw, calc(100svh * 16 / 9));
+      height: min(100svh, calc(100vw * 9 / 16)); }
 
     /* 触屏操作按钮：仅触摸设备且在游戏中显示 */
     .touch-btn { display: none; position: absolute; z-index: 30; align-items: center; justify-content: center;
