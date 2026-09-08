@@ -169,8 +169,9 @@ function joyShow(x, y) {
 }
 function joyDirSet(nd) {
   if (nd === joyDir) return;
-  if (joyDir !== 0) fireKey(joyDir < 0 ? 'arrowleft' : 'arrowright', false);
-  if (nd !== 0) fireKey(nd < 0 ? 'arrowleft' : 'arrowright', true);
+  const setKey = (k, v) => { try { if (v && !keys[k]) pressed[k] = true; keys[k] = v; } catch (err) {} };
+  if (joyDir !== 0) setKey(joyDir < 0 ? 'arrowleft' : 'arrowright', false);
+  if (nd !== 0) setKey(nd < 0 ? 'arrowleft' : 'arrowright', true);
   joyDir = nd;
 }
 const JOY_UP = 0.5;              // 摇杆上推超过半径一半即视为「跳」
@@ -189,8 +190,10 @@ function joyMove(x, y) {
     const grounded = !!(typeof G !== 'undefined' && G.player && G.player.onGround);
     // 刚上推立刻跳；按住不放且已落地时按节奏续跳，避免连点
     if ((!joyUp || grounded) && now - joyJumpT > (grounded ? 260 : 420)) {
-      fireKey(' ', true);
-      setTimeout(() => fireKey(' ', false), 90);
+      // 直接置位「本帧按下」+ 短按后松开：比派发键盘事件可靠
+      // （keydown 处理器是 if (!keys[k]) pressed[k]=true，若 keys 残留 true 就再也跳不了）
+      try { pressed[' '] = true; keys[' '] = true; } catch (err) {}
+      setTimeout(() => { try { keys[' '] = false; } catch (err) {} }, 90);
       joyJumpT = now;
     }
     joyUp = true;
