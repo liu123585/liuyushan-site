@@ -952,6 +952,7 @@ function startStage(n, spawnOverride, opts) {
     else cps = [ { x: Math.round(def.w * 0.45), y: 420 }, { x: Math.round(def.w * 0.8), y: 420 } ];
   }
   G.checkpoints = cps.map(c => ({ x: c.x, y: c.y, activated: false }));
+  G.spikes = []; // enrichStage 会 push 尖刺，必须先初始化
   enrichStage(G, def, n);
   for (const c of G.checkpoints) if (Math.abs(c.x - spawn[0]) < 60) c.activated = true;
   G.checkpoint = { x: spawn[0], y: spawn[1], activated: true };
