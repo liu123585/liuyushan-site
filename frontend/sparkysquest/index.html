@@ -16,8 +16,8 @@
       align-items: center; justify-content: center; }
     canvas { display: block; background: #eaf4ff; image-rendering: auto;
       box-shadow: 0 0 60px rgba(120,160,255,.25); border-radius: 6px; touch-action: none;
-      width: min(100vw, calc(100svh * 16 / 9));
-      height: min(100svh, calc(100vw * 9 / 16)); }
+      width: min(100vw, calc(100vh * 16 / 9));
+      height: min(100vh, calc(100vw * 9 / 16)); }
 
     /* 触屏操作按钮：仅触摸设备且在游戏中显示 */
     .touch-btn { display: none; position: absolute; z-index: 30; align-items: center; justify-content: center;
@@ -252,6 +252,6 @@
       window.addEventListener('orientationchange', update);
     })();
   </script>
-  <script src="game.js?v=20260908c"></script>
+  <script src="game.js?v=20260908r"></script>
 </body>
 </html>
