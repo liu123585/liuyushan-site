@@ -1934,9 +1934,12 @@ function drawPlatforms() {
     grd.addColorStop(0, pc[0]);
     grd.addColorStop(1, pc[1]);
     ctx.fillStyle = grd; rr(ctx, p.x, p.y, p.w, p.h, 10); ctx.fill();
-    ctx.fillStyle = moving ? 'rgba(150,232,255,.95)' : 'rgba(255,255,255,.92)';
+    // 顶部高光用主题色而非硬白，避免在熔岩/星轨等暗主题里突兀
+    const acRgba = (hex, a) => { const h = (hex || '').replace('#',''); if (h.length < 6) return 'rgba(255,255,255,' + a + ')'; return 'rgba(' + parseInt(h.slice(0,2),16) + ',' + parseInt(h.slice(2,4),16) + ',' + parseInt(h.slice(4,6),16) + ',' + a + ')'; };
+    ctx.fillStyle = moving ? 'rgba(150,232,255,.95)' : acRgba(t.accent2 || t.accent, .9);
     rr(ctx, p.x, p.y - 5, p.w, 12, 8); ctx.fill();
-    ctx.fillStyle = 'rgba(255,255,255,.35)'; rr(ctx, p.x + 8, p.y - 2, p.w - 16, 5, 3); ctx.fill();
+    ctx.fillStyle = moving ? 'rgba(150,232,255,.35)' : acRgba(t.accent || t.accent2, .45);
+    rr(ctx, p.x + 8, p.y - 2, p.w - 16, 5, 3); ctx.fill();
     if (p.w > 120) {
       const n = Math.floor(p.w / 150);
       for (let i = 1; i <= n; i++) {
