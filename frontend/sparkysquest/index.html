@@ -34,11 +34,33 @@
     @media (pointer: coarse) { body.in-game .touch-btn { display: flex; } }
     /* 手机按键：尺寸随屏幕高度自适应（横屏时高度是限制维度），保证小屏也不溢出 */
     :root {
-      --bs: clamp(56px, 17vh, 96px);     /* 普通动作按钮 */
-      --bj: clamp(66px, 21vh, 116px);    /* 跳跃/射击：最大，放拇指最顺手处 */
-      --gp: clamp(8px, 2vh, 18px);       /* 按钮间距 */
-      --pd: clamp(12px, 3vh, 26px);      /* 屏幕边距 */
+      --bs: clamp(66px, 20vh, 112px);    /* 普通动作按钮（加大） */
+      --bj: clamp(80px, 25vh, 138px);    /* 跳跃/射击：最大，放拇指最顺手处（加大） */
+      --gp: clamp(10px, 2.4vh, 20px);    /* 按钮间距 */
+      --pd: clamp(14px, 3.4vh, 30px);    /* 屏幕边距 */
+      --jr: clamp(132px, 36vh, 212px);   /* 虚拟摇杆直径 */
     }
+
+    /* 虚拟摇杆：左半屏浮动，按下在哪就从哪冒出来，松手消失；带死区防误触 */
+    #joyZone { display: none; position: absolute; left: 0; top: 0; z-index: 34;
+      width: 52%; height: 100%; touch-action: none; }
+    body.touch.in-game #joyZone { display: block; }
+    @media (pointer: coarse) { body.in-game #joyZone { display: block; } }
+    #joyBase { position: absolute; width: var(--jr); height: var(--jr);
+      margin-left: calc(var(--jr) / -2); margin-top: calc(var(--jr) / -2);
+      border-radius: 50%; background: rgba(120,150,255,.15);
+      border: 3px solid rgba(255,255,255,.5); box-sizing: border-box;
+      box-shadow: 0 8px 26px rgba(80,110,200,.28); backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(3px); opacity: 0; transform: scale(.82);
+      transition: opacity .12s ease, transform .12s ease; }
+    #joyBase.on { opacity: 1; transform: scale(1); }
+    #joyKnob { position: absolute; left: 50%; top: 50%; width: 44%; height: 44%;
+      margin-left: -22%; margin-top: -22%; border-radius: 50%;
+      background: radial-gradient(circle at 34% 30%, #ffffff, #8fbcff 62%, #4d86ff);
+      box-shadow: 0 6px 18px rgba(60,100,220,.45); }
+    /* 有了摇杆后隐藏左右方向键，避免两套移动控件互相干扰 */
+    body.touch.in-game #btnLeft, body.touch.in-game #btnRight { display: none !important; }
+    @media (pointer: coarse) { body.in-game #btnLeft, body.in-game #btnRight { display: none !important; } }
     #btnLeft   { left: var(--pd); bottom: var(--pd); width: var(--bs); height: var(--bs); }
     #btnRight  { left: calc(var(--pd) + var(--bs) + var(--gp)); bottom: var(--pd); width: var(--bs); height: var(--bs); }
     #btnJump   { right: var(--pd); bottom: var(--pd); width: var(--bj); height: var(--bj);
@@ -132,6 +154,11 @@
 <body>
   <div id="wrap">
   <canvas id="canvas"></canvas>
+
+    <!-- 虚拟摇杆：左半屏任意位置按下即出现（浮动摇杆），拖动控制移动 -->
+    <div id="joyZone">
+      <div id="joyBase"><div id="joyKnob"></div></div>
+    </div>
 
     <!-- 触屏操作按钮（仅手机/触摸设备显示） -->
     <div id="btnLeft"   class="touch-btn">◀</div>
@@ -256,6 +283,6 @@
       window.addEventListener('orientationchange', update);
     })();
   </script>
-  <script src="game.js?v=20260908w"></script>
+  <script src="game.js?v=20260908x"></script>
 </body>
 </html>

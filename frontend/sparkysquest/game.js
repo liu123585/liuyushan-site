@@ -150,6 +150,43 @@ const touchMap = { btnLeft: 'arrowleft', btnRight: 'arrowright', btnJump: ' ', b
 function fireKey(key, isDown) {
   try { window.dispatchEvent(new KeyboardEvent(isDown ? 'keydown' : 'keyup', { key })); } catch (e) {}
 }
+
+// ---------- 虚拟摇杆（浮动式）----------
+// 触发区在左半屏：手指按下哪里，摇杆就在哪里冒出来，松手消失（主流手游做法）。
+// 用 pointerId 锁定摇杆手指，保证「摇杆拖动」和「右手点技能键」互不干扰。
+const joyZone = document.getElementById('joyZone');
+const joyBase = document.getElementById('joyBase');
+const joyKnob = document.getElementById('joyKnob');
+const JOY_DEAD = 0.22;           // 死区：轻微抖动不触发移动
+let joyId = null, joyCX = 0, joyCY = 0, joyR = 60, joyDir = 0;
+function joyShow(x, y) {
+  joyR = (joyBase && joyBase.offsetWidth ? joyBase.offsetWidth : 132) / 2;
+  joyCX = x; joyCY = y;
+  if (!joyBase) return;
+  joyBase.style.left = x + 'px'; joyBase.style.top = y + 'px';
+  joyKnob.style.transform = 'translate(0px, 0px)';
+  joyBase.classList.add('on');
+}
+function joyDirSet(nd) {
+  if (nd === joyDir) return;
+  if (joyDir !== 0) fireKey(joyDir < 0 ? 'arrowleft' : 'arrowright', false);
+  if (nd !== 0) fireKey(nd < 0 ? 'arrowleft' : 'arrowright', true);
+  joyDir = nd;
+}
+function joyMove(x, y) {
+  let dx = x - joyCX, dy = y - joyCY;
+  const d = Math.hypot(dx, dy) || 1;
+  if (d > joyR) { dx = dx / d * joyR; dy = dy / d * joyR; }   // 限制在底盘内
+  if (joyKnob) joyKnob.style.transform = 'translate(' + dx.toFixed(1) + 'px,' + dy.toFixed(1) + 'px)';
+  const nx = dx / joyR;
+  joyDirSet(nx < -JOY_DEAD ? -1 : (nx > JOY_DEAD ? 1 : 0));
+}
+function joyEnd() {
+  if (!joyBase) return;
+  joyBase.classList.remove('on');
+  joyId = null;
+  joyDirSet(0);
+}
 if (isTouch) {
   document.body.classList.add('touch');
   for (const id in touchMap) {
@@ -162,6 +199,28 @@ if (isTouch) {
     el.addEventListener('pointerup', upFn);
     el.addEventListener('pointerleave', upFn);
     el.addEventListener('pointercancel', upFn);
+  }
+  // 摇杆：左半屏按下即出现并跟手；捕获指针，手指滑出区域也不断连
+  if (joyZone && joyBase) {
+    const jr = () => joyZone.getBoundingClientRect();
+    joyZone.addEventListener('pointerdown', (e) => {
+      if (joyId !== null) return;                 // 已有手指在控摇杆，忽略后续手指
+      joyId = e.pointerId;
+      try { joyZone.setPointerCapture(e.pointerId); } catch (err) {}
+      const r = jr();
+      joyShow(e.clientX - r.left, e.clientY - r.top);
+      joyMove(e.clientX - r.left, e.clientY - r.top);
+      e.preventDefault();
+    }, { passive: false });
+    joyZone.addEventListener('pointermove', (e) => {
+      if (e.pointerId !== joyId) return;
+      const r = jr();
+      joyMove(e.clientX - r.left, e.clientY - r.top);
+      e.preventDefault();
+    }, { passive: false });
+    const jEnd = (e) => { if (e.pointerId !== joyId) return; joyEnd(); e.preventDefault(); };
+    joyZone.addEventListener('pointerup', jEnd, { passive: false });
+    joyZone.addEventListener('pointercancel', jEnd, { passive: false });
   }
 }
 // 电脑和手机都会按游戏状态加/去 in-game：
@@ -747,7 +806,8 @@ function enrichStage(G, def, n) {
   const grounds = G.level.platforms.filter(pl => pl.h > 60);
   const groundY = grounds.length ? Math.max.apply(null, grounds.map(pl => pl.y)) : 480;
   const clampX = (x) => clamp(x, 360, w - 200);
-  const nPlat = Math.max(2, Math.min(9, Math.round((w - 800) / 620)));
+  // 平台数量收敛：原来是 (w-800)/620 会铺得很满，画面显得拥挤
+  const nPlat = Math.max(2, Math.min(6, Math.round((w - 900) / 900)));
   for (let i = 0; i < nPlat; i++) {
     const frac = (i + 0.5) / nPlat;
     let x = 650 + frac * (w - 1300) + (rng() - 0.5) * 150;
@@ -758,7 +818,7 @@ function enrichStage(G, def, n) {
     const pl = { x: Math.round(x), y, w: pw, h: 22, move };
     if (move) { pl.baseX = pl.x; pl.baseY = pl.y; pl.ox = 0; pl.oy = 0; pl.dx = 0; pl.dy = 0; pl.mt = rand(0, 6); }
     G.level.platforms.push(pl);
-    const cn = Math.max(2, Math.floor(pw / 42));
+    const cn = Math.max(2, Math.floor(pw / 64)); // 金币排布更疏，不糊成一片
     for (let k = 0; k < cn; k++) G.coins.push({ x: pl.x + 14 + k * 38, y: pl.y - 26, w: 18, h: 18, t: rand(0, 6), got: false });
     const r2 = rng();
     if (r2 < 0.34) {
@@ -770,8 +830,9 @@ function enrichStage(G, def, n) {
     } else if (r2 < 0.6) {
       G.chests.push({ x: pl.x + pl.w / 2 - 15, y: pl.y - 28, w: 30, h: 26, opened: false, t: rand(0, 6) });
     }
-    if (rng() < 0.4) G.enemies.push(makeEnemy({ type: 'bee', x: pl.x + pl.w / 2, y: pl.y - 90 }));
-    if (rng() < 0.3) G.stars.push({ x: pl.x + pl.w / 2, y: pl.y - 60, w: 22, h: 22, t: rand(0, 6), got: false });
+    // 平台上的敌人/星辰概率下调，避免每个平台都堆满东西
+    if (rng() < 0.24) G.enemies.push(makeEnemy({ type: 'bee', x: pl.x + pl.w / 2, y: pl.y - 90 }));
+    if (rng() < 0.18) G.stars.push({ x: pl.x + pl.w / 2, y: pl.y - 60, w: 22, h: 22, t: rand(0, 6), got: false });
   }
   if (!def.boss) {
     const spikeN = Math.min(4, Math.max(1, Math.round((w - 1000) / 1400)));
@@ -981,7 +1042,7 @@ function startStage(n, spawnOverride, opts) {
   G.enemies = def.enemies.map(makeEnemy);
   // 随关卡递增的“增援”：越后面的关卡敌人越多（第1关几乎不变，后期大幅增多）
   if (!def.boss) {
-    const extra = Math.min(16, Math.round(G.stage * 1.6));
+    const extra = Math.min(9, Math.round(G.stage * 0.9)); // 增援收敛，画面不再被敌人塞满
     const pool = ['slime', 'bee', 'turret', 'roller'];
     for (let i = 0; i < extra; i++) {
       const ty = pool[(Math.random() * pool.length) | 0];
