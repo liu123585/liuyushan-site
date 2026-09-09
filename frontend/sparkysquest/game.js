@@ -379,7 +379,7 @@ const LEVELS = [
       { x: 1720, y: 350, w: 170, h: 22 },
       { x: 2480, y: 300, w: 200, h: 22 },
       { x: 2900, y: 380, w: 180, h: 22 },
-      { x: 1640, y: 300, w: 150, h: 22, move: { axis: 'y', range: 70, speed: 1.1 } },
+      { x: 1640, y: 300, w: 150, h: 22, move: { axis: 'x', range: 70, speed: 1.1 } },
       { x: 1300, y: 235, w: 150, h: 22 },
     ],
     enemies: [
@@ -419,7 +419,7 @@ const LEVELS = [
       { x: 2560, y: 330, w: 160, h: 22 },
       { x: 3100, y: 300, w: 180, h: 22 },
       { x: 3380, y: 380, w: 180, h: 22 },
-      { x: 2040, y: 250, w: 150, h: 22, move: { axis: 'y', range: 80, speed: 1.1 } },
+      { x: 2040, y: 250, w: 150, h: 22, move: { axis: 'x', range: 80, speed: 1.1 } },
       { x: 1500, y: 215, w: 150, h: 22 },
     ],
     enemies: [
@@ -462,7 +462,7 @@ const LEVELS = [
       { x: 2620, y: 300, w: 180, h: 22 },
       { x: 2700, y: 220, w: 160, h: 22 },
       { x: 3450, y: 340, w: 180, h: 22 },
-      { x: 1450, y: 240, w: 160, h: 22, move: { axis: 'y', range: 60, speed: 1.1 } },
+      { x: 1450, y: 240, w: 160, h: 22, move: { axis: 'x', range: 60, speed: 1.1 } },
     ],
     enemies: [
       { type: 'roller', x: 300, y: 446 },
@@ -499,7 +499,7 @@ const LEVELS = [
       { x: 560, y: 380, w: 170, h: 22, move: { axis: 'x', range: 110, speed: 1.0 } },
       { x: 1060, y: 350, w: 160, h: 22, move: { axis: 'x', range: 130, speed: 1.15 } },
       { x: 1560, y: 330, w: 170, h: 22 },
-      { x: 2060, y: 320, w: 160, h: 22, move: { axis: 'y', range: 90, speed: 1.0 } },
+      { x: 2060, y: 320, w: 160, h: 22, move: { axis: 'x', range: 90, speed: 1.0 } },
       { x: 2620, y: 300, w: 180, h: 22 },
       { x: 3050, y: 330, w: 170, h: 22, move: { axis: 'x', range: 120, speed: 1.1 } },
       { x: 2680, y: 190, w: 160, h: 22 },
@@ -602,9 +602,9 @@ const LEVELS = [
       { x: 0, y: 480, w: 4200, h: 90 },
       { x: 560, y: 380, w: 160, h: 22, move: { axis: 'x', range: 100, speed: 1.0 } },
       { x: 980, y: 360, w: 160, h: 22, move: { axis: 'x', range: 110, speed: 1.1 } },
-      { x: 1400, y: 340, w: 160, h: 22, move: { axis: 'y', range: 80, speed: 1.0 } },
+      { x: 1400, y: 340, w: 160, h: 22, move: { axis: 'x', range: 80, speed: 1.0 } },
       { x: 1820, y: 330, w: 160, h: 22, move: { axis: 'x', range: 120, speed: 1.15 } },
-      { x: 2240, y: 320, w: 160, h: 22, move: { axis: 'y', range: 90, speed: 1.0 } },
+      { x: 2240, y: 320, w: 160, h: 22, move: { axis: 'x', range: 90, speed: 1.0 } },
       { x: 2660, y: 340, w: 160, h: 22, move: { axis: 'x', range: 110, speed: 1.1 } },
       { x: 3080, y: 350, w: 160, h: 22, move: { axis: 'x', range: 100, speed: 1.0 } },
       { x: 3500, y: 330, w: 160, h: 22, move: { axis: 'x', range: 120, speed: 1.2 } },
@@ -663,13 +663,13 @@ const LEVELS = [
     platforms: [
       { x: 0, y: 480, w: 4400, h: 90 },
       { x: 360, y: 360, w: 160, h: 22, move: { axis: 'x', range: 120, speed: 1.2 } },
-      { x: 800, y: 340, w: 160, h: 22, move: { axis: 'y', range: 90, speed: 1.1 } },
+      { x: 800, y: 340, w: 160, h: 22, move: { axis: 'x', range: 90, speed: 1.1 } },
       { x: 1240, y: 330, w: 160, h: 22, move: { axis: 'x', range: 130, speed: 1.3 } },
-      { x: 1680, y: 320, w: 160, h: 22, move: { axis: 'y', range: 100, speed: 1.2 } },
+      { x: 1680, y: 320, w: 160, h: 22, move: { axis: 'x', range: 100, speed: 1.2 } },
       { x: 2120, y: 320, w: 160, h: 22, move: { axis: 'x', range: 120, speed: 1.35 } },
-      { x: 2560, y: 330, w: 160, h: 22, move: { axis: 'y', range: 90, speed: 1.3 } },
+      { x: 2560, y: 330, w: 160, h: 22, move: { axis: 'x', range: 90, speed: 1.3 } },
       { x: 3000, y: 330, w: 160, h: 22, move: { axis: 'x', range: 130, speed: 1.4 } },
-      { x: 3440, y: 320, w: 160, h: 22, move: { axis: 'y', range: 100, speed: 1.35 } },
+      { x: 3440, y: 320, w: 160, h: 22, move: { axis: 'x', range: 100, speed: 1.35 } },
       { x: 1300, y: 200, w: 180, h: 22 },
       { x: 2200, y: 180, w: 180, h: 22 },
       { x: 3100, y: 200, w: 180, h: 22 },
@@ -735,15 +735,15 @@ const LEVELS = [
     platforms: [
       { x: 0, y: 480, w: 4800, h: 90 },
       { x: 360, y: 360, w: 160, h: 22, move: { axis: 'x', range: 130, speed: 1.4 } },
-      { x: 800, y: 340, w: 160, h: 22, move: { axis: 'y', range: 100, speed: 1.3 } },
+      { x: 800, y: 340, w: 160, h: 22, move: { axis: 'x', range: 100, speed: 1.3 } },
       { x: 1240, y: 330, w: 160, h: 22, move: { axis: 'x', range: 140, speed: 1.5 } },
-      { x: 1680, y: 320, w: 160, h: 22, move: { axis: 'y', range: 110, speed: 1.4 } },
+      { x: 1680, y: 320, w: 160, h: 22, move: { axis: 'x', range: 110, speed: 1.4 } },
       { x: 2120, y: 320, w: 160, h: 22, move: { axis: 'x', range: 130, speed: 1.55 } },
-      { x: 2560, y: 330, w: 160, h: 22, move: { axis: 'y', range: 100, speed: 1.5 } },
+      { x: 2560, y: 330, w: 160, h: 22, move: { axis: 'x', range: 100, speed: 1.5 } },
       { x: 3000, y: 330, w: 160, h: 22, move: { axis: 'x', range: 140, speed: 1.6 } },
-      { x: 3440, y: 320, w: 160, h: 22, move: { axis: 'y', range: 110, speed: 1.55 } },
+      { x: 3440, y: 320, w: 160, h: 22, move: { axis: 'x', range: 110, speed: 1.55 } },
       { x: 3880, y: 330, w: 160, h: 22, move: { axis: 'x', range: 130, speed: 1.6 } },
-      { x: 4320, y: 320, w: 160, h: 22, move: { axis: 'y', range: 100, speed: 1.5 } },
+      { x: 4320, y: 320, w: 160, h: 22, move: { axis: 'x', range: 100, speed: 1.5 } },
       { x: 1400, y: 200, w: 180, h: 22 },
       { x: 2400, y: 180, w: 180, h: 22 },
       { x: 3400, y: 200, w: 180, h: 22 },
@@ -833,9 +833,17 @@ function enrichStage(G, def, n) {
     x = clamp(x, 320, w - 240);
     const y = Math.round(130 + rng() * 300);
     const pw = Math.round(100 + rng() * 80);
-    const move = rng() < 0.22 ? { axis: 'y', range: 40 + rng() * 50, speed: 0.9 + rng() * 0.5 } : null;
+    // 只做水平移动：上下升降的电梯容易让人站上去踩空掉下去
+    const move = rng() < 0.12 ? { axis: 'x', range: 40 + rng() * 50, speed: 0.9 + rng() * 0.5 } : null;
     const pl = { x: Math.round(x), y, w: pw, h: 22, move };
     if (move) { pl.baseX = pl.x; pl.baseY = pl.y; pl.ox = 0; pl.oy = 0; pl.dx = 0; pl.dy = 0; pl.mt = rand(0, 6); }
+    // 与已有平台重叠/贴太近就整块跳过，避免叠出一堆看不清的假平台
+    let clash = false;
+    for (const q of G.level.platforms) {
+      const gapX = Math.abs((pl.x + pl.w / 2) - (q.x + q.w / 2)) - (pl.w + q.w) / 2;
+      if (gapX < 50 && Math.abs(pl.y - q.y) < 52) { clash = true; break; }
+    }
+    if (clash) continue;
     G.level.platforms.push(pl);
     const cn = Math.max(2, Math.floor(pw / 64)); // 金币排布更疏，不糊成一片
     for (let k = 0; k < cn; k++) G.coins.push({ x: pl.x + 14 + k * 38, y: pl.y - 26, w: 18, h: 18, t: rand(0, 6), got: false });
@@ -872,6 +880,9 @@ function enrichStage(G, def, n) {
 // 就在它脚下就地生成一个支撑小平台，杜绝物品凭空悬在空中。
 function supportPickups() {
   const plats = G.level.platforms;
+  // 地面高度：没有可依附平台时就把物品放到地面上，绝不凭空造平台
+  const gnd = plats.filter(p => p.h > 60);
+  const gy = gnd.length ? Math.max.apply(null, gnd.map(p => p.y)) : 480;
   // 找能托住它的台面：优先物品「下方」的平台，其次才是最近的
   const findTop = (cx, y) => {
     let best = null, bd = 1e9;
@@ -894,17 +905,9 @@ function supportPickups() {
     for (const it of arr) {
       const h = ph || it.h || 22;
       const cx = it.x + (it.w || 20) / 2;
+      // 只放到「已有平台顶」或「地面」上，不再生成任何新平台（杜绝假平台）
       const pl = findTop(cx, it.y);
-      if (pl) { it.y = Math.round(pl.y - h - 6); continue; }
-      // 没有可依附的平台 → 生成一个支撑小平台托住它
-      const pw = 58, phh = 20;
-      const nx = Math.round(cx - pw / 2), ny = Math.round(it.y + h + 8);
-      if (overlapped(nx, ny, pw)) { // 已有相近台面就直接用它，避免堆平台
-        const pl2 = findTop(cx, ny);
-        if (pl2) { it.y = Math.round(pl2.y - h - 6); continue; }
-      }
-      plats.push({ x: nx, y: ny, w: pw, h: phh });
-      it.y = Math.round(ny - h - 6);
+      it.y = Math.round((pl ? pl.y : gy) - h - 6);
     }
   };
   fix(G.coins, 18);
