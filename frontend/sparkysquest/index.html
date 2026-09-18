@@ -270,19 +270,18 @@
   <script>
     (function () {
       const hint = document.getElementById('rotateHint');
+      // 仅在「触摸设备 + 竖屏」时提示横屏。电脑（鼠标/键盘，非触摸）直接进入，用键盘操作，
+      // 再也不被「请横屏」卡住——电脑没有横屏的概念。
+      const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints || 0) > 0 || window.matchMedia('(pointer: coarse)').matches;
       function update() {
         const portrait = window.innerWidth < window.innerHeight;
-        if (portrait) {
-          hint.style.display = 'flex';
-        } else {
-          hint.style.display = 'none';
-        }
+        hint.style.display = (isTouch && portrait) ? 'flex' : 'none';
       }
       update();
       window.addEventListener('resize', update);
       window.addEventListener('orientationchange', update);
     })();
   </script>
-  <script src="game.js?v=20260908z3"></script>
+  <script src="game.js?v=20260908z4"></script>
 </body>
 </html>
