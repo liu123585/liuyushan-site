@@ -6,7 +6,6 @@
 
 // ---------- 基础工具 ----------
 const VW = 960, VH = 540;
-const SPIKE_H = 32; // 地刺高度（加大，视觉更醒目、判定更清晰）
 const clamp = (v, a, b) => v < a ? a : (v > b ? b : v);
 const lerp = (a, b, t) => a + (b - a) * t;
 const rand = (a, b) => a + Math.random() * (b - a);
@@ -260,38 +259,59 @@ function ensureAudio() {
   if (!actx) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
   if (actx && actx.state === 'suspended') actx.resume();
 }
-function beep(freq, dur, type = 'square', vol = 0.18, slideTo = null) {
+// 通用合成音：带 ADSR 包络，比裸 beep 更圆润好听
+function tone(freq, dur, type = 'square', vol = 0.16, slideTo = null, attack = 0.005) {
   if (muted || !actx) return;
+  const t0 = actx.currentTime;
   const o = actx.createOscillator(), g = actx.createGain();
-  o.type = type; o.frequency.value = freq;
-  if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, actx.currentTime + dur);
-  g.gain.value = vol;
-  g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + dur);
+  o.type = type; o.frequency.setValueAtTime(freq, t0);
+  if (slideTo) o.frequency.exponentialRampToValueAtTime(Math.max(1, slideTo), t0 + dur);
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(vol, t0 + attack);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
   o.connect(g); g.connect(actx.destination);
-  o.start(); o.stop(actx.currentTime + dur);
+  o.start(t0); o.stop(t0 + dur + 0.02);
+}
+// 噪声爆发：用于打击 / 碎裂 / 落地等冲击感
+function noise(dur, vol, hp, lp) {
+  if (muted || !actx) return;
+  const t0 = actx.currentTime;
+  const n = Math.max(1, Math.floor(actx.sampleRate * dur));
+  const buf = actx.createBuffer(1, n, actx.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+  const src = actx.createBufferSource(); src.buffer = buf;
+  const g = actx.createGain(); g.gain.value = vol;
+  let node = src;
+  if (lp) { const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lp; node.connect(f); node = f; }
+  if (hp) { const f = actx.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = hp; node.connect(f); node = f; }
+  node.connect(g); g.connect(actx.destination);
+  src.start(t0);
 }
 const SFX = {
-  jump:  () => beep(480, 0.18, 'square', 0.16, 760),
-  djump: () => beep(620, 0.16, 'square', 0.14, 900),
-  dash:  () => beep(680, 0.12, 'sawtooth', 0.12, 1100),
-  swing: () => beep(300, 0.08, 'sawtooth', 0.12, 160),
-  hit:   () => beep(420, 0.10, 'square', 0.14, 220),
-  stomp: () => beep(260, 0.12, 'square', 0.16, 120),
-  coin:  () => { beep(880, 0.07, 'triangle', 0.14); setTimeout(() => beep(1320, 0.09, 'triangle', 0.14), 60); },
-  star:  () => { beep(990, 0.08, 'triangle', 0.14); setTimeout(() => beep(1480, 0.12, 'triangle', 0.14), 70); },
-  hurt:  () => beep(220, 0.22, 'sawtooth', 0.18, 70),
-  boss:  () => beep(120, 0.4, 'sawtooth', 0.2, 60),
-  up:    () => { beep(660, 0.08, 'triangle', 0.14); setTimeout(() => beep(990, 0.12, 'triangle', 0.14), 70); },
-  win:   () => { [523,659,784,1046].forEach((f,i)=>setTimeout(()=>beep(f,0.18,'triangle',0.16),i*120)); },
-  clear: () => { [523,659,784].forEach((f,i)=>setTimeout(()=>beep(f,0.14,'triangle',0.14),i*90)); },
-  land:  () => beep(300, 0.07, 'square', 0.10, 200),
-  shoot: () => beep(640, 0.06, 'square', 0.10, 980),
-  portal:() => { beep(520, 0.12, 'sine', 0.14, 1300); setTimeout(() => beep(900, 0.12, 'sine', 0.14, 500), 60); },
-  key:   () => { beep(880, 0.08, 'triangle', 0.14); setTimeout(() => beep(1320, 0.1, 'triangle', 0.14), 60); },
-  gate:  () => beep(420, 0.22, 'square', 0.14, 820),
-  brk:   () => beep(200, 0.10, 'sawtooth', 0.14, 80),
-  echo:  () => { beep(700, 0.10, 'sine', 0.12, 1200); },
-  chest: () => { beep(880, 0.12, 'square', 0.16, 1320); setTimeout(() => beep(1320, 0.1, 'triangle', 0.12), 70); },
+  jump:  () => { tone(420, 0.16, 'square', 0.16, 720, 0.004); tone(840, 0.09, 'triangle', 0.05, 1100, 0.004); },
+  djump: () => { tone(560, 0.14, 'square', 0.14, 1000); tone(1120, 0.08, 'triangle', 0.05); },
+  dash:  () => { noise(0.18, 0.12, 600, 4200); tone(720, 0.12, 'sawtooth', 0.08, 1300); },
+  swing: () => tone(300, 0.08, 'sawtooth', 0.10, 160),
+  hit:   () => { tone(420, 0.10, 'square', 0.13, 220); noise(0.06, 0.06, 800); },
+  stomp: () => { tone(260, 0.12, 'square', 0.16, 120); noise(0.10, 0.10, 200, 1200); },
+  coin:  () => { tone(988, 0.07, 'triangle', 0.13); setTimeout(() => tone(1319, 0.10, 'triangle', 0.13), 55); },
+  star:  () => { tone(1047, 0.08, 'triangle', 0.13); setTimeout(() => tone(1568, 0.12, 'triangle', 0.12), 65); },
+  hurt:  () => { tone(300, 0.18, 'sawtooth', 0.18, 90); noise(0.12, 0.10, 300); },
+  boss:  () => { tone(120, 0.4, 'sawtooth', 0.20, 60); noise(0.30, 0.08, 150); },
+  up:    () => { tone(660, 0.08, 'triangle', 0.14); setTimeout(() => tone(990, 0.12, 'triangle', 0.14), 70); },
+  win:   () => { [523,659,784,1046].forEach((f, i) => setTimeout(() => { tone(f, 0.22, 'triangle', 0.16); tone(f * 1.5, 0.18, 'sine', 0.06); }, i * 120)); },
+  clear: () => { [523,659,784].forEach((f, i) => setTimeout(() => tone(f, 0.16, 'triangle', 0.14), i * 90)); },
+  land:  () => { noise(0.07, 0.10, 150, 900); tone(180, 0.07, 'sine', 0.10, 120); },
+  shoot: () => { tone(680, 0.06, 'square', 0.09, 980); },
+  portal:() => { tone(520, 0.12, 'sine', 0.13, 1300); setTimeout(() => tone(900, 0.12, 'sine', 0.12, 500), 55); },
+  key:   () => { tone(880, 0.08, 'triangle', 0.13); setTimeout(() => tone(1320, 0.1, 'triangle', 0.12), 55); },
+  gate:  () => tone(420, 0.22, 'square', 0.13, 820),
+  brk:   () => { noise(0.12, 0.12, 200, 1500); tone(200, 0.10, 'sawtooth', 0.10, 80); },
+  echo:  () => { tone(700, 0.10, 'sine', 0.11, 1200); },
+  chest: () => { tone(880, 0.12, 'square', 0.15, 1320); setTimeout(() => tone(1320, 0.1, 'triangle', 0.11), 65); },
+  crumble: () => { noise(0.18, 0.12, 200, 1200); tone(160, 0.14, 'sawtooth', 0.10, 80); },
+  combo: (n) => { const f = 600 + Math.min(10, n) * 45; tone(f, 0.09, 'square', 0.12, f * 1.5); },
 };
 // 循环 BGM：优先播放关卡歌曲 mp3（songs/NN.mp3，exe / 本地服务器 / 内嵌资源均可播放）；
 // 仅在 mp3 加载不到时（如 file:// 直接打开分享版）回退到 WebAudio 合成芯片乐兜底。
@@ -366,7 +386,7 @@ function setBgmVol(pct) {
 
 // ---------- 关卡数据 ----------
 // 主题：meadow / cave / sky / boss
-function L(opts) { return Object.assign({ platforms: [], enemies: [], coins: [], stars: [], spikes: [], bounces: [], powers: [], signs: [], chests: [], portals: [], blocks: [], keys: [], gates: [], checkpoints: [], spawn: [80, 420], goal: null, boss: false, song: 1, theme: 'meadow' }, opts); }
+function L(opts) { return Object.assign({ platforms: [], enemies: [], coins: [], stars: [], bounces: [], powers: [], signs: [], chests: [], portals: [], blocks: [], keys: [], gates: [], checkpoints: [], spawn: [80, 420], goal: null, boss: false, song: 1, theme: 'meadow' }, opts); }
 
 const LEVELS = [
   // 第一关 · 微光草原
@@ -392,7 +412,6 @@ const LEVELS = [
     ],
     coins: coinRow(300, 450, 6, 90).concat(coinRow(900, 300, 3, 60), coinRow(1750, 320, 3, 60), coinRow(2500, 270, 3, 60), coinRow(2950, 350, 3, 60), coinRow(1300, 205, 3, 50)),
     stars: [ [560, 330], [1085, 300], [2570, 270], [1375, 205] ],
-    spikes: [ { x: 1380, y: 462, w: 70 }, { x: 2050, y: 462, w: 70 } ],
     bounces: [ { x: 2260, y: 462, w: 70, h: 14 } ],
     powers: [ { x: 1040, y: 270, w: 26, h: 26, kind: 'rapid', name: '连发', icon: 'R', col: '#ffb04a' } ],
     crates: [ { x: 1120, y: 290, kind: 'hmg' } ],
@@ -436,7 +455,6 @@ const LEVELS = [
     ],
     coins: coinRow(420, 450, 4, 70).concat(coinRow(980, 300, 3, 55), coinRow(1520, 310, 3, 55), coinRow(2060, 270, 3, 55), coinRow(2640, 300, 3, 55), coinRow(3160, 270, 3, 55), coinRow(3440, 350, 3, 55), coinRow(1500, 185, 3, 50)),
     stars: [ [980, 300], [2060, 270], [3160, 270], [1575, 185] ],
-    spikes: [ { x: 1160, y: 462, w: 80 }, { x: 1700, y: 462, w: 60 }, { x: 2300, y: 462, w: 80 } ],
     bounces: [ { x: 2700, y: 462, w: 70, h: 14 } ],
     powers: [ { x: 1450, y: 270, w: 26, h: 26, kind: 'shield', name: '护盾', icon: 'S', col: '#5b9bff' } ],
     crates: [ { x: 1000, y: 280, kind: 'shotgun' }, { x: 2700, y: 250, kind: 'laser' } ],
@@ -515,7 +533,6 @@ const LEVELS = [
     ],
     coins: coinRow(300, 450, 4, 70).concat(coinRow(720, 430, 3, 60), coinRow(1580, 290, 3, 55), coinRow(2640, 260, 3, 55), coinRow(3080, 290, 3, 55), coinRow(2700, 150, 3, 50)),
     stars: [ [1600, 290], [2650, 260], [2720, 150] ],
-    spikes: [ { x: 940, y: 462, w: 70 }, { x: 1400, y: 462, w: 70 }, { x: 1880, y: 462, w: 70 } ],
     bounces: [ { x: 2400, y: 462, w: 70, h: 14 } ],
     powers: [ { x: 1580, y: 290, w: 26, h: 26, kind: 'shield', name: '护盾', icon: 'S', col: '#5b9bff' } ],
     crates: [ { x: 1080, y: 300, kind: 'hmg' }, { x: 2700, y: 250, kind: 'rocket' } ],
@@ -550,7 +567,6 @@ const LEVELS = [
     ],
     coins: coinRow(300, 450, 4, 70).concat(coinRow(1150, 290, 3, 55), coinRow(2040, 280, 3, 55), coinRow(2970, 300, 3, 55), coinRow(1200, 130, 3, 55), coinRow(2500, 100, 3, 55)),
     stars: [ [1160, 290], [2450, 220], [2520, 100] ],
-    spikes: [ { x: 780, y: 462, w: 70 }, { x: 1240, y: 462, w: 70 }, { x: 2120, y: 462, w: 70 }, { x: 2560, y: 462, w: 70 } ],
     bounces: [ { x: 360, y: 462, w: 70, h: 14 }, { x: 1180, y: 462, w: 70, h: 14 }, { x: 2500, y: 462, w: 70, h: 14 } ],
     powers: [ { x: 1150, y: 300, w: 26, h: 26, kind: 'rapid', name: '连发', icon: 'R', col: '#ffb04a' } ],
     crates: [ { x: 1160, y: 290, kind: 'shotgun' }, { x: 2480, y: 90, kind: 'laser' } ],
@@ -588,7 +604,6 @@ const LEVELS = [
     ],
     coins: coinRow(300, 450, 4, 70).concat(coinRow(820, 300, 3, 55), coinRow(1300, 290, 3, 55), coinRow(1780, 280, 3, 55), coinRow(2260, 290, 3, 55), coinRow(2740, 300, 3, 55), coinRow(3220, 320, 3, 55)),
     stars: [ [1300, 290], [2260, 290], [3220, 320] ],
-    spikes: [ { x: 850, y: 462, w: 70 }, { x: 1330, y: 462, w: 70 }, { x: 1810, y: 462, w: 70 }, { x: 2290, y: 462, w: 70 }, { x: 2770, y: 462, w: 70 } ],
     bounces: [ { x: 1700, y: 462, w: 70, h: 14 } ],
     powers: [ { x: 1290, y: 290, w: 26, h: 26, kind: 'shield', name: '护盾', icon: 'S', col: '#5b9bff' } ],
     crates: [ { x: 850, y: 290, kind: 'hmg' }, { x: 2300, y: 280, kind: 'rocket' }, { x: 3220, y: 310, kind: 'laser' } ],
@@ -629,7 +644,6 @@ const LEVELS = [
     ],
     coins: coinRow(300, 450, 4, 70).concat(coinRow(1250, 160, 3, 55), coinRow(2050, 150, 3, 55), coinRow(2850, 140, 3, 55), coinRow(3650, 160, 3, 55), coinRow(1000, 320, 3, 55), coinRow(2260, 280, 3, 55)),
     stars: [ [1250, 160], [2850, 140], [3650, 160] ],
-    spikes: [ { x: 780, y: 462, w: 70 }, { x: 1620, y: 462, w: 70 }, { x: 2460, y: 462, w: 70 }, { x: 3300, y: 462, w: 70 } ],
     bounces: [ { x: 400, y: 462, w: 70, h: 14 }, { x: 1150, y: 462, w: 70, h: 14 }, { x: 1950, y: 462, w: 70, h: 14 }, { x: 2750, y: 462, w: 70, h: 14 }, { x: 3650, y: 462, w: 70, h: 14 } ],
     powers: [ { x: 1230, y: 160, w: 26, h: 26, kind: 'magnet', name: '磁铁', icon: 'M', col: '#46d6c4' } ],
     crates: [ { x: 1250, y: 150, kind: 'laser' }, { x: 2050, y: 140, kind: 'shotgun' }, { x: 2850, y: 130, kind: 'rocket' } ],
@@ -651,7 +665,6 @@ const LEVELS = [
     enemies: [],
     coins: coinRow(240, 320, 3, 70).concat(coinRow(1180, 320, 3, 70), coinRow(700, 220, 3, 70)),
     stars: [ [720, 220] ],
-    spikes: [],
     bounces: [ { x: 700, y: 462, w: 70, h: 14 } ],
     powers: [ { x: 200, y: 320, w: 26, h: 26, kind: 'rapid', name: '连发', icon: 'R', col: '#ffb04a' } ],
     crates: [ { x: 720, y: 300, kind: 'hmg' }, { x: 700, y: 170, kind: 'rocket' } ],
@@ -694,7 +707,6 @@ const LEVELS = [
     ],
     coins: coinRow(300, 450, 4, 70).concat(coinRow(1340, 170, 3, 55), coinRow(2240, 150, 3, 55), coinRow(3140, 170, 3, 55), coinRow(820, 300, 3, 55), coinRow(1700, 280, 3, 55), coinRow(2580, 290, 3, 55), coinRow(3460, 280, 3, 55)),
     stars: [ [1340, 170], [2240, 150], [3140, 170] ],
-    spikes: [ { x: 560, y: 462, w: 80 }, { x: 1000, y: 462, w: 80 }, { x: 1440, y: 462, w: 80 }, { x: 1880, y: 462, w: 80 }, { x: 2320, y: 462, w: 80 }, { x: 2760, y: 462, w: 80 }, { x: 3200, y: 462, w: 80 } ],
     bounces: [ { x: 450, y: 462, w: 70, h: 14 }, { x: 1850, y: 462, w: 70, h: 14 }, { x: 3300, y: 462, w: 70, h: 14 } ],
     powers: [ { x: 1300, y: 160, w: 26, h: 26, kind: 'bomb', name: '清屏弹', icon: 'B', col: '#ffb547' }, { x: 3100, y: 160, w: 26, h: 26, kind: 'shield', name: '护盾', icon: 'S', col: '#5b9bff' } ],
     crates: [ { x: 800, y: 300, kind: 'hmg' }, { x: 2200, y: 140, kind: 'rocket' }, { x: 3100, y: 160, kind: 'laser' } ],
@@ -771,7 +783,6 @@ const LEVELS = [
     ],
     coins: coinRow(300, 450, 4, 70).concat(coinRow(1440, 170, 3, 55), coinRow(2440, 150, 3, 55), coinRow(3440, 170, 3, 55), coinRow(4340, 170, 3, 55), coinRow(820, 300, 3, 55), coinRow(1700, 280, 3, 55), coinRow(2580, 290, 3, 55), coinRow(3460, 280, 3, 55), coinRow(4400, 280, 3, 55)),
     stars: [ [1440, 170], [2440, 150], [3440, 170], [4340, 170] ],
-    spikes: [ { x: 520, y: 462, w: 80 }, { x: 940, y: 462, w: 80 }, { x: 1360, y: 462, w: 80 }, { x: 1780, y: 462, w: 80 }, { x: 2200, y: 462, w: 80 }, { x: 2620, y: 462, w: 80 }, { x: 3040, y: 462, w: 80 }, { x: 3460, y: 462, w: 80 }, { x: 3880, y: 462, w: 80 }, { x: 4300, y: 462, w: 80 } ],
     bounces: [ { x: 400, y: 462, w: 70, h: 14 }, { x: 1600, y: 462, w: 70, h: 14 }, { x: 2800, y: 462, w: 70, h: 14 }, { x: 4000, y: 462, w: 70, h: 14 } ],
     powers: [ { x: 1400, y: 160, w: 26, h: 26, kind: 'bomb', name: '清屏弹', icon: 'B', col: '#ffb547' }, { x: 3400, y: 160, w: 26, h: 26, kind: 'magnet', name: '磁铁', icon: 'M', col: '#46d6c4' }, { x: 4340, y: 160, w: 26, h: 26, kind: 'heal', name: '回血', icon: 'H', col: '#ff6b8b' } ],
     crates: [ { x: 800, y: 300, kind: 'hmg' }, { x: 2400, y: 140, kind: 'rocket' }, { x: 3440, y: 160, kind: 'laser' }, { x: 4340, y: 160, kind: 'shotgun' } ],
@@ -831,17 +842,39 @@ function enrichStage(G, def, n) {
     const frac = (i + 0.5) / nPlat;
     let x = 650 + frac * (w - 1300) + (rng() - 0.5) * 150;
     x = clamp(x, 320, w - 240);
-    const y = Math.round(130 + rng() * 300);
+    const y = Math.round(140 + rng() * 290);
     const pw = Math.round(100 + rng() * 80);
-    // 只做水平移动：上下升降的电梯容易让人站上去踩空掉下去
-    const move = rng() < 0.12 ? { axis: 'x', range: 40 + rng() * 50, speed: 0.9 + rng() * 0.5 } : null;
-    const pl = { x: Math.round(x), y, w: pw, h: 22, move };
+    // 移动平台：水平滑动 或 垂直升降（电梯加行程限制，绝不探到地面/其它台子以下）
+    let move = null;
+    if (rng() < 0.22) {
+      if (rng() < 0.45) {
+        const range = Math.min(70 + rng() * 60, (groundY - y) - 56); // 垂直：保证始终悬在地面之上
+        move = (range > 24) ? { axis: 'y', range, speed: 0.8 + rng() * 0.5 } : null;
+      } else {
+        move = { axis: 'x', range: 40 + rng() * 60, speed: 0.9 + rng() * 0.5 };
+      }
+    }
+    // 其它机制：崩塌台 / 传送带（与移动平台互斥，一个台子只承担一种机制）
+    let crumble = false, conv = 0;
+    if (!move) {
+      const rk = rng();
+      if (rk < 0.18) crumble = true;
+      else if (rk < 0.32) conv = rng() < 0.5 ? 1 : -1;
+    }
+    const pl = { x: Math.round(x), y, w: pw, h: 22, move, crumble, conv };
     if (move) { pl.baseX = pl.x; pl.baseY = pl.y; pl.ox = 0; pl.oy = 0; pl.dx = 0; pl.dy = 0; pl.mt = rand(0, 6); }
-    // 与已有平台重叠/贴太近就整块跳过，避免叠出一堆看不清的假平台
+    // 重叠/贴太近就整块跳过：水平有重叠且高度几乎一致 → 必然跳过（含移动平台的行程范围）
     let clash = false;
     for (const q of G.level.platforms) {
-      const gapX = Math.abs((pl.x + pl.w / 2) - (q.x + q.w / 2)) - (pl.w + q.w) / 2;
-      if (gapX < 50 && Math.abs(pl.y - q.y) < 52) { clash = true; break; }
+      let qx0 = q.x, qx1 = q.x + q.w;
+      if (q.move && q.move.axis === 'x') { const r = q.move.range; qx0 = Math.min(qx0, q.baseX - r); qx1 = Math.max(qx1, q.baseX + r + q.w); }
+      const gapX = (pl.x + pl.w < qx0 || pl.x > qx1) ? 1e9 : Math.max(0, Math.min(pl.x + pl.w, qx1) - Math.max(pl.x, qx0));
+      if (gapX < 64 && Math.abs(pl.y - q.y) < 74) { clash = true; break; } // 高度几乎重叠 → 跳过
+      // 垂直移动平台会上下扫，禁止把新台放在它扫过的竖直区间里
+      if (q.move && q.move.axis === 'y' && gapX < 64) {
+        const r = q.move.range;
+        if (pl.y > q.baseY - r - 46 && pl.y < q.baseY + r + 46) { clash = true; break; }
+      }
     }
     if (clash) continue;
     G.level.platforms.push(pl);
@@ -858,15 +891,10 @@ function enrichStage(G, def, n) {
       G.chests.push({ x: pl.x + pl.w / 2 - 15, y: pl.y - 28, w: 30, h: 26, opened: false, t: rand(0, 6) });
     }
     // 平台上的敌人/星辰概率下调，避免每个平台都堆满东西
-    if (rng() < 0.24) G.enemies.push(makeEnemy({ type: 'bee', x: pl.x + pl.w / 2, y: pl.y - 90 }));
-    if (rng() < 0.18) G.stars.push({ x: pl.x + pl.w / 2, y: pl.y - 60, w: 22, h: 22, t: rand(0, 6), got: false });
+    if (rng() < 0.22) G.enemies.push(makeEnemy({ type: 'bee', x: pl.x + pl.w / 2, y: pl.y - 90 }));
+    if (rng() < 0.16) G.stars.push({ x: pl.x + pl.w / 2, y: pl.y - 60, w: 22, h: 22, t: rand(0, 6), got: false });
   }
   if (!def.boss) {
-    const spikeN = Math.min(4, Math.max(1, Math.round((w - 1000) / 1400)));
-    for (let i = 0; i < spikeN; i++) {
-      const sx = clampX(500 + rng() * (w - 1000));
-      G.spikes.push({ x: Math.round(sx), y: groundY - SPIKE_H, w: 90 + Math.round(rng() * 60), h: SPIKE_H });
-    }
     const bounceN = 1 + Math.round(rng() * 1.4);
     for (let i = 0; i < bounceN; i++) {
       const bx = clampX(700 + rng() * (w - 1100));
@@ -954,7 +982,7 @@ const G = {
   keys: 0,
   boss: null,
   cam: { x: 0, y: 0 },
-  shake: 0,
+  shake: 0, hurtFlash: 0,
   hitstop: 0,
   time: 0,
   best: 0,
@@ -1113,12 +1141,9 @@ function startStage(n, spawnOverride, opts) {
     else cps = [ { x: Math.round(def.w * 0.45), y: 420 }, { x: Math.round(def.w * 0.8), y: 420 } ];
   }
   G.checkpoints = cps.map(c => ({ x: c.x, y: c.y, activated: false }));
-  // 地刺：先加载关卡自带的（加宽加高，底部仍贴原地面），enrichStage 会再补充
-  G.spikes = (def.spikes || []).map(s => ({
-    x: s.x, y: s.y - (SPIKE_H - 18), w: Math.max(90, Math.round(s.w * 1.3)), h: SPIKE_H,
-  }));
+  // 地刺已彻底移除：不再生成任何尖刺障碍
+  G.spikes = [];
   enrichStage(G, def, n);
-  G.level.spikes = G.spikes; // 统一引用，保证绘制与伤害判定都能读到
   supportPickups(); // 拾取物一律落到平台顶上，空中不再漂浮食物/道具
   for (const c of G.checkpoints) if (Math.abs(c.x - spawn[0]) < 60) c.activated = true;
   G.checkpoint = { x: spawn[0], y: spawn[1], activated: true };
@@ -1149,6 +1174,7 @@ function reviveAtCheckpoint() {
 function moveAndCollide(e, dt) {
   e.x += e.vx * dt;
   for (const p of G.level.platforms) {
+    if (p.broken) continue;
     if (aabb(e, p)) {
       if (e.vx > 0) e.x = p.x - e.w;
       else if (e.vx < 0) e.x = p.x + p.w;
@@ -1166,6 +1192,7 @@ function moveAndCollide(e, dt) {
   e.onGround = false;
   e.standPlat = null;
   for (const p of G.level.platforms) {
+    if (p.broken) continue;
     if (aabb(e, p)) {
       if (e.vy > 0) { e.y = p.y - e.h; e.vy = 0; e.onGround = true; e.standPlat = p; }
       else if (e.vy < 0) { e.y = p.y + p.h; e.vy = 0; }
@@ -1248,6 +1275,20 @@ function updatePlayer(dt) {
 
   // 随移动平台一起移动
   if (p.standPlat) { p.x += p.standPlat.dx || 0; p.y += p.standPlat.dy || 0; }
+  // 崩塌台：站上去后裂纹计时，到时碎裂掉落，几秒后复原（掉到下方平台/地面，不卡关）
+  if (p.standPlat && p.standPlat.crumble && !p.standPlat.broken) {
+    const cp = p.standPlat;
+    cp.crackT = (cp.crackT || 0) + dt;
+    if (cp.crackT >= 0.55 && !cp._warn) { cp._warn = true; SFX.crumble(); addFloat(cp.x + cp.w / 2, cp.y - 12, '台子要塌了!', '#d9a05b'); }
+    if (cp.crackT >= 0.95) {
+      cp.broken = true; cp.brokenT = 0; SFX.crumble();
+      burst(cp.x + cp.w / 2, cp.y + cp.h / 2, '#caa46a', 18);
+    }
+  }
+  // 传送带：站在上面被水平推送
+  if (p.standPlat && p.standPlat.conv && !p.standPlat.broken) {
+    p.x += p.standPlat.conv * 135 * dt;
+  }
   // 弹跳板
   for (const b of G.bounces) {
     b.cool = Math.max(0, b.cool - dt);
@@ -1255,11 +1296,6 @@ function updatePlayer(dt) {
       p.vy = -1180; p.jumps = p.maxJumps; b.cool = 0.4; p.sqv = -1; SFX.djump();
       spawnDust(p.x + p.w / 2, p.y + p.h, 10);
     }
-  }
-
-  // 尖刺伤害
-  if (G.level.spikes) for (const s of G.level.spikes) {
-    if (p.invuln <= 0 && aabb(p, { x: s.x, y: s.y, w: s.w, h: s.h || SPIKE_H })) damagePlayer(1, s.x + s.w / 2);
   }
 
   // 攻击：合金弹头式按住开火键连发（J / 鼠标左键＝主攻击），见下方 fireWeapon。
@@ -1467,7 +1503,7 @@ function handleEnemyContact(e) {
   if (p.vy > 60 && (p.y + p.h) < e.y + e.h * 0.6) {
     e.hp = 0; e.flash = 0.12; p.vy = -460; p.jumps = Math.max(p.jumps, 1);
     SFX.stomp(); addFloat(e.x + e.w / 2, e.y, p.atk, '#9be15d'); hitSpark(e.x + e.w / 2, e.y);
-    G.hitstop = 0.05; G.shake = Math.max(G.shake, 2);
+    G.hitstop = 0.07; G.shake = Math.max(G.shake, 3.5);
     addCombo(); p.score += 100 * Math.max(1, G.combo);
     if (e.hp <= 0) killEnemy(e);
     return;
@@ -1635,7 +1671,7 @@ function damagePlayer(dmg, srcX) {
   p.hp -= dmg; p.invuln = 1.6;
   G.combo = 0; G.comboT = 0;
   p.vx = sign(p.x - srcX) * 320; p.vy = -300;
-  G.shake = 0; SFX.hurt();
+  G.shake = 0; SFX.hurt(); G.hurtFlash = 0.4;
   burst(p.x + p.w / 2, p.y + p.h / 2, '#ff6b6b', 12);
   if (p.hp <= 0) { p.hp = 0; reviveAtCheckpoint(); }
 }
@@ -1759,11 +1795,16 @@ function updateParticles(dt) {
   G.floats = G.floats.filter(f => f.life > 0);
 }
 function addFloat(x, y, txt, col) { G.floats.push({ x, y, txt: String(txt), col, life: 0.8 }); }
-function addCombo() { G.combo++; G.comboT = 2.6; }
+function addCombo() {
+  G.combo++; G.comboT = 2.6;
+  SFX.combo(G.combo);
+  if (G.combo > 1 && G.combo % 5 === 0) addFloat(G.player.x + G.player.w / 2, G.player.y - 24, '连击 x' + G.combo + '!', '#ff7eb3');
+}
 
 // ---------- 移动平台 ----------
 function updatePlatforms(dt) {
   for (const p of G.level.platforms) {
+    if (p.broken) { p.brokenT = (p.brokenT || 0) + dt; if (p.brokenT > 3.5) { p.broken = false; p.crackT = 0; p._warn = false; } p.dx = 0; p.dy = 0; continue; }
     if (!p.move) { p.dx = 0; p.dy = 0; continue; }
     p.mt += dt;
     const off = Math.sin(p.mt * p.move.speed) * p.move.range;
@@ -1787,6 +1828,7 @@ function frame(now) {
   let dt = (now - last) / 1000; last = now;
   dt = Math.min(dt, 1 / 30);
   G.time += dt;
+  G.hurtFlash = Math.max(0, (G.hurtFlash || 0) - dt);
 
   if (G.state === 'playing') {
     if (G.hitstop > 0) { G.hitstop -= dt; }
@@ -1839,7 +1881,6 @@ function render() {
   drawBackground();
   drawPlatforms();
   drawBounces();
-  drawSpikes();
   drawCoins();
   drawCheckpoints();
   drawStars();
@@ -2049,10 +2090,16 @@ function drawPlatforms() {
   const pc = t.plat || ['#cfe6ff', '#9cc2ec'];
   for (const p of G.level.platforms) {
     if (p.y > VH + 4) continue;
+    if (p.broken) { // 崩塌中：只画几块下坠的碎屑残影
+      ctx.fillStyle = 'rgba(180,150,100,.32)';
+      for (let k = 0; k < 3; k++) ctx.fillRect(p.x + k * (p.w / 3) + 6, p.y + 4, p.w / 3 - 12, 6);
+      continue;
+    }
     const moving = !!p.move;
+    const crumble = !!p.crumble, conv = p.conv || 0;
+    const baseCol = crumble ? ['#e7c089', '#b9814a'] : (conv ? ['#bcd0ff', '#6f8fe0'] : pc);
     const grd = ctx.createLinearGradient(0, p.y, 0, p.y + p.h);
-    grd.addColorStop(0, pc[0]);
-    grd.addColorStop(1, pc[1]);
+    grd.addColorStop(0, baseCol[0]); grd.addColorStop(1, baseCol[1]);
     ctx.fillStyle = grd; rr(ctx, p.x, p.y, p.w, p.h, 10); ctx.fill();
     // 顶部高光用主题色而非硬白，避免在熔岩/星轨等暗主题里突兀
     const acRgba = (hex, a) => { const h = (hex || '').replace('#',''); if (h.length < 6) return 'rgba(255,255,255,' + a + ')'; return 'rgba(' + parseInt(h.slice(0,2),16) + ',' + parseInt(h.slice(2,4),16) + ',' + parseInt(h.slice(4,6),16) + ',' + a + ')'; };
@@ -2060,6 +2107,25 @@ function drawPlatforms() {
     rr(ctx, p.x, p.y - 5, p.w, 12, 8); ctx.fill();
     ctx.fillStyle = moving ? 'rgba(150,232,255,.35)' : acRgba(t.accent || t.accent2, .45);
     rr(ctx, p.x + 8, p.y - 2, p.w - 16, 5, 3); ctx.fill();
+    // 崩塌台：随裂纹计时显示越来越多裂痕（直观提示“快跳走”）
+    if (crumble && p.crackT > 0.35) {
+      ctx.strokeStyle = 'rgba(60,40,20,' + Math.min(0.85, (p.crackT - 0.35) * 2.2) + ')';
+      ctx.lineWidth = 1.5;
+      const seg = Math.max(1, Math.floor(p.crackT * 6));
+      for (let k = 1; k <= seg; k++) {
+        const cx = p.x + (p.w * k) / (seg + 1);
+        ctx.beginPath(); ctx.moveTo(cx, p.y + 2); ctx.lineTo(cx + 6, p.y + p.h - 2); ctx.stroke();
+      }
+    }
+    // 传送带：滚动箭头指示推送方向
+    if (conv) {
+      let off = (G.time * 60 * conv) % 28; if (off < 0) off += 28;
+      ctx.fillStyle = 'rgba(255,255,255,.72)';
+      for (let ax = p.x + 8; ax < p.x + p.w - 10; ax += 28) {
+        const mx = ax + off;
+        ctx.beginPath(); ctx.moveTo(mx, p.y + 4); ctx.lineTo(mx - conv * 5, p.y + p.h / 2); ctx.lineTo(mx, p.y + p.h - 4); ctx.closePath(); ctx.fill();
+      }
+    }
     if (p.w > 120) {
       const n = Math.floor(p.w / 150);
       for (let i = 1; i <= n; i++) {
@@ -2068,26 +2134,6 @@ function drawPlatforms() {
       }
     }
     if (moving) { ctx.strokeStyle = 'rgba(120,220,255,.7)'; ctx.lineWidth = 2; rr(ctx, p.x, p.y, p.w, p.h, 10); ctx.stroke(); }
-  }
-}
-function drawSpikes() {
-  for (const s of G.level.spikes || []) {
-    const sh = s.h || SPIKE_H;      // 尖刺高度（默认 SPIKE_H，显著加高）
-    const tw = 26;                  // 单个尖刺宽度（加大）
-    const n = Math.max(1, Math.floor(s.w / tw));
-    ctx.fillStyle = '#ff8a8a';
-    for (let i = 0; i < n; i++) {
-      const x = s.x + i * tw;
-      ctx.beginPath(); ctx.moveTo(x, s.y + sh); ctx.lineTo(x + tw / 2, s.y); ctx.lineTo(x + tw, s.y + sh); ctx.closePath(); ctx.fill();
-    }
-    // 高光与底座，让尖刺更醒目
-    ctx.fillStyle = 'rgba(255,255,255,.45)';
-    for (let i = 0; i < n; i++) {
-      const x = s.x + i * tw;
-      ctx.beginPath(); ctx.moveTo(x + tw / 2, s.y); ctx.lineTo(x + tw / 2 - 4, s.y + sh); ctx.lineTo(x + tw / 2 - 1, s.y + sh); ctx.closePath(); ctx.fill();
-    }
-    ctx.fillStyle = '#c94f4f'; ctx.fillRect(s.x, s.y + sh - 4, s.w, 6);
-    ctx.fillStyle = '#e06b6b'; ctx.fillRect(s.x, s.y + sh - 9, s.w, 5);
   }
 }
 function drawBounces() {
@@ -2233,6 +2279,12 @@ function drawCheckpoints() {
     const sx = c.x - G.cam.x, sy = c.y - G.cam.y;
     if (sx < -60 || sx > VW + 60) continue;
     const on = !!c.activated;
+    // 常驻光柱：从存档点向上射出，远处也能看见（不再需要走近才显示）
+    const beamA = (Math.sin(G.time * 2.2) * 0.5 + 0.5) * 0.26 + 0.16;
+    const bg = ctx.createLinearGradient(sx, sy - 210, sx, sy);
+    bg.addColorStop(0, 'rgba(0,0,0,0)');
+    bg.addColorStop(1, on ? 'rgba(70,214,160,' + beamA + ')' : 'rgba(150,185,240,' + beamA + ')');
+    ctx.fillStyle = bg; ctx.fillRect(sx - 7, sy - 210, 14, 210);
     // 地面光晕：常亮（不再用 sin 做忽明忽暗的脉冲）
     const glow = ctx.createRadialGradient(sx, sy - 4, 2, sx, sy - 4, 46);
     glow.addColorStop(0, on ? 'rgba(70,214,160,.40)' : 'rgba(150,185,240,.30)');
@@ -2497,8 +2549,12 @@ function drawHUD() {
   ctx.textAlign = 'center';
   ctx.fillStyle = 'rgba(40,55,90,.9)'; ctx.fillText('分数 ' + p.score, VW / 2, 28);
   if (G.combo > 1) {
-    ctx.fillStyle = '#ff7eb3'; ctx.font = 'bold 19px sans-serif';
-    ctx.fillText('连击 x' + G.combo, VW / 2, 52);
+    const pop = 1 + Math.max(0, G.comboT - 2.1) * 1.4; // 刚加连击时弹性放大
+    ctx.save();
+    ctx.translate(VW / 2, 52); ctx.scale(pop, pop);
+    ctx.fillStyle = '#ff7eb3'; ctx.font = 'bold 20px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('连击 x' + G.combo, 0, 0);
+    ctx.restore();
   }
   ctx.textAlign = 'right';
   if (muted) { ctx.fillStyle = 'rgba(40,55,90,.6)'; ctx.fillText('🔇 静音(M)', VW - 22, 72); }
@@ -2546,6 +2602,15 @@ function drawHUD() {
   if (G.hintUntil) {
     const left = (G.hintUntil - performance.now()) / 1000;
     if (left > 0) drawControlHint(Math.min(1, left / 1.5));
+  }
+  // 受伤红屏 + 低血量脉冲：强反馈让玩家立刻感知到受击与危险
+  if (G.hurtFlash > 0) {
+    ctx.fillStyle = 'rgba(255,40,60,' + (G.hurtFlash * 0.5) + ')';
+    ctx.fillRect(0, 0, VW, VH);
+  } else if (p.hp <= 1) {
+    const a = 0.10 + Math.abs(Math.sin(G.time * 4)) * 0.16;
+    ctx.fillStyle = 'rgba(255,40,60,' + a + ')';
+    ctx.fillRect(0, 0, VW, VH);
   }
 }
 // 底部的操作提示胶囊
