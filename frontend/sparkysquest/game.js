@@ -132,9 +132,11 @@ window.addEventListener('keydown', (e) => {
   ensureAudio();
   if (k === 'm') toggleMute();
   if (k === 'r' && (G.state === 'playing' || G.state === 'gameover')) restartStage();
+  if (k === 'q' && G.state === 'playing') tryTimeSlow();
   if ((k === 'p' || k === 'escape') && G.state === 'playing') pauseGame();
   else if ((k === 'p' || k === 'escape') && G.state === 'paused') resumeGame();
 });
+function tryTimeSlow(){ if (G.timeSlowCD>0 || G.state!=='playing') return; G.timeSlowT=3; G.timeSlowCD=12; if (SFX.boss) SFX.boss(); burst(G.player.x+G.player.w/2, G.player.y, '#7fffd4', 16); }
 window.addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; });
 canvas.addEventListener('mousedown', (e) => {
   ensureAudio();
@@ -145,7 +147,7 @@ canvas.addEventListener('mouseup', () => { keys['j'] = false; });
 // ---------- 触屏控制（手机 / 平板） ----------
 // 复用键盘输入管线：触摸按钮 = 派发对应的键盘事件，这样移动/跳跃/开火/星影逻辑完全一致。
 const isTouch = (typeof navigator !== 'undefined') && (('ontouchstart' in window) || (navigator.maxTouchPoints || 0) > 0 || (typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches));
-const touchMap = { btnLeft: 'arrowleft', btnRight: 'arrowright', btnJump: ' ', btnShoot: 'j', btnDash: 'shift', btnEcho: 'f' };
+const touchMap = { btnLeft: 'arrowleft', btnRight: 'arrowright', btnJump: ' ', btnShoot: 'j', btnDash: 'shift', btnEcho: 'f', btnSlow: 'q' };
 function fireKey(key, isDown) {
   try { window.dispatchEvent(new KeyboardEvent(isDown ? 'keydown' : 'keyup', { key })); } catch (e) {}
 }
@@ -1033,20 +1035,21 @@ function makePlayer() {
   };
 }
 function makeEnemy(spec) {
+  const dm = G.diffMul || 1;
   const base = { x: spec.x, y: spec.y, vx: 0, vy: 0, onGround: false, flash: 0, dead: false, t: rand(0, 6), id: Math.random() };
-  if (spec.type === 'slime') return Object.assign(base, { type: 'slime', w: 38, h: 30, hp: 2, speed: 70, dir: Math.random() < 0.5 ? -1 : 1, dmgT: 0 });
+  if (spec.type === 'slime') return Object.assign(base, { type: 'slime', w: 38, h: 30, hp: Math.round(2*dm), speed: 70, dir: Math.random() < 0.5 ? -1 : 1, dmgT: 0 });
   if (spec.type === 'bee') {
     // 领地机制：以出生点为中心、range 为半径，只在这片区域里追玩家
-    const b = Object.assign(base, { type: 'bee', w: 30, h: 26, hp: 1, speed: 85, dmgT: 0, range: spec.range || 240 });
+    const b = Object.assign(base, { type: 'bee', w: 30, h: 26, hp: Math.round(1*dm), speed: 85, dmgT: 0, range: spec.range || 240 });
     b.homeX = b.x + b.w / 2; b.homeY = b.y + b.h / 2;
     return b;
   }
-  if (spec.type === 'turret') return Object.assign(base, { type: 'turret', w: 40, h: 44, hp: 3, fireT: rand(2, 3.2), dmgT: 0 });
-  if (spec.type === 'roller') return Object.assign(base, { type: 'roller', w: 34, h: 34, hp: 3, speed: 150, dir: Math.random() < 0.5 ? -1 : 1, dmgT: 0, spin: 0 });
+  if (spec.type === 'turret') return Object.assign(base, { type: 'turret', w: 40, h: 44, hp: Math.round(3*dm), fireT: rand(2, 3.2), dmgT: 0 });
+  if (spec.type === 'roller') return Object.assign(base, { type: 'roller', w: 34, h: 34, hp: Math.round(3*dm), speed: 150, dir: Math.random() < 0.5 ? -1 : 1, dmgT: 0, spin: 0 });
   return base;
 }
 function makeBoss(spec) {
-  const hp = (spec && spec.bossHp) || 55;
+  const hp = Math.round(((spec && spec.bossHp) || 55) * (G.diffMul || 1));
   return {
     type: 'boss', x: 680, y: 200, w: 130, h: 130, vx: 0, vy: 0, onGround: false,
     hp, maxHp: hp, flash: 0, invuln: 0, phase: 1, timer: 2, action: 'idle',
@@ -1058,6 +1061,7 @@ function makeBoss(spec) {
 function startStage(n, spawnOverride, opts) {
   opts = opts || {};
   G.stage = n;
+  G.diffMul = (G.endless ? 1 + (G.endlessLoop||0)*0.12 : 1); G.goldStars = []; G.timeSlowT = 0; G.timeSlowCD = 0;
   const def = LEVELS[n - 1];
   const spawn = spawnOverride || def.spawn;
   G.level = { w: def.w, theme: def.theme, platforms: def.platforms.map(p => {
@@ -1521,8 +1525,9 @@ function updateBoss(dt) {
     b.timer -= dt;
     if (b.timer <= 0) {
       const r = Math.random();
-      if (r < 0.38) { b.action = 'slam'; b.vy = -900; b.landed = false; }
-      else if (r < 0.72) { b.action = 'spread'; bossSpread(b); b.timer = b.phase >= 2 ? 1.6 : 2.2; b.action = 'idle'; }
+      if (r < 0.34) { b.action = 'slam'; b.vy = -900; b.landed = false; }
+      else if (r < 0.64) { b.action = 'spread'; bossSpread(b); b.timer = b.phase >= 2 ? 1.6 : 2.2; b.action = 'idle'; }
+      else if (b.phase >= 3 && r < 0.84) { bossRing(b); b.timer = 2.0; }
       else { b.action = 'summon'; for (let i = 0; i < (b.phase >= 2 ? 2 : 1); i++) spawnMinion(b); b.timer = 2.4; b.action = 'idle'; }
     }
   } else if (b.action === 'slam') {
@@ -1575,7 +1580,7 @@ function spawnMinion(b) {
 function updateProjectiles(dt) {
   const p = G.player;
   for (const pr of G.projectiles) {
-    pr.x += pr.vx * dt; pr.y += pr.vy * dt; pr.life -= dt;
+    const psm = (pr.fromEnemy && G.timeSlowT > 0) ? 0.35 : 1; pr.x += pr.vx * dt * psm; pr.y += pr.vy * dt * psm; pr.life -= dt;
     if (pr.shock) pr.vy += 600 * dt; // 冲击波下坠
     if (pr.life <= 0 || pr.x < -60 || pr.x > G.level.w + 60 || pr.y > VH + 60 || pr.y < -60) { pr.dead = true; continue; }
     // 撞平台
@@ -1599,8 +1604,8 @@ function updateProjectiles(dt) {
         if (pr.boom) explode(pr); else hurtBoss(pr.dmg, sign(pr.vx));
         if (!pr.pierce) pr.dead = true;
       }
-    } else if (pr.fromEnemy) {
-      if (aabb(p, pr)) { damagePlayer(1, pr.x); pr.dead = true; hitSpark(pr.x, pr.y); }
+    } else       if (pr.fromEnemy) {
+      if (aabb(p, pr)) { if (p.shieldT > 0) { pr.fromEnemy = false; pr.vx = -pr.vx * 1.25; pr.vy = -Math.abs(pr.vy) - 140; pr.dmg = Math.max(2, (p.atk || 3)); pr.life = 4; pr.cl = '#7fffd4'; hitSpark(pr.x, pr.y); } else { damagePlayer(1, pr.x); pr.dead = true; hitSpark(pr.x, pr.y); } }
     }
     G.blocks = (G.blocks || []).filter(b => !b.broken);
   }
@@ -1779,11 +1784,23 @@ function frame(now) {
     else {
       updatePlatforms(dt);
       updatePlayer(dt);
-      if (G.state === 'playing') updateEnemies(dt);
-      if (G.state === 'playing') updateBoss(dt);
+      if (G.timeSlowT > 0) G.timeSlowT -= dt;
+      if (G.timeSlowCD > 0) G.timeSlowCD -= dt;
+      const sdt = (G.timeSlowT > 0) ? dt * 0.35 : dt;
+      if (G.state === 'playing') updateEnemies(sdt);
+      if (G.state === 'playing') updateBoss(sdt);
       if (G.state === 'playing') updateProjectiles(dt);
       if (G.state === 'playing') updateCollect(dt);
       if (G.state === 'playing') updateCheckpoints();
+      if (G.state === 'playing') {
+        const _pp = G.player;
+        if (Math.random() < 0.004 && (G.goldStars||[]).length < 2) G.goldStars.push({ x: rand(60, VW-60), y: rand(80, 280), t: 0 });
+        for (let _gi = (G.goldStars||[]).length - 1; _gi >= 0; _gi--) {
+          const _gs = G.goldStars[_gi]; _gs.t += dt; _gs.y += Math.sin(_gs.t*2)*0.5;
+          if (aabb(_pp, { x: _gs.x-14, y: _gs.y-14, w: 28, h: 28 })) { _pp.coins += 25; _pp.score = (_pp.score||0) + 500; burst(_gs.x, _gs.y, '#ffd700', 20); G.goldStars.splice(_gi, 1); }
+          else if (_gs.t > 30) G.goldStars.splice(_gi, 1);
+        }
+      }
       // 引导提示：靠近即弹出顶部横幅，看完自动消失（不再立一块常驻木牌）
       if (G.signs && G.signs.length) {
         const pl2 = G.player;
@@ -1840,6 +1857,7 @@ function render() {
   drawParticles();
   drawFloats();
   ctx.restore();
+  for (const _gs of (G.goldStars||[])) { ctx.save(); ctx.translate(_gs.x, _gs.y); ctx.rotate(_gs.t*1.2); ctx.shadowColor='#ffd700'; ctx.shadowBlur=16; ctx.fillStyle='#ffd700'; ctx.beginPath(); for (let _kk=0;_kk<5;_kk++){ const _a=-Math.PI/2+_kk*2*Math.PI/5; ctx.lineTo(Math.cos(_a)*11,Math.sin(_a)*11); const _a2=_a+Math.PI/5; ctx.lineTo(Math.cos(_a2)*5,Math.sin(_a2)*5);} ctx.closePath(); ctx.fill(); ctx.restore(); }
   drawHUD();
 }
 
@@ -2465,6 +2483,8 @@ function drawFloats() {
 // ---------- HUD ----------
 function drawHUD() {
   const p = G.player; if (!p) return;
+  if (G.endless) { ctx.fillStyle = '#7CFFB2'; ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('∞ 无尽生存 第 ' + (G.endlessLoop+1) + ' 轮', VW/2, 22); ctx.textAlign = 'left'; }
+  if (G.timeSlowT > 0 || G.timeSlowCD > 0) { ctx.fillStyle = G.timeSlowT > 0 ? '#7fffd4' : '#9aa'; ctx.font = '14px sans-serif'; ctx.textAlign = 'right'; ctx.fillText(G.timeSlowT > 0 ? ('时缓 '+G.timeSlowT.toFixed(1)+'s') : ('时缓冷却 '+Math.ceil(G.timeSlowCD)+'s'), VW-12, 22); ctx.textAlign = 'left'; }
   // 心
   for (let i = 0; i < p.maxHp; i++) {
     const x = 22 + i * 30, y = 26;
@@ -2583,6 +2603,7 @@ function hideAll() { ['title', 'upgrade', 'gameover', 'win', 'pause'].forEach(id
 
 function levelClear() {
   if (G.state !== 'playing') return;
+  if (G.endless) { hideAll(); G.endlessLoop = (G.endlessLoop||0) + 1; G.diffMul = 1 + G.endlessLoop * 0.12; startStage((G.stage % LEVELS.length) + 1); return; }
   SFX.clear();
   saveBest();
   saveProgress();
@@ -2655,6 +2676,7 @@ function restartFromOver() { hideAll(); startStage(G.stage); }
 
 function winGame() {
   if (G.state === 'win') return;
+  if (G.endless) { hideAll(); G.endlessLoop = (G.endlessLoop||0) + 1; G.diffMul = 1 + G.endlessLoop * 0.12; startStage((G.stage % LEVELS.length) + 1); return; }
   setState('win'); SFX.win(); saveBest();
   burst(G.boss ? G.boss.x + 65 : VW / 2, VH / 2, '#ffd166', 40);
   document.getElementById('winCoins').textContent = G.player.coins;
@@ -2702,8 +2724,9 @@ function continueGame() {
   const s = loadSave(); if (!s) { newGame(); return; }
   applySave(s); hideAll(); startStage(s.stage || 1); refreshTitle();
 }
-function newGame() {
+function newGame(endless) {
   try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
+  G.endless = !!endless; G.endlessLoop = 0;
   G.player = makePlayer(); hideAll(); startStage(1); refreshTitle();
 }
 function gotoStage(i) {
@@ -2733,6 +2756,7 @@ function refreshTitle() {
 
 // ---------- 绑定 UI ----------
 document.getElementById('startBtn').onclick = newGame;
+document.getElementById('endlessBtn').onclick = () => newGame(true);
 document.getElementById('continueBtn').onclick = continueGame;
 document.getElementById('nextBtn').onclick = nextStage;
 document.getElementById('retryBtn').onclick = restartFromOver;

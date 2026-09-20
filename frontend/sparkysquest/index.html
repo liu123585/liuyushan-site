@@ -71,6 +71,8 @@
       width: var(--bj); height: var(--bj); font-size: clamp(26px, 5.8vh, 38px); background: rgba(120,220,255,.5); }
     #btnEcho   { right: calc(var(--pd) + var(--bj) + var(--gp)); bottom: calc(var(--pd) + var(--bj) + var(--gp));
       width: var(--bs); height: var(--bs); background: rgba(186,140,255,.55); }
+    #btnSlow   { right: var(--pd); bottom: calc(var(--pd) + var(--bj)*2 + var(--gp)*2);
+      width: var(--bs); height: var(--bs); background: rgba(127,255,212,.5); }
 
     /* 暂停按钮：手机和电脑进入游戏后都显示 */
     #btnPause { display: none; position: absolute; z-index: 40; top: 14px; right: 16px;
@@ -167,6 +169,7 @@
     <div id="btnShoot"  class="touch-btn">开火</div>
     <div id="btnDash"   class="touch-btn">冲</div>
     <div id="btnEcho"   class="touch-btn">星跃</div>
+    <div id="btnSlow"   class="touch-btn">时</div>
 
     <!-- 暂停：手机和电脑都能点 -->
     <button id="btnPause">暂停</button>
@@ -204,6 +207,7 @@
           <span id="bgmVolTitleTxt">40%</span>
         </div>
         <button class="btn" id="startBtn">从头开始</button>
+        <button class="btn" id="endlessBtn" style="background:linear-gradient(90deg,#7CFFB2,#46d6c4)">∞ 无尽生存</button><br/>
         <div id="levelSelect" class="lvl-select" style="display:none"></div>
       </div>
     </div>
