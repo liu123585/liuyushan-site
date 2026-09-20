@@ -905,6 +905,14 @@ function enrichStage(G, def, n) {
       G.lasers.push({ x: lx, y: groundY - lh, w: 16, h: lh, t: rng() * 3.4, period: 3.4, on: false, warn: false });
     }
   }
+  // 隐藏奖励：每关一个「金宝箱」，摆在悬空平台上（不再往背景天空里飘星，避免和装饰混淆）
+  if (!def.boss) {
+    const gp = G.level.platforms.filter(pl => pl.h <= 30 && !pl.move && !pl.crumble && !pl.conv);
+    if (gp.length) {
+      const gpl = gp[Math.floor(rng() * gp.length)];
+      G.chests.push({ x: gpl.x + gpl.w / 2 - 15, y: gpl.y - 30, w: 30, h: 26, opened: false, t: rand(0, 6), gold: true });
+    }
+  }
   // 第 3 关起加入新敌人：空中投弹怪；第 5 关起再加地面铁甲冲撞者
   if (!def.boss && n >= 3) {
     G.enemies.push(makeEnemy({ type: 'bomber', x: Math.round(clampX(900 + rng() * (w - 1400))), y: 150 + rng() * 120 }));
@@ -1091,7 +1099,7 @@ function makeBoss(spec) {
 function startStage(n, spawnOverride, opts) {
   opts = opts || {};
   G.stage = n;
-  G.diffMul = 1; G.goldStars = []; G.timeSlowT = 0; G.timeSlowCD = 0;
+  G.diffMul = 1; G.timeSlowT = 0; G.timeSlowCD = 0;
   const def = LEVELS[n - 1];
   const spawn = spawnOverride || def.spawn;
   G.level = { w: def.w, theme: def.theme, platforms: def.platforms.map(p => {
@@ -1783,12 +1791,13 @@ function updateCollect(dt) {
     if (c.opened) continue;
     if (aabb(p, c)) {
       c.opened = true;
-      const n = 6 + Math.floor(rand(0, 5));
+      const n = c.gold ? 25 : (6 + Math.floor(rand(0, 5)));
       p.coins += n;
-      burst(c.x + 15, c.y + 10, '#ffd166', 18);
-      addFloat(c.x + 15, c.y - 6, '+' + n + '★', '#ffd166');
+      burst(c.x + 15, c.y + 10, c.gold ? '#ffd700' : '#ffd166', 20);
+      addFloat(c.x + 15, c.y - 6, '+' + n + ' 星币', c.gold ? '#ffd700' : '#ffd166');
       SFX.chest();
-      if (Math.random() < 0.4) { p.stars += 1; addFloat(c.x + 15, c.y - 26, '★+1 天赋星', '#5be0ff'); }
+      if (c.gold) { addScore(500); addFloat(c.x + 15, c.y - 30, '金宝箱 +500分', '#ffd700'); }
+      if (c.gold || Math.random() < 0.4) { p.stars += 1; addFloat(c.x + 15, c.y - (c.gold ? 52 : 26), '★+1 天赋星', '#5be0ff'); }
     }
   }
   G.chests = G.chests.filter(c => !c.opened);
@@ -1935,15 +1944,6 @@ function frame(now) {
       if (G.state === 'playing') updateCollect(dt);
       if (G.state === 'playing') updateCheckpoints();
       if (G.state === 'playing') updateLasers(dt);
-      if (G.state === 'playing') {
-        const _pp = G.player;
-        if (Math.random() < 0.004 && (G.goldStars||[]).length < 2) G.goldStars.push({ x: rand(60, VW-60), y: rand(80, 280), t: 0 });
-        for (let _gi = (G.goldStars||[]).length - 1; _gi >= 0; _gi--) {
-          const _gs = G.goldStars[_gi]; _gs.t += dt; _gs.y += Math.sin(_gs.t*2)*0.5;
-          if (aabb(_pp, { x: _gs.x-14, y: _gs.y-14, w: 28, h: 28 })) { _pp.coins += 25; addScore(500); burst(_gs.x, _gs.y, '#ffd700', 20); G.goldStars.splice(_gi, 1); }
-          else if (_gs.t > 30) G.goldStars.splice(_gi, 1);
-        }
-      }
       // 引导提示：靠近即弹出顶部横幅，看完自动消失（不再立一块常驻木牌）
       if (G.signs && G.signs.length) {
         const pl2 = G.player;
@@ -2000,7 +2000,7 @@ function render() {
   drawParticles();
   drawFloats();
   ctx.restore();
-  for (const _gs of (G.goldStars||[])) { ctx.save(); ctx.translate(_gs.x, _gs.y); ctx.rotate(_gs.t*1.2); ctx.shadowColor='#ffd700'; ctx.shadowBlur=16; ctx.fillStyle='#ffd700'; ctx.beginPath(); for (let _kk=0;_kk<5;_kk++){ const _a=-Math.PI/2+_kk*2*Math.PI/5; ctx.lineTo(Math.cos(_a)*11,Math.sin(_a)*11); const _a2=_a+Math.PI/5; ctx.lineTo(Math.cos(_a2)*5,Math.sin(_a2)*5);} ctx.closePath(); ctx.fill(); ctx.restore(); }
+  drawCheckpointGuides(); // 画面外存档点的屏幕边缘指示牌（固定在屏幕上，需在相机变换之外画）
   drawHUD();
 }
 
@@ -2291,15 +2291,21 @@ function drawChests() {
   for (const c of G.chests) {
     if (c.opened) continue;
     const x = c.x, y = c.y + Math.sin(c.t * 2) * 2;
-    const g = ctx.createRadialGradient(x + 15, y + 13, 2, x + 15, y + 13, 38);
-    g.addColorStop(0, 'rgba(255,200,90,.42)'); g.addColorStop(1, 'rgba(255,200,90,0)');
-    ctx.fillStyle = g; ctx.fillRect(x - 18, y - 18, 66, 56);
-    ctx.fillStyle = '#caa24a'; rr(ctx, x, y, 30, 26, 4); ctx.fill();
-    ctx.strokeStyle = '#8a6a2a'; ctx.lineWidth = 2; rr(ctx, x, y, 30, 26, 4); ctx.stroke();
-    ctx.fillStyle = '#7a5a22'; ctx.fillRect(x, y + 11, 30, 5);
-    ctx.fillStyle = '#ffd86b'; ctx.fillRect(x + 13, y + 9, 4, 9);
-    ctx.fillStyle = '#fff'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText('?', x + 15, y + 22); ctx.textAlign = 'left';
+    const g = ctx.createRadialGradient(x + 15, y + 13, 2, x + 15, y + 13, c.gold ? 52 : 38);
+    g.addColorStop(0, c.gold ? 'rgba(255,215,60,.62)' : 'rgba(255,200,90,.42)');
+    g.addColorStop(1, c.gold ? 'rgba(255,215,60,0)' : 'rgba(255,200,90,0)');
+    ctx.fillStyle = g; ctx.fillRect(x - (c.gold ? 28 : 18), y - (c.gold ? 26 : 18), c.gold ? 86 : 66, c.gold ? 74 : 56);
+    if (c.gold) { // 金宝箱：更亮、带闪光，一眼看出是好东西（不是背景装饰）
+      ctx.save(); ctx.globalAlpha = 0.5 + 0.5 * Math.abs(Math.sin(G.time * 4));
+      ctx.fillStyle = '#fff3b0'; ctx.font = 'bold 15px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('✦', x + 15, y - 12); ctx.restore();
+    }
+    ctx.fillStyle = c.gold ? '#f6c33a' : '#caa24a'; rr(ctx, x, y, 30, 26, 4); ctx.fill();
+    ctx.strokeStyle = c.gold ? '#a67708' : '#8a6a2a'; ctx.lineWidth = 2; rr(ctx, x, y, 30, 26, 4); ctx.stroke();
+    ctx.fillStyle = c.gold ? '#a67708' : '#7a5a22'; ctx.fillRect(x, y + 11, 30, 5);
+    ctx.fillStyle = c.gold ? '#fff3b0' : '#ffd86b'; ctx.fillRect(x + 13, y + 9, 4, 9);
+    ctx.fillStyle = c.gold ? '#7a5200' : '#fff'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(c.gold ? '★' : '?', x + 15, y + 22); ctx.textAlign = 'left';
   }
 }
 // ---------- 新机关：传送门 / 钥匙 / 锁门 / 木箱 ----------
@@ -2397,48 +2403,97 @@ function drawCheckpoints() {
   if (!G.checkpoints) return;
   for (const c of G.checkpoints) {
     const sx = c.x - G.cam.x, sy = c.y - G.cam.y;
-    if (sx < -60 || sx > VW + 60) continue;
+    if (sx < -80 || sx > VW + 80) continue; // 画面外的存档点交给屏幕边缘指示牌（见 drawCheckpointGuides），保证任何时候都看得见
     const on = !!c.activated;
-    // 常驻光柱：从存档点向上射出，远处也能看见（不再需要走近才显示）
-    const beamA = (Math.sin(G.time * 2.2) * 0.5 + 0.5) * 0.26 + 0.16;
-    const bg = ctx.createLinearGradient(sx, sy - 210, sx, sy);
+    // 常驻光柱：加高加亮，隔着大半屏也能看见
+    const beamA = (Math.sin(G.time * 2.2) * 0.5 + 0.5) * 0.22 + 0.34;
+    const bg = ctx.createLinearGradient(sx, sy - 330, sx, sy);
     bg.addColorStop(0, 'rgba(0,0,0,0)');
-    bg.addColorStop(1, on ? 'rgba(70,214,160,' + beamA + ')' : 'rgba(150,185,240,' + beamA + ')');
-    ctx.fillStyle = bg; ctx.fillRect(sx - 7, sy - 210, 14, 210);
-    // 地面光晕：常亮（不再用 sin 做忽明忽暗的脉冲）
-    const glow = ctx.createRadialGradient(sx, sy - 4, 2, sx, sy - 4, 46);
-    glow.addColorStop(0, on ? 'rgba(70,214,160,.40)' : 'rgba(150,185,240,.30)');
+    bg.addColorStop(1, on ? 'rgba(70,214,160,' + beamA + ')' : 'rgba(130,190,255,' + beamA + ')');
+    ctx.fillStyle = bg; ctx.fillRect(sx - 10, sy - 330, 20, 330);
+    // 地面光晕：常亮
+    const glow = ctx.createRadialGradient(sx, sy - 4, 2, sx, sy - 4, 56);
+    glow.addColorStop(0, on ? 'rgba(70,214,160,.45)' : 'rgba(130,190,255,.38)');
     glow.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(sx, sy - 4, 46, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(sx, sy - 4, 56, 0, Math.PI * 2); ctx.fill();
     // 旗杆
-    ctx.fillStyle = on ? '#37c98d' : '#93a9c6';
-    ctx.fillRect(sx - 3, sy - 72, 5, 72);
-    // 旗面：常亮实体色，未激活也足够醒目
+    ctx.fillStyle = on ? '#37c98d' : '#9fb6d4';
+    ctx.fillRect(sx - 4, sy - 96, 7, 96);
+    // 旗面：比原来更大更亮，常亮实体色
     ctx.beginPath();
-    ctx.moveTo(sx + 3, sy - 72);
-    ctx.lineTo(sx + 31, sy - 61);
-    ctx.lineTo(sx + 3, sy - 50);
+    ctx.moveTo(sx + 3, sy - 96);
+    ctx.lineTo(sx + 44, sy - 81);
+    ctx.lineTo(sx + 3, sy - 66);
     ctx.closePath();
-    ctx.fillStyle = on ? '#46d6a0' : '#dbe8f7';
+    ctx.fillStyle = on ? '#46d6a0' : '#e6f0ff';
     ctx.fill();
-    ctx.strokeStyle = on ? '#1f9e6d' : '#7e97b8'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.strokeStyle = on ? '#1f9e6d' : '#8fa8c8'; ctx.lineWidth = 2.5; ctx.stroke();
     // 顶部状态灯：激活打勾、未激活空心圈，均为常亮
-    ctx.strokeStyle = on ? 'rgba(45,205,145,.95)' : 'rgba(125,155,205,.9)';
-    ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.arc(sx, sy - 84, 7.5, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = on ? 'rgba(45,205,145,.95)' : 'rgba(150,185,235,.95)';
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(sx, sy - 112, 9, 0, Math.PI * 2); ctx.stroke();
     if (on) {
-      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.moveTo(sx - 3.6, sy - 84); ctx.lineTo(sx - 1, sy - 81.4); ctx.lineTo(sx + 4.2, sy - 87.2); ctx.stroke();
+      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3.5;
+      ctx.beginPath(); ctx.moveTo(sx - 4.4, sy - 112); ctx.lineTo(sx - 1.2, sy - 108.8); ctx.lineTo(sx + 5, sy - 116); ctx.stroke();
     }
     // 文字常显（带描边，保证在任何背景上都看得清）
-    ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
+    ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center';
     const label = on ? '已存档' : '存档点';
-    ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,255,255,.9)';
-    ctx.strokeText(label, sx, sy - 98);
-    ctx.fillStyle = on ? '#1f9e6d' : '#54708f';
-    ctx.fillText(label, sx, sy - 98);
+    ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(255,255,255,.95)';
+    ctx.strokeText(label, sx, sy - 130);
+    ctx.fillStyle = on ? '#1f9e6d' : '#3d6ea8';
+    ctx.fillText(label, sx, sy - 130);
+    // 未激活：旗子上方加一个来回跳动的下箭头，远处一眼锁定
+    if (!on) {
+      const ay = sy - 152 - Math.abs(Math.sin(G.time * 3)) * 10;
+      ctx.fillStyle = '#ffd166';
+      ctx.beginPath(); ctx.moveTo(sx, ay + 14); ctx.lineTo(sx - 11, ay - 2); ctx.lineTo(sx + 11, ay - 2); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 2; ctx.stroke();
+    }
     ctx.textAlign = 'left';
   }
+}
+// 画面外的存档点：在屏幕左右边缘常驻指示牌（小旗 + 朝向箭头 + 距离），
+// 这样存档点在任何时刻都「一直显示」，不用等走到附近才发现
+function drawCheckpointGuides() {
+  if (!G.checkpoints || !G.checkpoints.length) return;
+  const p = G.player; if (!p) return;
+  const pcx = p.x + p.w / 2;
+  ctx.save();
+  ctx.setTransform(RS, 0, 0, RS, 0, 0); // 固定在屏幕上，不随相机移动
+  for (const c of G.checkpoints) {
+    if (c.activated) continue;              // 已存档的不再提示，避免刷屏
+    const sx = c.x - G.cam.x;
+    if (sx > 20 && sx < VW - 20) continue;  // 已在画面内，旗子本体可见，不用指示牌
+    const left = sx <= 20;
+    const dist = Math.max(0, Math.round(Math.abs(c.x - pcx) / 10));
+    const gx = left ? 100 : VW - 100;
+    const gy = clamp(c.y - G.cam.y - 120, 76, VH - 72);
+    const w = 122, h = 34;
+    ctx.fillStyle = 'rgba(20,28,48,.8)';
+    rr(ctx, gx - w / 2, gy - h / 2, w, h, 17); ctx.fill();
+    ctx.strokeStyle = 'rgba(120,200,255,.95)'; ctx.lineWidth = 2;
+    rr(ctx, gx - w / 2, gy - h / 2, w, h, 17); ctx.stroke();
+    // 小旗图标
+    const fx = gx - w / 2 + 17;
+    ctx.fillStyle = '#9fb6d4'; ctx.fillRect(fx - 1.5, gy - 10, 3, 21);
+    ctx.fillStyle = '#7fd6ff';
+    ctx.beginPath(); ctx.moveTo(fx + 1.5, gy - 10); ctx.lineTo(fx + 14, gy - 5); ctx.lineTo(fx + 1.5, gy); ctx.closePath(); ctx.fill();
+    // 朝向箭头（随时间轻微来回，动的东西更抓眼）
+    const bob = Math.sin(G.time * 5) * 3;
+    const ax = left ? gx - w / 2 - 16 : gx + w / 2 + 16;
+    ctx.fillStyle = '#7fd6ff';
+    ctx.beginPath();
+    if (left) { ctx.moveTo(ax - 9 + bob, gy); ctx.lineTo(ax + 5 + bob, gy - 9); ctx.lineTo(ax + 5 + bob, gy + 9); }
+    else { ctx.moveTo(ax + 9 + bob, gy); ctx.lineTo(ax - 5 + bob, gy - 9); ctx.lineTo(ax - 5 + bob, gy + 9); }
+    ctx.closePath(); ctx.fill();
+    // 距离文字
+    ctx.fillStyle = '#ffffff'; ctx.font = 'bold 14px sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('存档点 ' + dist + 'm', gx + 7, gy + 1);
+    ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
+  }
+  ctx.restore();
 }
 function drawCoins() {
   for (const c of G.coins) {
