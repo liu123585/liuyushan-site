@@ -182,21 +182,7 @@ function joyMove(x, y) {
   if (joyKnob) joyKnob.style.transform = 'translate(' + dx.toFixed(1) + 'px,' + dy.toFixed(1) + 'px)';
   const nx = dx / joyR, ny = dy / joyR;
   joyDirSet(nx < -JOY_DEAD ? -1 : (nx > JOY_DEAD ? 1 : 0));
-  // 摇杆上推 = 跳跃（右下角跳跃键仍然保留，两种方式都能跳）
-  const up = ny < -JOY_UP;
-  const now = performance.now();
-  if (up) {
-    const grounded = !!(typeof G !== 'undefined' && G.player && G.player.onGround);
-    // 刚上推立刻跳；按住不放且已落地时按节奏续跳，避免连点
-    if ((!joyUp || grounded) && now - joyJumpT > (grounded ? 260 : 420)) {
-      // 直接置位「本帧按下」+ 短按后松开：比派发键盘事件可靠
-      // （keydown 处理器是 if (!keys[k]) pressed[k]=true，若 keys 残留 true 就再也跳不了）
-      try { pressed[' '] = true; keys[' '] = true; } catch (err) {}
-      setTimeout(() => { try { keys[' '] = false; } catch (err) {} }, 90);
-      joyJumpT = now;
-    }
-    joyUp = true;
-  } else joyUp = false;
+  // 左摇杆只负责左右移动；跳跃由右侧独立「跳」按钮触发（不再上推起跳）
 }
 function joyEnd() {
   if (!joyBase) return;
@@ -421,7 +407,7 @@ const LEVELS = [
       { x: 900, y: 390, text: 'J / 鼠标左键 开火', arrow: 'right' },
       { x: 1330, y: 390, text: '跳到敌人头顶\n踩它！一踩就死', arrow: 'up' },
       { x: 1750, y: 390, text: 'Shift / L 冲刺', arrow: 'right' },
-      { x: 2500, y: 390, text: 'F 放出星影分身\n替你引开敌人', arrow: 'right' },
+      { x: 2500, y: 390, text: 'F / 右下「星跃」\n向上星能冲刺够高处', arrow: 'right' },
     ],
     chests: [ { x: 1310, y: 209 } ],
     goal: { x: 3220, y: 380 },
@@ -573,7 +559,7 @@ const LEVELS = [
     chests: [ { x: 2450, y: 114 } ],
     goal: { x: 3330, y: 380 },
   }),
-  // 第六关 · 翠影密林（敌人密集，最适合用分身诱敌）
+  // 第六关 · 翠影密林（敌人密集，适合用星跃闪避或冲上高台）
   L({
     name: '第六关 · 翠影密林', theme: 'forest', song: 9, w: 3800,
     platforms: [
@@ -842,7 +828,10 @@ function enrichStage(G, def, n) {
     const frac = (i + 0.5) / nPlat;
     let x = 650 + frac * (w - 1300) + (rng() - 0.5) * 150;
     x = clamp(x, 320, w - 240);
-    const y = Math.round(140 + rng() * 290);
+    // 平台高度限制在离地面不超过 320px，确保单/双跳必定可达（避免“太高跳不上去”）
+    const maxAbove = 320;
+    let y = Math.round(groundY - (110 + rng() * (maxAbove - 110)));
+    y = Math.max(120, Math.min(y, groundY - 90));
     const pw = Math.round(100 + rng() * 80);
     // 移动平台：水平滑动 或 垂直升降（电梯加行程限制，绝不探到地面/其它台子以下）
     let move = null;
@@ -988,8 +977,6 @@ const G = {
   best: 0,
   combo: 0, comboT: 0,
   clouds: [],
-  // 星影分身：录下玩家的一段动作，放出发光分身重放，用来吸引敌人与踩敌
-  echo: { recording: false, recT: 0, frames: [], play: null, cool: 0 },
 };
 
 // ---------- 物理常量 ----------
@@ -1035,8 +1022,8 @@ function makePlayer() {
   return {
     x: 80, y: 420, w: 34, h: 42,
     vx: 0, vy: 0, facing: 1, onGround: false,
-    maxHp: 6, hp: 6, atk: 2, maxRun: 300, jumpV: 900, maxJumps: 2,
-    jumps: 0, coyote: 0, jumpBuf: 0, dashCD: 0, dashT: 0, dashDir: 1, score: 0,
+    maxHp: 6, hp: 6, atk: 2, maxRun: 300, jumpV: 950, maxJumps: 2,
+    jumps: 0, coyote: 0, jumpBuf: 0, dashCD: 0, dashT: 0, dashDir: 1, leapCD: 0, score: 0,
     attacking: false, atkT: 0, atkCD: 0, swung: new Set(),
     shootCD: 0, charge: 0, rapidT: 0, shieldT: 0, magnetT: 0,
     gunLv: 1, gun: 'pistol', muzzle: 0,
@@ -1082,13 +1069,12 @@ function startStage(n, spawnOverride, opts) {
   if (!G.player) G.player = p;
   // 保留成长，重置位置/状态
   p.x = spawn[0]; p.y = spawn[1]; p.vx = 0; p.vy = 0; p.facing = 1;
-  p.onGround = false; p.attacking = false; p.atkT = 0; p.invuln = 0.6; p.jumps = 0;
+  p.onGround = false; p.attacking = false; p.atkT = 0; p.invuln = 0.6; p.jumps = 0; p.leapCD = 0;
   p.hp = p.maxHp; p.squash = 1; p.sqv = 0;
   G.lastSafe = { x: spawn[0], y: spawn[1] };
   equipGun(p); // 每关开局装备天赋枪并补满弹药
   G.hintUntil = performance.now() + 9000; // 开局 9 秒显示操作提示
   G.signHint = null;                      // 清掉上一关残留的引导横幅
-  G.echo = { recording: false, recT: 0, frames: [], play: null, cool: 0 };
 
   G.enemies = def.enemies.map(makeEnemy);
   // 随关卡递增的“增援”：越后面的关卡敌人越多（第1关几乎不变，后期大幅增多）
@@ -1301,7 +1287,7 @@ function updatePlayer(dt) {
   // 攻击：合金弹头式按住开火键连发（J / 鼠标左键＝主攻击），见下方 fireWeapon。
   // 近身击杀改为「踩踏」——跳起落下踩敌人顶部即秒杀，不再有单独的挥击键。
 
-  // 星影分身（F）与开火逻辑见下方
+  // 星跃（F）与开火逻辑见下方
   p.shootCD = Math.max(0, p.shootCD - dt);
   p.muzzle = Math.max(0, p.muzzle - dt);
   // 合金弹头式：按住开火键连发，松开停火
@@ -1325,21 +1311,17 @@ function updatePlayer(dt) {
     }
   }
 
-  // 星影分身：按 F 开始录制动作，录满 3 秒或再按一次即放出星影重放
-  const E = G.echo;
-  if (tap('f') && E.cool <= 0 && !E.play) {
-    if (!E.recording) {
-      E.recording = true; E.recT = 0; E.frames = [];
-      addFloat(p.x + p.w / 2, p.y - 12, '开始录制', '#b98cff');
-    } else {
-      E.recording = false; releaseEcho();
-    }
+  // 星跃（F / 右下「星跃」键）：向上星能冲刺，附带短暂无敌，冷却约 1.4s，可够到高处平台或闪避弹幕
+  if (tap('f') && p.leapCD <= 0) {
+    p.vy = -p.jumpV * 1.05;
+    p.invuln = Math.max(p.invuln, 0.28);
+    p.leapCD = 1.4;
+    p.jumps = Math.max(p.jumps, 1);
+    SFX.djump(); spawnDust(p.x + p.w / 2, p.y + p.h, 12);
+    burst(p.x + p.w / 2, p.y + p.h / 2, '#7fe0ff', 14);
+    addFloat(p.x + p.w / 2, p.y - 10, '星跃!', '#7fe0ff');
   }
-  if (E.recording) {
-    E.recT += dt;
-    E.frames.push({ x: p.x, y: p.y, f: p.facing });
-    if (E.recT >= 3) { E.recording = false; releaseEcho(); }
-  }
+  p.leapCD = Math.max(0, p.leapCD - dt);
 }
 
 // （近战挥击已移除：近身击杀统一用「踩踏」——跳起落下踩敌人顶部即秒杀，见上方的踩踏判定）
@@ -1440,10 +1422,9 @@ function updateEnemies(dt) {
     } else if (e.type === 'bee') {
       e.t += dt;
       const hx = e.homeX, hy = e.homeY, rg = e.range;
-      // 有星影时优先追星影（分身当诱饵），否则追玩家；两者都不在领地内就回巢悬停
-      const ep = G.echo.play;
-      const gx = ep ? ep.x + ECHO_W / 2 : p.x + p.w / 2;
-      const gy = ep ? ep.y + ECHO_H / 2 : p.y + p.h / 2;
+      // 直接追玩家（已移除星影分身诱饵机制）
+      const gx = p.x + p.w / 2;
+      const gy = p.y + p.h / 2;
       const chase = Math.hypot(gx - hx, gy - hy) < rg;
       const tx = chase ? gx : hx;
       const ty = chase ? gy : hy;
@@ -1459,10 +1440,8 @@ function updateEnemies(dt) {
       e.y = clamp(e.y, 10, VH - e.h - 10);
     } else if (e.type === 'turret') {
       e.fireT -= dt;
-      // 有星影时优先打星影（诱饵），并且只在射程内开火，不会隔着半张地图打你
-      const ep = G.echo.play;
-      const aimX = ep ? ep.x + ECHO_W / 2 : pcx;
-      const aimY = ep ? ep.y + ECHO_H / 2 : pcy;
+      // 直接瞄准玩家（已移除星影分身诱饵机制）
+      const aimX = pcx, aimY = pcy;
       const dpx = Math.abs(aimX - (e.x + e.w / 2)), dpy = Math.abs(aimY - (e.y + e.h / 2));
       if (e.fireT <= 0 && dpx < 520 && dpy < 300) {
         const dx = aimX - (e.x + e.w / 2), dy = aimY - (e.y + e.h / 2), d = Math.hypot(dx, dy) || 1;
@@ -1524,42 +1503,7 @@ function killEnemy(e) {
   addCombo(); G.player.score += 80 * Math.max(1, G.combo);
 }
 
-// ---------- 星影分身 ----------
-// 录下玩家的一段动作后放出「星影」重放：星影替你吸引敌人火力，落下时还能踩死敌人
-const ECHO_W = 34, ECHO_H = 42;
-function releaseEcho() {
-  const E = G.echo;
-  if (!E.frames.length) { E.cool = 1.5; return; }
-  const f0 = E.frames[0];
-  E.play = { frames: E.frames, i: 0, x: f0.x, y: f0.y, vy: 0, f: f0.f };
-  E.frames = [];
-  burst(f0.x + ECHO_W / 2, f0.y + ECHO_H / 2, '#b98cff', 16);
-  SFX.djump();
-}
-function updateEcho(dt) {
-  const E = G.echo;
-  E.cool = Math.max(0, E.cool - dt);
-  const pl = E.play;
-  if (!pl) return;
-  const fr = pl.frames;
-  if (pl.i >= fr.length) { E.play = null; E.cool = 5; return; }
-  const s = fr[pl.i];
-  pl.vy = s.y - pl.y; // 用位移推算下落，作为踩踏判定依据
-  pl.x = s.x; pl.y = s.y; pl.f = s.f;
-  pl.i++;
-  const box = { x: pl.x, y: pl.y, w: ECHO_W, h: ECHO_H };
-  for (const e of G.enemies) {
-    if (e.dead || e.asleep || e.type === 'roller') continue;
-    if (aabb(box, e) && pl.vy > 1.6 && (pl.y + ECHO_H) < e.y + e.h * 0.7) {
-      e.hp = 0; killEnemy(e);
-      addFloat(e.x + e.w / 2, e.y, '星影踩击', '#b98cff');
-    }
-  }
-  // 星影还能替你挡下敌方子弹
-  for (const pr of G.projectiles) {
-    if (pr.fromEnemy && !pr.dead && aabb(box, pr)) { pr.dead = true; hitSpark(pr.x, pr.y); }
-  }
-}
+// ---------- 星跃（F）：触发逻辑见 updatePlayer 中的 leap 段 ----------
 
 // ---------- BOSS ----------
 function updateBoss(dt) {
@@ -1835,7 +1779,6 @@ function frame(now) {
     else {
       updatePlatforms(dt);
       updatePlayer(dt);
-      updateEcho(dt);
       if (G.state === 'playing') updateEnemies(dt);
       if (G.state === 'playing') updateBoss(dt);
       if (G.state === 'playing') updateProjectiles(dt);
@@ -1893,7 +1836,6 @@ function render() {
   for (const e of G.enemies) drawEnemy(e);
   if (G.boss) drawBoss(G.boss);
   drawProjectiles();
-  drawEcho();
   drawPlayer(G.player);
   drawParticles();
   drawFloats();
@@ -1901,7 +1843,6 @@ function render() {
   drawHUD();
 }
 
-// 星影分身：紫色发光的半透明剪影，跟着录下的轨迹重放
 // 弹药补给箱：外观颜色跟随当前天赋枪
 function drawCrates() {
   const gp = G.player; if (!gp) return;
@@ -1918,15 +1859,6 @@ function drawCrates() {
     ctx.fillStyle = W.col; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
     ctx.fillText('A', x + 14, y + 20);
   }
-}
-
-function drawEcho() {
-  const pl = G.echo.play; if (!pl) return;
-  const cx = pl.x + ECHO_W / 2, cy = pl.y + ECHO_H / 2;
-  const g = ctx.createRadialGradient(cx, cy, 2, cx, cy, 54);
-  g.addColorStop(0, 'rgba(190,150,255,.5)'); g.addColorStop(1, 'rgba(190,150,255,0)');
-  ctx.fillStyle = g; ctx.fillRect(cx - 54, cy - 54, 108, 108);
-  drawSprite('player', cx, cy, ECHO_H, pl.f, { alpha: 0.62 });
 }
 
 function drawTitleBg() {
@@ -2584,19 +2516,14 @@ function drawHUD() {
   ctx.textAlign = 'left'; ctx.font = 'bold 14px sans-serif';
   ctx.fillStyle = W.col;
   ctx.fillText('枪械天赋 Lv' + p.gunLv + '   [' + W.tag + '] ' + W.name + '   弹药 ' + (W.inf ? '∞' : (p.ammo[p.gun] || 0)), 22, 82);
-  // 星影分身状态
+  // 星跃状态
   ctx.font = 'bold 13px sans-serif';
-  const E = G.echo;
-  if (E.recording) {
-    ctx.fillStyle = '#b98cff';
-    ctx.fillText('● 录制中 ' + Math.max(0, 3 - E.recT).toFixed(1) + 's（再按 F 放出）', 22, 102);
-  } else if (E.play) {
-    ctx.fillStyle = '#b98cff'; ctx.fillText('星影行动中 · 敌人被它吸引', 22, 102);
-  } else if (E.cool > 0) {
-    ctx.fillStyle = 'rgba(130,140,165,.9)'; ctx.fillText('分身冷却 ' + Math.ceil(E.cool) + 's', 22, 102);
+  const lp = p.leapCD;
+  if (lp > 0) {
+    ctx.fillStyle = 'rgba(130,140,165,.9)'; ctx.fillText('星跃冷却 ' + Math.ceil(lp) + 's', 22, 102);
   } else {
-    ctx.fillStyle = 'rgba(95,110,145,.85)';
-    ctx.fillText(isTouch ? '分身就绪（点右下「分身」录制）' : 'F 星影分身 就绪', 22, 102);
+    ctx.fillStyle = 'rgba(95,200,230,.9)';
+    ctx.fillText(isTouch ? '星跃就绪（点右下「星跃」向上冲）' : 'F 星跃 就绪', 22, 102);
   }
   // 开局操作提示条：手机显示按钮名、电脑显示键位，几秒后自动淡出
   if (G.hintUntil) {
@@ -2616,8 +2543,8 @@ function drawHUD() {
 // 底部的操作提示胶囊
 function drawControlHint(alpha) {
   const txt = isTouch
-    ? '◀ ▶ 移动    跳 跳跃(可二段)    开火 按住连发    冲 突进    分身 放出星影诱敌'
-    : '← → 移动    空格 跳(可二段)    J 开火(按住连发)    Shift/L 冲刺    F 星影分身    P 暂停';
+    ? '◀ ▶ 移动    跳 跳跃(可二段)    开火 按住连发    冲 突进    星跃 向上冲够高处'
+    : '← → 移动    空格 跳(可二段)    J 开火(按住连发)    Shift/L 冲刺    F 星跃    P 暂停';
   ctx.save();
   ctx.globalAlpha = alpha;
   ctx.font = 'bold 14px sans-serif';
