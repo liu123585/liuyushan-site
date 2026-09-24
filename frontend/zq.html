@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<title>🌕 中秋 · 给朋友写封信</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --gold:#f0d49a; --kw:#e6bd86; --str:#e2a6bb; --com:#7e89a3;
+    --fn:#9ad6cf; --op:#d392ac; --txt:#e9e7e0;
+    --serif:"Songti SC","STSong","SimSun","Noto Serif SC",serif;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+  }
+  html,body{height:100%}
+  body{font-family:var(--mono);background:#060a1c;color:var(--txt);min-height:100vh;
+       overflow-x:hidden;padding:18px;position:relative;}
+  .bg{position:fixed;inset:0;z-index:0;overflow:hidden;
+      background:radial-gradient(1200px 800px at 78% 10%,rgba(70,90,150,.30),transparent 60%),
+                 radial-gradient(900px 700px at 12% 92%,rgba(120,70,140,.22),transparent 60%),
+                 linear-gradient(168deg,#070b1e,#0b1230 45%,#150f36 100%);}
+  .moon{position:fixed;top:5%;right:7%;width:clamp(86px,22vw,132px);aspect-ratio:1;border-radius:50%;z-index:0;
+        background:radial-gradient(circle at 36% 34%,#fff8da,#ffe9a8 42%,#f3c768 72%,#dcab46 100%);
+        box-shadow:0 0 46px 13px rgba(255,216,140,.40),0 0 130px 46px rgba(255,216,140,.18),
+                   inset -14px -10px 30px rgba(170,115,30,.42);animation:moonGlow 7s ease-in-out infinite;}
+  .moon::before,.moon::after{content:"";position:absolute;border-radius:50%;background:rgba(170,125,40,.26);
+        box-shadow:inset 2px 3px 6px rgba(115,78,20,.4);}
+  .moon::before{width:19%;height:19%;top:27%;left:31%;}
+  .moon::after{width:12%;height:12%;top:56%;left:59%;box-shadow:inset 2px 2px 5px rgba(115,78,20,.4),22px -8px 0 -2px rgba(170,125,40,.20);}
+  @keyframes moonGlow{0%,100%{filter:brightness(1)}50%{filter:brightness(1.1)}}
+  .cloud{position:fixed;z-index:0;border-radius:50%;filter:blur(28px);opacity:.16;background:linear-gradient(90deg,#aab4e8,#7e88c8);}
+  .cloud.c1{width:240px;height:68px;top:21%;left:-260px;animation:drift 40s linear infinite;}
+  .cloud.c2{width:320px;height:88px;top:63%;left:-360px;opacity:.12;animation:drift 54s linear infinite 7s;}
+  @keyframes drift{to{transform:translateX(140vw)}}
+  #stars{position:fixed;inset:0;z-index:0;pointer-events:none}
+  .star{position:absolute;background:#fff;border-radius:50%;opacity:.8;animation:tw 3.4s infinite ease-in-out}
+  @keyframes tw{0%,100%{opacity:.1;transform:scale(.7)}50%{opacity:.95;transform:scale(1)}}
+  #lanterns{position:fixed;inset:0;z-index:1;pointer-events:none}
+  .lantern{position:absolute;bottom:-50px;font-size:23px;animation:rise linear forwards;will-change:transform,opacity}
+  @keyframes rise{to{transform:translateY(-118vh) translateX(var(--dx,0)) rotate(16deg);opacity:0}}
+
+  .wrap{position:relative;z-index:2;width:min(680px,96vw);margin:0 auto}
+
+  .maker{background:rgba(12,16,32,.55);border:1px solid rgba(240,212,154,.14);border-radius:18px;
+         padding:24px 22px;backdrop-filter:blur(16px);box-shadow:0 30px 80px rgba(0,0,0,.5);}
+  .maker h1{font-family:var(--serif);font-size:22px;color:#fbeeca;text-align:center;letter-spacing:2px;margin-bottom:6px;font-weight:600}
+  .maker .sub{text-align:center;font-size:12.5px;color:#a9b4cd;margin-bottom:20px;letter-spacing:.5px}
+  .field{margin-bottom:15px}
+  .field label{display:block;font-size:12.5px;color:#a9b4cd;margin-bottom:7px;letter-spacing:.5px}
+  .field input,.field textarea{width:100%;padding:13px 15px;border-radius:12px;border:1px solid rgba(240,212,154,.22);
+        background:rgba(255,255,255,.04);color:#fff;font-size:15px;outline:none;font-family:var(--serif);resize:none;transition:.2s}
+  .field input:focus,.field textarea:focus{border-color:rgba(240,212,154,.5)}
+  .field textarea{min-height:100px;line-height:1.7}
+  .field input::placeholder,.field textarea::placeholder{color:#5f6c8a}
+  .gen{width:100%;padding:14px;border:none;border-radius:999px;font-size:15.5px;font-weight:700;color:#2a1d00;
+       background:linear-gradient(135deg,#f6e0a6,#f0cf7e);box-shadow:0 10px 30px rgba(240,207,126,.3);cursor:pointer;margin-top:6px;letter-spacing:1px}
+  .gen:active{transform:translateY(1px)}
+  .tip{text-align:center;font-size:11.5px;color:#6b7a99;margin-top:12px;letter-spacing:.5px}
+
+  .reshead{display:flex;align-items:center;justify-content:space-between;margin:24px 2px 14px;font-size:12.5px;color:#a9b4cd}
+  .reshead b{color:var(--gold)}
+
+  .editor{background:rgba(12,16,32,.55);border:1px solid rgba(240,212,154,.13);border-radius:16px;overflow:hidden;
+          margin-bottom:18px;backdrop-filter:blur(16px);box-shadow:0 20px 50px rgba(0,0,0,.45)}
+  .bar{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02)}
+  .dot{width:10px;height:10px;border-radius:50%}.dot.r{background:#ff5f57}.dot.y{background:#febc2e}.dot.g{background:#28c840}
+  .file{margin-left:8px;font-size:12px;color:#9aa6c2}
+  .run{margin-left:auto;font-size:11px;color:#9ad6cf;border:1px solid rgba(154,214,207,.28);padding:3px 9px;border-radius:999px;display:flex;align-items:center;gap:6px}
+  .run i{width:6px;height:6px;border-radius:50%;background:#28c840;box-shadow:0 0 8px #28c840;animation:pulse 1.4s infinite}
+  @keyframes pulse{50%{opacity:.3}}
+  .code{padding:17px 17px 7px;font-size:clamp(12px,3.4vw,14px);line-height:1.85;white-space:pre-wrap;word-break:break-word;color:var(--txt);min-height:118px}
+  .kw{color:var(--kw)}.str{color:var(--str)}.com{color:var(--com);font-style:italic}.fn{color:var(--fn)}.op{color:var(--op)}.p{color:var(--txt)}
+  .caret{display:inline-block;width:7px;height:15px;background:var(--gold);vertical-align:-3px;margin-left:1px;animation:blink 1s steps(1) infinite;border-radius:1px}
+  @keyframes blink{50%{opacity:0}}
+  #out{padding:6px 19px 16px;opacity:0;transform:translateY(8px);transition:.7s ease}
+  #out.show{opacity:1;transform:none}
+  .divider{height:1px;background:linear-gradient(90deg,transparent,rgba(240,212,154,.45),transparent);margin:6px 0 16px}
+  .reslabel{font-size:10.5px;color:var(--com);margin-bottom:14px;letter-spacing:1px}
+  .letter{font-family:var(--serif);font-size:clamp(15px,4.3vw,18px);line-height:2.05;color:#fbeeca;letter-spacing:1px;white-space:pre-wrap}
+  .letter .nm{color:var(--gold);font-weight:600}
+  .acts{display:flex;gap:10px;padding:0 19px 18px}
+  .acts button{flex:1;padding:10px;border-radius:10px;border:1px solid rgba(240,212,154,.2);background:rgba(255,255,255,.03);
+               color:#dce8ff;font-size:12.5px;cursor:pointer;font-family:var(--mono);transition:.2s}
+  .acts button:active{background:rgba(255,255,255,.09)}
+  .toast{position:fixed;left:50%;bottom:42px;transform:translateX(-50%);z-index:9;background:rgba(18,24,44,.96);
+         border:1px solid rgba(240,212,154,.4);color:#fbeeca;padding:11px 19px;border-radius:999px;font-size:13px;
+         opacity:0;transition:.3s;pointer-events:none}
+  .toast.show{opacity:1}
+  .hint{text-align:center;font-size:11px;color:#6b7a99;margin:18px 0 6px;letter-spacing:.5px}
+  .again{display:block;margin:0 auto 30px;padding:9px 22px;border-radius:999px;border:1px solid rgba(255,255,255,.14);
+         background:transparent;color:#dce8ff;font-size:13px;cursor:pointer;font-family:var(--mono)}
+</style>
+</head>
+<body>
+  <div class="bg"></div><div class="moon"></div><div class="cloud c1"></div><div class="cloud c2"></div>
+  <div id="stars"></div><div id="lanterns"></div>
+
+  <div class="wrap">
+    <div class="maker" id="maker">
+      <h1>🌕 中秋 · 给朋友写封信</h1>
+      <div class="sub">填一排名字，每人收到不一样的一封</div>
+      <div class="field">
+        <label>你的名字（落款用）</label>
+        <input id="sender" placeholder="例如：阿星" maxlength="12" />
+      </div>
+      <div class="field">
+        <label>朋友名字（一行一个）</label>
+        <textarea id="friends" placeholder="小明&#10;小红&#10;老王"></textarea>
+      </div>
+      <button class="gen" id="genBtn">写好了，生成</button>
+      <div class="tip">每位朋友内容都不同，不会撞车</div>
+    </div>
+
+    <div class="reshead" id="reshead" style="display:none">
+      <span>写好 <b id="cnt">0</b> 封</span>
+      <span id="back" style="cursor:pointer;color:#9ad6cf">+ 再写几封</span>
+    </div>
+    <div id="results"></div>
+    <button class="again" id="again" style="display:none">重新写</button>
+    <div class="hint" id="hint" style="display:none">轻触屏幕放一盏灯笼 🏮</div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+  (function(){const b=document.getElementById('stars');const n=innerWidth<480?70:110;
+    for(let i=0;i<n;i++){const s=document.createElement('div');s.className='star';
+      const sz=Math.random()*2+1;s.style.width=s.style.height=sz+'px';
+      s.style.left=Math.random()*100+'%';s.style.top=Math.random()*100+'%';
+      s.style.animationDelay=(Math.random()*3.4)+'s';s.style.animationDuration=(2+Math.random()*2.5)+'s';b.appendChild(s);}})();
+
+  // —— 文案（口语化、像真人写的，组合出各不相同的一封）——
+  const GREET=["亲爱的 {f}：","{f}：","{f} 老友：","写给 {f}：","{f}，见字如面：","嘿 {f}：","{f} 同学：","致 {f}："];
+  const B1=["又到中秋了，今年月亮好像格外圆。","刚抬头看见月亮，就想起好久没跟你唠嗑了。","冷空气来了，但今晚的月色还挺暖的。",
+            "一年又一年，中秋还是那个中秋。","忙到这么晚，还好有月亮陪着，也陪着你。","桂花香飘进来的时候，才知道中秋到了。",
+            "这天适合想念，尤其想念许久没见的你。","不知不觉，又快到该吃月饼的日子了。"];
+  const B2=["平时各忙各的，但你一直在我心里有一席之地。","虽然不常联系，可你向来是我认可的朋友。","想起以前一起瞎混的那些年，真有点怀念。",
+            "隔着屏幕和距离，惦记倒是一点没减。","谢谢你出现过，让某些日子没那么难熬。","江湖再大，能交到你这样的朋友也算运气。",
+            "有些话当面说不出口，借着月亮替我说吧。","忙归忙，你过得好不好我其实一直惦记着。"];
+  const B3=["希望你今年顺顺当当，想的事都能成。","祝你钱包鼓鼓，烦恼少少，天天有好胃口。","愿你身边总有靠谱的人，夜里睡得踏实。",
+            "希望你少熬点夜，多爱自己一点。","祝你所念皆所愿，哪怕慢一点也没关系。","愿你今年遇到的都是好人好事。",
+            "希望你和家里人都平平安安的，这就够本了。","愿这轮月亮，顺手把你今年的霉运都照亮赶跑。"];
+  const CLOSE=["记得吃块月饼，别光顾着忙。中秋快乐！","月亮替我陪你，中秋安康～","有空再聚，到时候好好喝一杯。中秋快乐！",
+               "中秋快乐，明年这时候希望能在现场看你。","遥祝平安，常联系。中秋安康！","就写到这，月亮很圆，你也好好的。🌕"];
+
+  const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+  function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+    clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),1600);}
+  function esc(s){return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+
+  // 按序号取组合，并在同批次内去重（保证每人不重复）
+  function pickParts(i,used){
+    let key,g,b1,b2,b3,c,k=i;
+    do{
+      g=GREET[k%GREET.length];
+      b1=B1[(k*2+1)%B1.length];
+      b2=B2[(k*3+2)%B2.length];
+      b3=B3[(k*5+3)%B3.length];
+      c=CLOSE[(k*7+1)%CLOSE.length];
+      key=g+"|"+b1+"|"+b2+"|"+b3+"|"+c;k++;
+    }while(used.has(key)&&k<i+GREET.length*4);
+    used.add(key);
+    return {g,b1,b2,b3,c};
+  }
+
+  function letterHTML(f,s,p){
+    const nm='<span class="nm">'+esc(f)+'</span>';
+    return esc(p.g.replace('{f}',nm))+'\n'+esc(p.b1)+'\n'+esc(p.b2)+'\n'+esc(p.b3)+'\n'+esc(p.c)+'\n—— '+esc(s);
+  }
+  function letterText(f,s,p){return p.g.replace('{f}',f)+'\n'+p.b1+'\n'+p.b2+'\n'+p.b3+'\n'+p.c+'\n—— '+s;}
+  function codeLines(f,s){
+    return [
+      [['com','# 🌕 中秋 · 给 '+f+' 的一封信']],
+      [['kw','from'],['p',' moon '],['kw','import'],['p',' Letter']],
+      [['p','L '],['op','='],['p',' '],['fn','Letter'],['p','('],['kw','to'],['op','='],['str','"'+f+'"'],['p',', '],['kw','by'],['op','='],['str','"'+s+'"'],['p',')']],
+      [['p','L'],['op','.'],['fn','send'],['p','()']],
+      [['com','# >>> 运行结果']]
+    ];
+  }
+
+  async function typeCode(lines,codeEl,caret){
+    for(const segs of lines){
+      for(const [cls,text] of segs){
+        const span=document.createElement('span');if(cls!=='p')span.className=cls;
+        codeEl.insertBefore(span,caret);
+        for(const ch of text){span.textContent+=ch;await sleep(12);}
+      }
+      codeEl.insertBefore(document.createTextNode('\n'),caret);
+      await sleep(120);
+    }
+  }
+
+  async function renderCard(f,s,p,idx){
+    const card=document.createElement('div');card.className='editor';
+    card.innerHTML=
+      '<div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>'+
+      '<span class="file">letter_'+String(idx+1).padStart(2,'0')+'.py</span>'+
+      '<span class="run"><i></i> 运行中</span></div>'+
+      '<div class="code"><span class="caret"></span></div>'+
+      '<div id="out"><div class="divider"></div><div class="reslabel"># &gt;&gt;&gt; 运行结果</div>'+
+      '<div class="letter"></div></div>'+
+      '<div class="acts"><button class="cp">复制这封信</button><button class="lk">复制专属链接</button></div>';
+    return card;
+  }
+
+  async function build(friends,sender){
+    const results=document.getElementById('results');results.innerHTML='';
+    const used=new Set();let count=0;
+    for(let i=0;i<friends.length;i++){
+      const f=friends[i].trim();if(!f)continue;
+      const p=pickParts(i,used);
+      const card=await renderCard(f,sender,p,i);
+      results.appendChild(card);
+      const codeEl=card.querySelector('.code'),caret=card.querySelector('.caret');
+      await typeCode(codeLines(f,sender),codeEl,caret);
+      card.querySelector('.letter').innerHTML=letterHTML(f,sender,p);
+      card.querySelector('#out').classList.add('show');caret.style.display='none';
+      card.querySelector('.run').innerHTML='<i></i> 已生成';
+      const txt=letterText(f,sender,p);
+      const link=location.origin+location.pathname+'?to='+encodeURIComponent(f)+'&from='+encodeURIComponent(sender);
+      card.querySelector('.cp').onclick=()=>{navigator.clipboard.writeText(txt).then(()=>toast('已复制给 '+f+' 的信')).catch(()=>toast('复制失败，请手动选'));};
+      card.querySelector('.lk').onclick=()=>{navigator.clipboard.writeText(link).then(()=>toast('已复制 '+f+' 的链接')).catch(()=>toast('复制失败'));};
+      count++;document.getElementById('cnt').textContent=count;
+      await sleep(160);
+    }
+    if(count===0)toast('请至少填一个朋友名字');
+  }
+
+  function launchLantern(){
+    const box=document.getElementById('lanterns');const l=document.createElement('div');
+    l.className='lantern';l.textContent=['🏮','🌕','✨','💛','🌟'][Math.floor(Math.random()*5)];
+    l.style.left=(Math.random()*100)+'%';l.style.setProperty('--dx',(Math.random()*60-30)+'px');
+    l.style.animationDuration=(3+Math.random()*2.5)+'s';box.appendChild(l);setTimeout(()=>l.remove(),6000);
+  }
+
+  // —— 单封信分享链接（?to=&from=）直接展示 ——
+  const params=new URLSearchParams(location.search);
+  const pf=params.get('to'),ps=params.get('from');
+  function hashStr(s){let h=0;for(let i=0;i<s.length;i++){h=(h*31+s.charCodeAt(i))>>>0;}return h;}
+  if(pf){
+    document.getElementById('maker').style.display='none';
+    const s=ps||'朋友';const p=pickParts(hashStr(pf+s),new Set());
+    (async()=>{
+      const card=await renderCard(pf,s,p,0);
+      document.getElementById('results').appendChild(card);
+      const codeEl=card.querySelector('.code'),caret=card.querySelector('.caret');
+      await typeCode(codeLines(pf,s),codeEl,caret);
+      card.querySelector('.letter').innerHTML=letterHTML(pf,s,p);
+      card.querySelector('#out').classList.add('show');caret.style.display='none';
+      card.querySelector('.run').innerHTML='<i></i> 已生成';
+      const txt=letterText(pf,s,p);const link=location.href;
+      card.querySelector('.cp').onclick=()=>{navigator.clipboard.writeText(txt).then(()=>toast('已复制给 '+pf+' 的信')).catch(()=>toast('复制失败'));};
+      card.querySelector('.lk').onclick=()=>{navigator.clipboard.writeText(link).then(()=>toast('已复制专属链接')).catch(()=>toast('复制失败'));};
+      document.getElementById('again').style.display='block';
+      document.getElementById('hint').style.display='block';
+    })();
+  }
+
+  document.getElementById('genBtn').onclick=()=>{
+    const s=(document.getElementById('sender').value.trim())||'我';
+    const fs=document.getElementById('friends').value.split('\n').map(x=>x.trim()).filter(Boolean);
+    if(fs.length===0){toast('请至少填一个朋友名字');return;}
+    document.getElementById('maker').style.display='none';
+    document.getElementById('reshead').style.display='flex';
+    document.getElementById('again').style.display='block';
+    document.getElementById('hint').style.display='block';
+    build(fs,s);
+  };
+  document.getElementById('again').onclick=()=>location.href=location.pathname;
+  document.getElementById('back').onclick=()=>{document.getElementById('maker').style.display='block';};
+
+  document.body.addEventListener('click',e=>{
+    if(['genBtn','again','back','cp','lk','sender','friends'].includes(e.target.id))return;
+    launchLantern();
+  });
+</script>
+</body>
+</html>
