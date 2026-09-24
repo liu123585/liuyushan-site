@@ -76,6 +76,36 @@
 
   .hint{position:fixed;bottom:18px;left:0;right:0;text-align:center;font-size:11px;color:#6b7a99;z-index:5;letter-spacing:.5px;
     opacity:0;animation:fin 1.5s ease 2.4s forwards}
+  /* 旅程模式 */
+  .journey{position:fixed;inset:0;z-index:8;display:none;align-items:center;justify-content:center;
+    background:radial-gradient(circle at 50% 45%,rgba(20,28,60,.35),rgba(5,7,15,.72));transition:opacity .8s ease}
+  .journey.on{display:flex;opacity:1}
+  .journey[data-g="warm"]{background:radial-gradient(circle at 50% 45%,rgba(70,46,12,.38),rgba(5,7,15,.72))}
+  .journey[data-g="red"]{background:radial-gradient(circle at 50% 45%,rgba(78,16,24,.40),rgba(5,7,15,.72))}
+  .journey[data-g="blue"]{background:radial-gradient(circle at 50% 45%,rgba(16,28,78,.44),rgba(5,7,15,.72))}
+  .journey[data-g="pink"]{background:radial-gradient(circle at 50% 45%,rgba(80,22,62,.42),rgba(5,7,15,.72))}
+  .journey[data-g="soft"]{background:radial-gradient(circle at 50% 45%,rgba(56,44,68,.34),rgba(5,7,15,.72))}
+  .journey[data-g="amber"]{background:radial-gradient(circle at 50% 45%,rgba(66,50,16,.38),rgba(5,7,15,.72))}
+  .journey[data-g="white"]{background:radial-gradient(circle at 50% 45%,rgba(44,50,66,.32),rgba(5,7,15,.72))}
+  .warp{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+  .streak{position:absolute;left:50%;top:50%;height:2px;width:10px;border-radius:2px;
+    background:linear-gradient(90deg,rgba(255,255,255,0),#fff);transform-origin:0 50%;
+    filter:drop-shadow(0 0 6px #fff);opacity:0}
+  .ring{position:absolute;left:50%;top:50%;border:1px solid rgba(255,255,255,.25);border-radius:50%;
+    transform:translate(-50%,-50%);pointer-events:none;animation:ringPulse 4s linear infinite}
+  .ring#ring2{animation-delay:2s}
+  @keyframes ringPulse{0%{width:40px;height:40px;opacity:.5}100%{width:85vmax;height:85vmax;opacity:0}}
+  .motif{position:relative;font-size:clamp(80px,26vw,180px);filter:drop-shadow(0 0 40px rgba(236,200,112,.6));
+    animation:motifPulse 4s ease-in-out infinite;z-index:2}
+  @keyframes motifPulse{0%,100%{transform:scale(1);opacity:.92}50%{transform:scale(1.12);opacity:1}}
+  .chapter{position:absolute;bottom:15%;left:0;right:0;text-align:center;z-index:3;padding:0 8%}
+  .chapter .line{font-family:var(--serif);font-size:clamp(20px,5.6vw,34px);color:#f5edd8;letter-spacing:.14em;
+    text-shadow:0 2px 30px rgba(236,200,112,.6);opacity:0;transition:opacity 1s ease,transform 1s ease;transform:translateY(14px)}
+  .chapter .line.show{opacity:1;transform:none}
+  .chapter .sub{margin-top:12px;font-size:clamp(12px,3.4vw,16px);color:#cdbfa0;letter-spacing:.34em;opacity:0;transition:opacity 1s ease .4s}
+  .chapter .sub.show{opacity:.9}
+  .exit{position:absolute;top:16px;right:16px;z-index:10;width:40px;height:40px;border-radius:50%;
+    border:1px solid rgba(255,255,255,.25);background:rgba(10,14,28,.55);color:#dce8ff;font-size:16px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -104,7 +134,16 @@
   <div class="poem" id="poem">花好月圆人长久</div>
   <div class="seal">中秋</div>
   <div class="center"><div class="title">中秋快乐</div><div class="bless" id="bless"></div></div>
-  <div class="hint">轻触屏幕，点亮一盏灯 🏮</div>
+  <div class="hint">轻触屏幕，开启中秋之旅 ✨</div>
+
+  <div class="journey" id="journey" data-g="warm">
+    <div class="warp" id="warp"></div>
+    <div class="ring" id="ring1"></div>
+    <div class="ring" id="ring2"></div>
+    <div class="motif" id="motif">🌕</div>
+    <div class="chapter"><div class="line" id="cline"></div><div class="sub" id="csub"></div></div>
+    <button class="exit" id="exit">✕</button>
+  </div>
 
 <script>
   const small = innerWidth < 480;
@@ -196,7 +235,64 @@
                 {duration:dur,easing:'linear'});
       document.body.appendChild(l);setTimeout(()=>l.remove(),dur);}
   }
-  window.addEventListener('pointerdown',e=>{ burstAt(e.clientX,e.clientY); });
+  // —— 旅程模式：轻触开启，持续播放后续画面 + 祝福 ——
+  function fwAt(px,py){
+    const box=document.getElementById('fireworks');
+    const hue=Math.random()<.5?'236,200,112':'255,170,180';
+    const N=small?16:24;
+    for(let i=0;i<N;i++){const p=document.createElement('div');
+      p.style.cssText='position:fixed;left:'+px+'px;top:'+py+'px;width:3px;height:3px;border-radius:50%;background:rgba('+hue+',1);box-shadow:0 0 9px rgba('+hue+',.9);z-index:9';
+      const ang=(Math.PI*2*i)/N,dist=40+Math.random()*60;
+      p.animate([{transform:'translate(-50%,-50%) translate(0,0) scale(1)',opacity:1},
+                 {transform:'translate(-50%,-50%) translate('+(Math.cos(ang)*dist)+'px,'+(Math.sin(ang)*dist)+'px) scale(.2)',opacity:0}],
+                {duration:1000+Math.random()*400,easing:'cubic-bezier(.2,.7,.3,1)'});
+      box.appendChild(p);setTimeout(()=>p.remove(),1500);}
+  }
+  const BLESS2=["愿你所行皆坦途，所念皆回响。","星河滚烫，你是人间理想。","愿你眼里有光，心中有月。",
+    "纵使千山万水，月光为你指路。","愿这个中秋，所有等待都有回音。","愿你被这世界，温柔以待。",
+    "人间烟火气，最抚凡人心。","愿你所得皆所期，所失皆无碍。","月满西楼，人约黄昏后。",
+    "愿你历尽千帆，归来仍是少年。","灯火可亲，岁月安稳。","愿风携桂香，捎去我的惦念。",
+    "山海自有归期，风雨自有相逢。","愿你眸中有星辰，脚下有远方。","一轮圆月，半盏清欢。",
+    "愿你心有繁星，目之所及皆温柔。","长风破浪会有时，直挂云帆济沧海。","愿岁岁年年，花常好月常圆。"];
+  const CHAPTERS=[{m:'🌕',g:'warm',sub:'飞向月亮'},{m:'🏮',g:'red',sub:'灯河漫游'},
+    {m:'🌌',g:'blue',sub:'星河穿越'},{m:'🎆',g:'pink',sub:'烟花满城'},
+    {m:'🌸',g:'soft',sub:'桂雨纷飞'},{m:'🍵',g:'amber',sub:'围炉煮茶'},{m:'✨',g:'white',sub:'星火人间'}];
+  let journeyOn=false,chapIdx=0,blessIdx=0,chapTimer=null,warpTimer=null,fwTimer=null;
+  const journey=document.getElementById('journey'),warp=document.getElementById('warp'),
+    motif=document.getElementById('motif'),cline=document.getElementById('cline'),csub=document.getElementById('csub');
+  function spawnStreak(){
+    const s=document.createElement('div');s.className='streak';
+    const ang=Math.random()*360,dist=Math.round(window.innerWidth*0.7);
+    s.style.transform='translate(-50%,-50%) rotate('+ang+'deg)';
+    warp.appendChild(s);
+    s.animate([{opacity:0,width:'10px'},{opacity:.9,width:'90px',offset:.2},{opacity:0,width:dist+'px'}],
+      {duration:800+Math.random()*500,easing:'ease-out'});
+    setTimeout(()=>s.remove(),1400);
+  }
+  function nextChapter(){
+    const c=CHAPTERS[chapIdx%CHAPTERS.length];
+    motif.textContent=c.m; journey.dataset.g=c.g;
+    cline.classList.remove('show'); csub.classList.remove('show');
+    const line=BLESS2[blessIdx%BLESS2.length]; blessIdx++;
+    csub.textContent=c.sub;
+    setTimeout(()=>{ cline.textContent=line; cline.classList.add('show'); csub.classList.add('show'); },520);
+    chapIdx++; chapTimer=setTimeout(nextChapter,5200);
+  }
+  function startJourney(){
+    if(journeyOn)return; journeyOn=true;
+    journey.classList.add('on'); document.querySelector('.hint').style.opacity=0;
+    nextChapter(); warpTimer=setInterval(spawnStreak,90);
+    fwTimer=setInterval(()=>{ if(Math.random()<.7) fwAt(Math.random()*innerWidth, Math.random()*innerHeight*0.6); },650);
+  }
+  function stopJourney(){
+    journeyOn=false; journey.classList.remove('on');
+    clearTimeout(chapTimer); clearInterval(warpTimer); clearInterval(fwTimer);
+  }
+  document.getElementById('exit').onclick=e=>{e.stopPropagation();stopJourney();};
+  window.addEventListener('pointerdown',e=>{
+    if(e.target.id==='exit')return;
+    if(journeyOn) fwAt(e.clientX,e.clientY); else startJourney();
+  });
 </script>
 </body>
 </html>
