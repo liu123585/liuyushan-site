@@ -171,16 +171,32 @@
   const BLESS=["愿人长久，千里共婵娟。","花好月圆，岁岁安康。","月满中秋，情满人间。","海上生明月，天涯共此时。","但愿人长久，年年共清辉。"];
   document.getElementById('bless').textContent=BLESS[Math.floor(Math.random()*BLESS.length)];
 
-  // 轻触放灯
-  document.body.addEventListener('click',()=>{
-    const l=document.createElement('div');l.textContent='🏮';
-    l.style.cssText='position:fixed;z-index:6;bottom:-40px;left:'+(Math.random()*100)+'%;font-size:26px;pointer-events:none';
-    const dx=(Math.random()*60-30)+'px',dur=3400+Math.random()*2000;
-    l.animate([{transform:'translateY(0) rotate(0)',opacity:1},
-               {transform:'translateY(-118vh) translateX('+dx+') rotate(20deg)',opacity:0}],
-              {duration:dur,easing:'linear'});
-    document.body.appendChild(l);setTimeout(()=>l.remove(),dur);
-  });
+  // 轻触：在点击处放烟花 + 涟漪 + 升起几盏灯（明显反馈）
+  function burstAt(px,py){
+    const box=document.getElementById('fireworks');
+    const hue=Math.random()<.5?'236,200,112':'255,170,180';
+    const N=small?18:28;
+    for(let i=0;i<N;i++){const p=document.createElement('div');
+      p.style.cssText='position:fixed;left:'+px+'px;top:'+py+'px;width:3px;height:3px;border-radius:50%;background:rgba('+hue+',1);box-shadow:0 0 9px rgba('+hue+',.9);z-index:7';
+      const ang=(Math.PI*2*i)/N,dist=50+Math.random()*70;
+      p.animate([{transform:'translate(-50%,-50%) translate(0,0) scale(1)',opacity:1},
+                 {transform:'translate(-50%,-50%) translate('+(Math.cos(ang)*dist)+'px,'+(Math.sin(ang)*dist)+'px) scale(.2)',opacity:0}],
+                {duration:1100+Math.random()*500,easing:'cubic-bezier(.2,.7,.3,1)'});
+      box.appendChild(p);setTimeout(()=>p.remove(),1700);}
+    const r=document.createElement('div');
+    r.style.cssText='position:fixed;left:'+px+'px;top:'+py+'px;width:12px;height:12px;border-radius:50%;border:2px solid rgba(255,255,255,.85);transform:translate(-50%,-50%);z-index:7';
+    r.animate([{transform:'translate(-50%,-50%) scale(1)',opacity:.9},{transform:'translate(-50%,-50%) scale(15)',opacity:0}],
+              {duration:900,easing:'ease-out'});
+    document.body.appendChild(r);setTimeout(()=>r.remove(),950);
+    for(let k=0;k<4;k++){const l=document.createElement('div');l.textContent='🏮';
+      l.style.cssText='position:fixed;z-index:6;left:'+(px+(Math.random()*60-30))+'px;top:'+py+'px;font-size:24px;pointer-events:none';
+      const dx=(Math.random()*80-40)+'px',dur=3200+Math.random()*2200;
+      l.animate([{transform:'translateY(0) rotate(0)',opacity:1},
+                 {transform:'translateY(-110vh) translateX('+dx+') rotate(22deg)',opacity:0}],
+                {duration:dur,easing:'linear'});
+      document.body.appendChild(l);setTimeout(()=>l.remove(),dur);}
+  }
+  window.addEventListener('pointerdown',e=>{ burstAt(e.clientX,e.clientY); });
 </script>
 </body>
 </html>
