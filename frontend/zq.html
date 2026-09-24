@@ -1,298 +1,90 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-<title>中秋快乐</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
+<title>山水 · 明月</title>
 <style>
-  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  :root{
-    --gold:#ecc870;--ink:#f5edd8;--soft:#cdbfa0;
-    --serif:"Songti SC","STSong","Noto Serif SC",serif;
-  }
-  html,body{height:100%;overflow:hidden}
-  body{background:#05070f;font-family:var(--serif);color:var(--ink);position:relative}
-
-  /* 夜空 */
-  .sky{position:fixed;inset:0;z-index:0;
-    background:radial-gradient(1200px 820px at 72% 14%,rgba(96,116,184,.40),transparent 60%),
-               radial-gradient(1000px 760px at 20% 88%,rgba(140,82,158,.30),transparent 62%),
-               linear-gradient(168deg,#070b1e 0%,#0a1233 40%,#1b1340 78%,#241640 100%);}
-  .horizon{position:fixed;left:0;right:0;bottom:0;height:46%;z-index:0;
-    background:linear-gradient(0deg,rgba(236,200,112,.10),transparent);}
-
-  /* 星空 / 流星 */
-  #stars,#shooting,#lanterns,#petals,#fireworks{position:fixed;inset:0;z-index:1;pointer-events:none}
-  .star{position:absolute;background:#fff;border-radius:50%;animation:tw 3.4s infinite ease-in-out}
-  @keyframes tw{0%,100%{opacity:.12;transform:scale(.7)}50%{opacity:1;transform:scale(1)}}
-  .shoot{position:absolute;width:150px;height:1.6px;background:linear-gradient(90deg,rgba(255,255,255,0),#fff,rgba(255,255,255,0));
-    transform:rotate(-32deg);filter:drop-shadow(0 0 7px #fff)}
-
-  /* 月亮：辉光 + 月海 + 桂树影 */
-  .moon{position:fixed;top:6%;right:8%;width:clamp(120px,30vw,200px);aspect-ratio:1;border-radius:50%;z-index:1;
-    background:radial-gradient(circle at 38% 34%,#fffdf4 0%,#fff4c8 28%,#f7d98c 56%,#ecc069 80%,#d6a948 100%);
-    box-shadow:0 0 70px 20px rgba(255,223,152,.45),0 0 190px 70px rgba(255,223,152,.20),
-               inset -20px -16px 46px rgba(150,100,28,.55);
-    animation:mglow 8s ease-in-out infinite}
-  @keyframes mglow{0%,100%{filter:brightness(1)}50%{filter:brightness(1.08)}}
-  .moon .c{position:absolute;border-radius:50%;background:rgba(150,108,40,.32);box-shadow:inset 3px 4px 9px rgba(110,72,18,.5)}
-  .moon .tree{position:absolute;left:30%;top:30%;width:38%;height:48%;opacity:.26;
-    background:radial-gradient(circle at 50% 12%,rgba(120,85,30,.9) 0 8%,transparent 9%),
-              radial-gradient(circle at 38% 40%,rgba(120,85,30,.85) 0 16%,transparent 17%),
-              radial-gradient(circle at 64% 52%,rgba(120,85,30,.8) 0 13%,transparent 14%),
-              radial-gradient(circle at 50% 78%,rgba(120,85,30,.8) 0 10%,transparent 11%);
-    filter:blur(.4px)}
-
-  /* 云 */
-  .cloud{position:fixed;z-index:1;border-radius:50%;filter:blur(26px);opacity:.18;
-    background:linear-gradient(90deg,#aeb8ec,#7e88c8)}
-  .cloud.c1{width:260px;height:72px;top:22%;left:-280px;animation:drift 46s linear infinite}
-  .cloud.c2{width:340px;height:92px;top:60%;left:-380px;opacity:.13;animation:drift 60s linear infinite 8s}
-  .cloud.c3{width:200px;height:60px;top:40%;left:-260px;opacity:.10;animation:drift 52s linear infinite 4s}
-  @keyframes drift{to{transform:translateX(150vw)}}
-
-  /* 远山剪影 */
-  .hills{position:fixed;left:0;right:0;bottom:0;z-index:2;width:100%;height:34vh;pointer-events:none}
-  .hills svg{width:100%;height:100%;display:block}
-
-  /* 竖排书法 */
-  .poem{position:fixed;left:6%;top:50%;transform:translateY(-50%);z-index:4;writing-mode:vertical-rl;
-    font-size:clamp(20px,5.4vw,30px);color:var(--ink);letter-spacing:.32em;font-weight:600;
-    text-shadow:0 2px 26px rgba(236,200,112,.5),0 0 2px rgba(0,0,0,.3);
-    opacity:0;animation:fin 1.8s ease .4s forwards}
-  .seal{position:fixed;left:calc(6% + 4px);top:calc(50% + 40%);z-index:4;writing-mode:vertical-rl;
-    font-size:clamp(13px,3.4vw,18px);color:#e7b9b0;letter-spacing:.18em;
-    border:1px solid rgba(231,185,176,.55);padding:6px 3px;border-radius:4px;opacity:0;animation:fin 1.4s ease 1.4s forwards}
-
-  /* 中央标题 */
-  .center{position:fixed;left:0;right:0;top:34%;z-index:4;text-align:center;pointer-events:none}
-  .title{font-size:clamp(46px,14vw,96px);font-weight:700;letter-spacing:.16em;
-    background:linear-gradient(180deg,#fff6da,#f3d27e 55%,#e3b35a);-webkit-background-clip:text;background-clip:text;color:transparent;
-    text-shadow:0 0 40px rgba(236,200,112,.55);animation:float 6s ease-in-out infinite;opacity:0;animation:fin 1.6s ease .2s forwards,float 6s ease-in-out 1.8s infinite}
-  .bless{margin-top:14px;font-size:clamp(15px,4.2vw,21px);color:var(--soft);letter-spacing:.22em;
-    text-shadow:0 1px 18px rgba(0,0,0,.4);opacity:0;animation:fin 1.6s ease 1s forwards}
-  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
-  @keyframes fin{to{opacity:1}}
-
-  .hint{position:fixed;bottom:18px;left:0;right:0;text-align:center;font-size:11px;color:#6b7a99;z-index:5;letter-spacing:.5px;
-    opacity:0;animation:fin 1.5s ease 2.4s forwards}
-  /* 旅程模式 */
-  .journey{position:fixed;inset:0;z-index:8;display:none;align-items:center;justify-content:center;
-    background:radial-gradient(circle at 50% 45%,rgba(20,28,60,.35),rgba(5,7,15,.72));transition:opacity .8s ease}
-  .journey.on{display:flex;opacity:1}
-  .journey[data-g="warm"]{background:radial-gradient(circle at 50% 45%,rgba(70,46,12,.38),rgba(5,7,15,.72))}
-  .journey[data-g="red"]{background:radial-gradient(circle at 50% 45%,rgba(78,16,24,.40),rgba(5,7,15,.72))}
-  .journey[data-g="blue"]{background:radial-gradient(circle at 50% 45%,rgba(16,28,78,.44),rgba(5,7,15,.72))}
-  .journey[data-g="pink"]{background:radial-gradient(circle at 50% 45%,rgba(80,22,62,.42),rgba(5,7,15,.72))}
-  .journey[data-g="soft"]{background:radial-gradient(circle at 50% 45%,rgba(56,44,68,.34),rgba(5,7,15,.72))}
-  .journey[data-g="amber"]{background:radial-gradient(circle at 50% 45%,rgba(66,50,16,.38),rgba(5,7,15,.72))}
-  .journey[data-g="white"]{background:radial-gradient(circle at 50% 45%,rgba(44,50,66,.32),rgba(5,7,15,.72))}
-  .warp{position:absolute;inset:0;overflow:hidden;pointer-events:none}
-  .streak{position:absolute;left:50%;top:50%;height:2px;width:10px;border-radius:2px;
-    background:linear-gradient(90deg,rgba(255,255,255,0),#fff);transform-origin:0 50%;
-    filter:drop-shadow(0 0 6px #fff);opacity:0}
-  .ring{position:absolute;left:50%;top:50%;border:1px solid rgba(255,255,255,.25);border-radius:50%;
-    transform:translate(-50%,-50%);pointer-events:none;animation:ringPulse 4s linear infinite}
-  .ring#ring2{animation-delay:2s}
-  @keyframes ringPulse{0%{width:40px;height:40px;opacity:.5}100%{width:85vmax;height:85vmax;opacity:0}}
-  .motif{position:relative;font-size:clamp(80px,26vw,180px);filter:drop-shadow(0 0 40px rgba(236,200,112,.6));
-    animation:motifPulse 4s ease-in-out infinite;z-index:2}
-  @keyframes motifPulse{0%,100%{transform:scale(1);opacity:.92}50%{transform:scale(1.12);opacity:1}}
-  .chapter{position:absolute;bottom:15%;left:0;right:0;text-align:center;z-index:3;padding:0 8%}
-  .chapter .line{font-family:var(--serif);font-size:clamp(20px,5.6vw,34px);color:#f5edd8;letter-spacing:.14em;
-    text-shadow:0 2px 30px rgba(236,200,112,.6);opacity:0;transition:opacity 1s ease,transform 1s ease;transform:translateY(14px)}
-  .chapter .line.show{opacity:1;transform:none}
-  .chapter .sub{margin-top:12px;font-size:clamp(12px,3.4vw,16px);color:#cdbfa0;letter-spacing:.34em;opacity:0;transition:opacity 1s ease .4s}
-  .chapter .sub.show{opacity:.9}
-  .exit{position:absolute;top:16px;right:16px;z-index:10;width:40px;height:40px;border-radius:50%;
-    border:1px solid rgba(255,255,255,.25);background:rgba(10,14,28,.55);color:#dce8ff;font-size:16px;cursor:pointer}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--serif:"Songti SC","STSong","Noto Serif SC",serif;--sans:"PingFang SC","Microsoft YaHei",sans-serif}
+html,body{height:100%;overflow:hidden;background:#05070f;font-family:var(--serif)}
+.loader{position:fixed;inset:0;z-index:99;background:#020205;display:flex;align-items:center;justify-content:center;color:#b8b0a0;letter-spacing:.3em;font-size:13px;transition:opacity .8s ease}
+.loader.hide{opacity:0;pointer-events:none}
+.scene{position:fixed;inset:0;z-index:0;background-size:cover;background-position:center;opacity:0;transform:scale(1);transition:opacity 1.6s ease,filter 1.6s ease;animation:kb 22s linear infinite alternate}
+.scene.active{opacity:1;z-index:1}
+@keyframes kb{to{transform:scale(1.14) translate(2%,-1%)}}
+.vignette{position:fixed;inset:0;z-index:2;background:radial-gradient(circle at 50% 40%,transparent 0%,rgba(0,0,0,.45) 70%,rgba(0,0,0,.85) 100%);pointer-events:none}
+.moon{position:fixed;z-index:3;border-radius:50%;background-image:url(assets/moon_nasa.jpg);background-size:cover;background-position:center;
+  box-shadow:0 0 60px 18px var(--glow),0 0 160px 60px rgba(255,245,210,.18);pointer-events:none;transition:all 1.6s ease;
+  animation:moonFloat 9s ease-in-out infinite}
+@keyframes moonFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.bokeh{position:fixed;inset:0;z-index:3;pointer-events:none}
+.orb{position:absolute;border-radius:50%;filter:blur(8px);opacity:0;animation:orbDrift linear infinite}
+@keyframes orbDrift{0%{transform:translateY(0) translateX(0);opacity:0}15%{opacity:.7}85%{opacity:.7}100%{transform:translateY(-110vh) translateX(var(--dx));opacity:0}}
+.content{position:fixed;left:0;right:0;bottom:17%;z-index:4;text-align:center;padding:0 8%;pointer-events:none}
+.title{font-size:clamp(42px,13vw,86px);font-weight:600;letter-spacing:.22em;color:transparent;
+  background:linear-gradient(180deg,#fff8e0,#e6c070 55%,#c89440);-webkit-background-clip:text;background-clip:text;
+  text-shadow:0 0 50px rgba(236,200,112,.35);opacity:0;transform:translateY(18px);transition:opacity 1.2s ease,transform 1.2s ease}
+.sub{margin-top:14px;font-size:clamp(18px,5vw,30px);color:#f0e8d8;letter-spacing:.14em;text-shadow:0 2px 24px rgba(0,0,0,.6);
+  opacity:0;transform:translateY(14px);transition:opacity 1.2s ease .25s,transform 1.2s ease .25s}
+.verse{margin-top:10px;font-size:clamp(14px,4vw,21px);color:#d8cfb8;letter-spacing:.08em;line-height:1.9;
+  text-shadow:0 2px 18px rgba(0,0,0,.6);opacity:0;transform:translateY(12px);transition:opacity 1.2s ease .45s,transform 1.2s ease .45s}
+.show{opacity:1!important;transform:none!important}
+.dots{position:fixed;bottom:36px;left:0;right:0;z-index:5;display:flex;justify-content:center;gap:12px}
+.dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.22);transition:.4s}
+.dot.active{background:rgba(236,200,112,.9);box-shadow:0 0 10px rgba(236,200,112,.6)}
+.hint{position:fixed;bottom:12px;left:0;right:0;z-index:5;text-align:center;font-family:var(--sans);font-size:11px;color:#6b6b7b;letter-spacing:.18em;opacity:0;animation:fin 1.5s ease 2s forwards}
+@keyframes fin{to{opacity:1}}
 </style>
 </head>
 <body>
-  <div class="sky"></div><div class="horizon"></div>
-  <div class="moon"><div class="c" style="width:22%;height:22%;left:28%;top:24%"></div>
-    <div class="c" style="width:13%;height:13%;left:60%;top:58%"></div>
-    <div class="c" style="width:9%;height:9%;left:46%;top:70%"></div>
-    <div class="tree"></div></div>
-  <div class="cloud c1"></div><div class="cloud c2"></div><div class="cloud c3"></div>
-  <div id="stars"></div><div id="shooting"></div><div id="lanterns"></div>
-  <div id="petals"></div><div id="fireworks"></div>
-
-  <div class="hills">
-    <svg viewBox="0 0 1000 340" preserveAspectRatio="none">
-      <path d="M0,340 L0,210 C140,150 240,250 360,200 C480,150 560,260 700,205 C820,160 920,250 1000,205 L1000,340 Z" fill="#0b1230" opacity=".9"/>
-      <path d="M0,340 L0,260 C160,210 300,300 460,255 C620,210 760,300 1000,250 L1000,340 Z" fill="#070c22" opacity=".95"/>
-      <g fill="#05070f" opacity=".9">
-        <path d="M700,255 l8,-46 l8,46 z"/>
-        <rect x="704" y="250" width="8" height="14"/>
-        <path d="M150,300 l10,-60 l10,60 z"/>
-        <rect x="155" y="294" width="10" height="16"/>
-      </g>
-    </svg>
-  </div>
-
-  <div class="poem" id="poem">花好月圆人长久</div>
-  <div class="seal">中秋</div>
-  <div class="center"><div class="title">中秋快乐</div><div class="bless" id="bless"></div></div>
-  <div class="hint">轻触屏幕，开启中秋之旅 ✨</div>
-
-  <div class="journey" id="journey" data-g="warm">
-    <div class="warp" id="warp"></div>
-    <div class="ring" id="ring1"></div>
-    <div class="ring" id="ring2"></div>
-    <div class="motif" id="motif">🌕</div>
-    <div class="chapter"><div class="line" id="cline"></div><div class="sub" id="csub"></div></div>
-    <button class="exit" id="exit">✕</button>
-  </div>
-
+<div class="loader" id="loader">正在点亮月光...</div>
+<div class="scene active" style="--img:url(assets/moon_uns.jpg)"></div>
+<div class="scene" style="--img:url(assets/land3.jpg)"></div>
+<div class="scene" style="--img:url(assets/land4.jpg)"></div>
+<div class="scene" style="--img:url(assets/land1.jpg)"></div>
+<div class="vignette"></div>
+<div class="moon" id="moon" style="--glow:rgba(255,250,230,.42)"></div>
+<div class="bokeh" id="bokeh"></div>
+<div class="content" id="content">
+  <div class="title" id="title">山水 · 明月</div>
+  <div class="sub" id="sub">云海之上</div>
+  <div class="verse" id="verse">愿逐月华流照君。</div>
+</div>
+<div class="dots" id="dots"></div>
+<div class="hint">轻触切换 · 自动流转</div>
 <script>
-  const small = innerWidth < 480;
-  // 星空
-  (function(){const b=document.getElementById('stars');const n=small?90:150;
-    for(let i=0;i<n;i++){const s=document.createElement('div');s.className='star';
-      const sz=Math.random()*2.2+0.8;s.style.width=s.style.height=sz+'px';
-      s.style.left=Math.random()*100+'%';s.style.top=Math.random()*100+'%';
-      s.style.animationDelay=(Math.random()*3.4)+'s';s.style.animationDuration=(2+Math.random()*2.6)+'s';b.appendChild(s);}})();
-
-  // 流星
-  function shoot(){const box=document.getElementById('shooting');const s=document.createElement('div');s.className='shoot';
-    s.style.left=(Math.random()*55+10)+'%';s.style.top=(Math.random()*38)+'%';
-    const dur=1300+Math.random()*800;
-    s.animate([{opacity:0,transform:'rotate(-32deg) translateX(0)'},
-               {opacity:1,offset:.15,transform:'rotate(-32deg) translateX(0)'},
-               {opacity:0,transform:'rotate(-32deg) translateX(170px)'}],
-              {duration:dur,easing:'ease-out'});
-    setTimeout(()=>s.remove(),dur);}
-  setInterval(()=>{if(Math.random()<.7)shoot();},1500);
-
-  // 飘升灯笼
-  const lanterns=['🏮','🏮','🏮','🌕','✨','💛'];
-  function lantern(){const box=document.getElementById('lanterns');const l=document.createElement('div');
-    l.textContent=lanterns[Math.floor(Math.random()*lanterns.length)];
-    l.style.cssText='position:absolute;bottom:-44px;left:'+(Math.random()*100)+'%;font-size:'+(16+Math.random()*16)+'px;opacity:.95';
-    const dx=(Math.random()*80-40)+'px',dur=3800+Math.random()*2600;
-    l.animate([{transform:'translateY(0) translateX(0) rotate(0)',opacity:.95},
-               {transform:'translateY(-118vh) translateX('+dx+') rotate(22deg)',opacity:0}],
-              {duration:dur,easing:'linear'});
-    box.appendChild(l);setTimeout(()=>l.remove(),dur);}
-  setInterval(lantern, small?650:480);
-
-  // 落桂 / 花瓣
-  function petal(){const box=document.getElementById('petals');const p=document.createElement('div');
-    const gold=Math.random()<.5;
-    p.style.cssText='position:absolute;top:-12px;left:'+(Math.random()*100)+'%;width:'+(3+Math.random()*3)+'px;height:'+(3+Math.random()*3)+'px;border-radius:50%;'+
-      'background:'+(gold?'rgba(236,200,112,.9)':'rgba(255,255,255,.85)')+';box-shadow:0 0 6px '+(gold?'rgba(236,200,112,.8)':'rgba(255,255,255,.7)');
-    const dx=(Math.random()*120-60)+'px',dur=6000+Math.random()*4000,rot=(Math.random()*360)+'deg';
-    p.animate([{transform:'translateY(0) translateX(0) rotate(0)',opacity:0},
-               {opacity:1,offset:.1},
-               {transform:'translateY(106vh) translateX('+dx+') rotate('+rot+')',opacity:.2}],
-              {duration:dur,easing:'linear'});
-    box.appendChild(p);setTimeout(()=>p.remove(),dur);}
-  setInterval(petal, small?180:120);
-
-  // 烟花
-  function firework(){const box=document.getElementById('fireworks');
-    const x=20+Math.random()*60,y=12+Math.random()*32;
-    const hue=Math.random()<.5?'236,200,112':'255,170,180';
-    const N=small?16:26;
-    for(let i=0;i<N;i++){const p=document.createElement('div');
-      p.style.cssText='position:absolute;left:'+x+'%;top:'+y+'%;width:3px;height:3px;border-radius:50%;background:rgba('+hue+',1);box-shadow:0 0 8px rgba('+hue+',.9)';
-      const ang=(Math.PI*2*i)/N,dist=40+Math.random()*50;
-      p.animate([{transform:'translate(0,0) scale(1)',opacity:1},
-                 {transform:'translate('+(Math.cos(ang)*dist)+'px,'+(Math.sin(ang)*dist)+'px) scale(.3)',opacity:0}],
-                {duration:1100+Math.random()*400,easing:'cubic-bezier(.2,.7,.3,1)'});
-      box.appendChild(p);setTimeout(()=>p.remove(),1600);}
-  }
-  setInterval(firework, 2200);
-  setTimeout(firework,600);
-
-  // 祝福语
-  const BLESS=["愿人长久，千里共婵娟。","花好月圆，岁岁安康。","月满中秋，情满人间。","海上生明月，天涯共此时。","但愿人长久，年年共清辉。"];
-  document.getElementById('bless').textContent=BLESS[Math.floor(Math.random()*BLESS.length)];
-
-  // 轻触：在点击处放烟花 + 涟漪 + 升起几盏灯（明显反馈）
-  function burstAt(px,py){
-    const box=document.getElementById('fireworks');
-    const hue=Math.random()<.5?'236,200,112':'255,170,180';
-    const N=small?18:28;
-    for(let i=0;i<N;i++){const p=document.createElement('div');
-      p.style.cssText='position:fixed;left:'+px+'px;top:'+py+'px;width:3px;height:3px;border-radius:50%;background:rgba('+hue+',1);box-shadow:0 0 9px rgba('+hue+',.9);z-index:7';
-      const ang=(Math.PI*2*i)/N,dist=50+Math.random()*70;
-      p.animate([{transform:'translate(-50%,-50%) translate(0,0) scale(1)',opacity:1},
-                 {transform:'translate(-50%,-50%) translate('+(Math.cos(ang)*dist)+'px,'+(Math.sin(ang)*dist)+'px) scale(.2)',opacity:0}],
-                {duration:1100+Math.random()*500,easing:'cubic-bezier(.2,.7,.3,1)'});
-      box.appendChild(p);setTimeout(()=>p.remove(),1700);}
-    const r=document.createElement('div');
-    r.style.cssText='position:fixed;left:'+px+'px;top:'+py+'px;width:12px;height:12px;border-radius:50%;border:2px solid rgba(255,255,255,.85);transform:translate(-50%,-50%);z-index:7';
-    r.animate([{transform:'translate(-50%,-50%) scale(1)',opacity:.9},{transform:'translate(-50%,-50%) scale(15)',opacity:0}],
-              {duration:900,easing:'ease-out'});
-    document.body.appendChild(r);setTimeout(()=>r.remove(),950);
-    for(let k=0;k<4;k++){const l=document.createElement('div');l.textContent='🏮';
-      l.style.cssText='position:fixed;z-index:6;left:'+(px+(Math.random()*60-30))+'px;top:'+py+'px;font-size:24px;pointer-events:none';
-      const dx=(Math.random()*80-40)+'px',dur=3200+Math.random()*2200;
-      l.animate([{transform:'translateY(0) rotate(0)',opacity:1},
-                 {transform:'translateY(-110vh) translateX('+dx+') rotate(22deg)',opacity:0}],
-                {duration:dur,easing:'linear'});
-      document.body.appendChild(l);setTimeout(()=>l.remove(),dur);}
-  }
-  // —— 旅程模式：轻触开启，持续播放后续画面 + 祝福 ——
-  function fwAt(px,py){
-    const box=document.getElementById('fireworks');
-    const hue=Math.random()<.5?'236,200,112':'255,170,180';
-    const N=small?16:24;
-    for(let i=0;i<N;i++){const p=document.createElement('div');
-      p.style.cssText='position:fixed;left:'+px+'px;top:'+py+'px;width:3px;height:3px;border-radius:50%;background:rgba('+hue+',1);box-shadow:0 0 9px rgba('+hue+',.9);z-index:9';
-      const ang=(Math.PI*2*i)/N,dist=40+Math.random()*60;
-      p.animate([{transform:'translate(-50%,-50%) translate(0,0) scale(1)',opacity:1},
-                 {transform:'translate(-50%,-50%) translate('+(Math.cos(ang)*dist)+'px,'+(Math.sin(ang)*dist)+'px) scale(.2)',opacity:0}],
-                {duration:1000+Math.random()*400,easing:'cubic-bezier(.2,.7,.3,1)'});
-      box.appendChild(p);setTimeout(()=>p.remove(),1500);}
-  }
-  const BLESS2=["愿你所行皆坦途，所念皆回响。","星河滚烫，你是人间理想。","愿你眼里有光，心中有月。",
-    "纵使千山万水，月光为你指路。","愿这个中秋，所有等待都有回音。","愿你被这世界，温柔以待。",
-    "人间烟火气，最抚凡人心。","愿你所得皆所期，所失皆无碍。","月满西楼，人约黄昏后。",
-    "愿你历尽千帆，归来仍是少年。","灯火可亲，岁月安稳。","愿风携桂香，捎去我的惦念。",
-    "山海自有归期，风雨自有相逢。","愿你眸中有星辰，脚下有远方。","一轮圆月，半盏清欢。",
-    "愿你心有繁星，目之所及皆温柔。","长风破浪会有时，直挂云帆济沧海。","愿岁岁年年，花常好月常圆。"];
-  const CHAPTERS=[{m:'🌕',g:'warm',sub:'飞向月亮'},{m:'🏮',g:'red',sub:'灯河漫游'},
-    {m:'🌌',g:'blue',sub:'星河穿越'},{m:'🎆',g:'pink',sub:'烟花满城'},
-    {m:'🌸',g:'soft',sub:'桂雨纷飞'},{m:'🍵',g:'amber',sub:'围炉煮茶'},{m:'✨',g:'white',sub:'星火人间'}];
-  let journeyOn=false,chapIdx=0,blessIdx=0,chapTimer=null,warpTimer=null,fwTimer=null;
-  const journey=document.getElementById('journey'),warp=document.getElementById('warp'),
-    motif=document.getElementById('motif'),cline=document.getElementById('cline'),csub=document.getElementById('csub');
-  function spawnStreak(){
-    const s=document.createElement('div');s.className='streak';
-    const ang=Math.random()*360,dist=Math.round(window.innerWidth*0.7);
-    s.style.transform='translate(-50%,-50%) rotate('+ang+'deg)';
-    warp.appendChild(s);
-    s.animate([{opacity:0,width:'10px'},{opacity:.9,width:'90px',offset:.2},{opacity:0,width:dist+'px'}],
-      {duration:800+Math.random()*500,easing:'ease-out'});
-    setTimeout(()=>s.remove(),1400);
-  }
-  function nextChapter(){
-    const c=CHAPTERS[chapIdx%CHAPTERS.length];
-    motif.textContent=c.m; journey.dataset.g=c.g;
-    cline.classList.remove('show'); csub.classList.remove('show');
-    const line=BLESS2[blessIdx%BLESS2.length]; blessIdx++;
-    csub.textContent=c.sub;
-    setTimeout(()=>{ cline.textContent=line; cline.classList.add('show'); csub.classList.add('show'); },520);
-    chapIdx++; chapTimer=setTimeout(nextChapter,5200);
-  }
-  function startJourney(){
-    if(journeyOn)return; journeyOn=true;
-    journey.classList.add('on'); document.querySelector('.hint').style.opacity=0;
-    nextChapter(); warpTimer=setInterval(spawnStreak,90);
-    fwTimer=setInterval(()=>{ if(Math.random()<.7) fwAt(Math.random()*innerWidth, Math.random()*innerHeight*0.6); },650);
-  }
-  function stopJourney(){
-    journeyOn=false; journey.classList.remove('on');
-    clearTimeout(chapTimer); clearInterval(warpTimer); clearInterval(fwTimer);
-  }
-  document.getElementById('exit').onclick=e=>{e.stopPropagation();stopJourney();};
-  window.addEventListener('pointerdown',e=>{
-    if(e.target.id==='exit')return;
-    if(journeyOn) fwAt(e.clientX,e.clientY); else startJourney();
-  });
+const scenes=[
+  {img:'assets/moon_uns.jpg',filter:'brightness(0.62) contrast(1.18) saturate(0.72) hue-rotate(-12deg)',moon:{t:'9%',r:'8%',s:'clamp(130px,28vw,230px)',g:'rgba(255,250,230,.42)'},sub:'云海之上',pool:['愿逐月华流照君。','云深不知处，明月照人来。','轻舟已过万重山。','且将新火试新茶，诗酒趁年华。']},
+  {img:'assets/land3.jpg',filter:'brightness(0.52) contrast(1.25) saturate(0.65) hue-rotate(-5deg)',moon:{t:'15%',r:'12%',s:'clamp(110px,22vw,190px)',g:'rgba(255,245,220,.38)'},sub:'海上明月',pool:['海上生明月，天涯共此时。','春江潮水连海平，海上明月共潮生。','潮起潮落，月亏月圆。','露从今夜白，月是故乡明。']},
+  {img:'assets/land4.jpg',filter:'brightness(0.66) contrast(1.12) saturate(0.62) hue-rotate(-18deg)',moon:{t:'7%',r:'10%',s:'clamp(150px,30vw,250px)',g:'rgba(255,250,230,.45)'},sub:'天山明月',pool:['明月出天山，苍茫云海间。','山高月小，水落石出。','白雪却嫌春色晚，故穿庭树作飞花。','长风几万里，吹度玉门关。']},
+  {img:'assets/land1.jpg',filter:'brightness(0.6) contrast(1.15) saturate(0.7) hue-rotate(-10deg)',moon:{t:'11%',r:'14%',s:'clamp(120px,24vw,210px)',g:'rgba(255,245,220,.4)'},sub:'山水有情',pool:['但愿人长久，千里共婵娟。','青山一道同云雨，明月何曾是两乡。','采菊东篱下，悠然见南山。','人生得意须尽欢，莫使金樽空对月。']}
+];
+const sceneEls=document.querySelectorAll('.scene');
+const moonEl=document.getElementById('moon');
+const titleEl=document.getElementById('title');
+const subEl=document.getElementById('sub');
+const verseEl=document.getElementById('verse');
+const dotEls=Array.from({length:scenes.length},(_,i)=>{const d=document.createElement('div');d.className='dot';document.getElementById('dots').appendChild(d);return d});
+let idx=0,counter=[0,0,0,0],timer=null;
+function pick(i){const p=scenes[i].pool;return p[counter[i]%p.length]}
+function apply(i){
+  sceneEls.forEach((el,j)=>{el.classList.toggle('active',j===i);el.style.backgroundImage=scenes[j].img;el.style.filter=scenes[i].filter});
+  const m=scenes[i].moon; moonEl.style.top=m.t; moonEl.style.right=m.r; moonEl.style.width=m.s; moonEl.style.height=m.s; moonEl.style.setProperty('--glow',m.g);
+  dotEls.forEach((d,j)=>d.classList.toggle('active',j===i));
+  subEl.classList.remove('show'); verseEl.classList.remove('show');
+  setTimeout(()=>{subEl.textContent=scenes[i].sub;verseEl.textContent=pick(i);subEl.classList.add('show');verseEl.classList.add('show');counter[i]++;},260);
+}
+function next(){apply(idx=(idx+1)%scenes.length)}
+function start(){clearInterval(timer);timer=setInterval(next,8500)}
+window.addEventListener('load',()=>{apply(0);titleEl.classList.add('show');document.getElementById('loader').classList.add('hide');start();});
+window.addEventListener('pointerdown',()=>{next();start();});
+(function(){const b=document.getElementById('bokeh');const n=innerWidth<480?18:28;
+for(let i=0;i<n;i++){const o=document.createElement('div');o.className='orb';
+  const sz=4+Math.random()*18;o.style.width=o.style.height=sz+'px';
+  o.style.left=(Math.random()*100)+'%';o.style.top=(100+Math.random()*30)+'%';
+  o.style.background='radial-gradient(circle,'+(Math.random()<.5?'rgba(236,200,112,.85)':'rgba(255,255,255,.8)')+',transparent)';
+  o.style.setProperty('--dx',(Math.random()*120-60)+'px');o.style.animationDelay=(Math.random()*6)+'s';o.style.animationDuration=(7+Math.random()*7)+'s';b.appendChild(o);}})();
 </script>
 </body>
 </html>
