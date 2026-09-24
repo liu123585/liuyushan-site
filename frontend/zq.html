@@ -3,88 +3,220 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
-<title>山水 · 明月</title>
+<title>中秋 · 明月人间</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{--serif:"Songti SC","STSong","Noto Serif SC",serif;--sans:"PingFang SC","Microsoft YaHei",sans-serif}
-html,body{height:100%;overflow:hidden;background:#05070f;font-family:var(--serif)}
-.loader{position:fixed;inset:0;z-index:99;background:#020205;display:flex;align-items:center;justify-content:center;color:#b8b0a0;letter-spacing:.3em;font-size:13px;transition:opacity .8s ease}
-.loader.hide{opacity:0;pointer-events:none}
-.scene{position:fixed;inset:0;z-index:0;background-size:cover;background-position:center;opacity:0;transform:scale(1);transition:opacity 1.6s ease,filter 1.6s ease;animation:kb 22s linear infinite alternate}
-.scene.active{opacity:1;z-index:1}
-@keyframes kb{to{transform:scale(1.14) translate(2%,-1%)}}
-.vignette{position:fixed;inset:0;z-index:2;background:radial-gradient(circle at 50% 40%,transparent 0%,rgba(0,0,0,.45) 70%,rgba(0,0,0,.85) 100%);pointer-events:none}
-.moon{position:fixed;z-index:3;border-radius:50%;background-image:url(assets/moon_nasa.jpg);background-size:cover;background-position:center;
-  box-shadow:0 0 60px 18px var(--glow),0 0 160px 60px rgba(255,245,210,.18);pointer-events:none;transition:all 1.6s ease;
-  animation:moonFloat 9s ease-in-out infinite}
+html,body{height:100%;overflow:hidden;font-family:var(--serif)}
+/* 夜空底色：有色彩的渐变，绝不黑屏 */
+.bg{position:fixed;inset:0;z-index:0;background:
+  radial-gradient(120% 80% at 82% 8%, rgba(70,95,180,.55), transparent 55%),
+  radial-gradient(100% 75% at 18% 92%, rgba(130,60,130,.40), transparent 60%),
+  radial-gradient(90% 60% at 50% 100%, rgba(40,30,70,.6), transparent 70%),
+  linear-gradient(180deg,#0a1230 0%,#0d1a44 38%,#162a5e 68%,#2a1c44 100%)}
+#sky{position:fixed;inset:0;z-index:1;pointer-events:none}
+/* 月亮：纯 CSS 绘制，带月海与陨石坑 */
+.moon{position:fixed;top:6%;right:8%;z-index:2;width:clamp(140px,30vw,260px);aspect-ratio:1;border-radius:50%;
+  background:radial-gradient(circle at 36% 34%,#ffffff 0%,#f6eccf 38%,#ecdfba 68%,#dcc89a 100%);
+  box-shadow:0 0 60px 18px rgba(255,250,230,.42),0 0 170px 60px rgba(255,245,210,.16);
+  overflow:hidden;animation:moonFloat 9s ease-in-out infinite}
 @keyframes moonFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
-.bokeh{position:fixed;inset:0;z-index:3;pointer-events:none}
-.orb{position:absolute;border-radius:50%;filter:blur(8px);opacity:0;animation:orbDrift linear infinite}
-@keyframes orbDrift{0%{transform:translateY(0) translateX(0);opacity:0}15%{opacity:.7}85%{opacity:.7}100%{transform:translateY(-110vh) translateX(var(--dx));opacity:0}}
-.content{position:fixed;left:0;right:0;bottom:17%;z-index:4;text-align:center;padding:0 8%;pointer-events:none}
-.title{font-size:clamp(42px,13vw,86px);font-weight:600;letter-spacing:.22em;color:transparent;
-  background:linear-gradient(180deg,#fff8e0,#e6c070 55%,#c89440);-webkit-background-clip:text;background-clip:text;
-  text-shadow:0 0 50px rgba(236,200,112,.35);opacity:0;transform:translateY(18px);transition:opacity 1.2s ease,transform 1.2s ease}
-.sub{margin-top:14px;font-size:clamp(18px,5vw,30px);color:#f0e8d8;letter-spacing:.14em;text-shadow:0 2px 24px rgba(0,0,0,.6);
-  opacity:0;transform:translateY(14px);transition:opacity 1.2s ease .25s,transform 1.2s ease .25s}
-.verse{margin-top:10px;font-size:clamp(14px,4vw,21px);color:#d8cfb8;letter-spacing:.08em;line-height:1.9;
-  text-shadow:0 2px 18px rgba(0,0,0,.6);opacity:0;transform:translateY(12px);transition:opacity 1.2s ease .45s,transform 1.2s ease .45s}
-.show{opacity:1!important;transform:none!important}
-.dots{position:fixed;bottom:36px;left:0;right:0;z-index:5;display:flex;justify-content:center;gap:12px}
-.dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.22);transition:.4s}
-.dot.active{background:rgba(236,200,112,.9);box-shadow:0 0 10px rgba(236,200,112,.6)}
-.hint{position:fixed;bottom:12px;left:0;right:0;z-index:5;text-align:center;font-family:var(--sans);font-size:11px;color:#6b6b7b;letter-spacing:.18em;opacity:0;animation:fin 1.5s ease 2s forwards}
+.moon::before{content:"";position:absolute;inset:0;border-radius:50%;mix-blend-mode:multiply;
+  background:
+    radial-gradient(circle at 30% 40%,rgba(150,138,104,.40) 0 15%,transparent 16%),
+    radial-gradient(circle at 63% 28%,rgba(150,138,104,.34) 0 10%,transparent 11%),
+    radial-gradient(circle at 56% 66%,rgba(150,138,104,.34) 0 12%,transparent 13%),
+    radial-gradient(circle at 40% 74%,rgba(150,138,104,.28) 0 8%,transparent 9%),
+    radial-gradient(circle at 74% 58%,rgba(150,138,104,.24) 0 7%,transparent 8%),
+    radial-gradient(circle at 22% 62%,rgba(150,138,104,.22) 0 9%,transparent 10%),
+    radial-gradient(circle at 48% 50%,rgba(160,150,118,.18) 0 22%,transparent 23%)}
+.moon::after{content:"";position:absolute;inset:0;border-radius:50%;
+  box-shadow:inset -16px -16px 38px rgba(120,100,60,.30),inset 14px 14px 30px rgba(255,255,255,.55)}
+/* 远山剪影 */
+.hills{position:fixed;left:0;right:0;bottom:0;z-index:2;height:34vh;pointer-events:none;
+  background:
+    radial-gradient(120% 100% at 20% 100%,rgba(10,14,34,.95),transparent 60%),
+    linear-gradient(180deg,transparent,rgba(8,10,26,.9));
+  clip-path:polygon(0 60%,12% 40%,24% 55%,38% 30%,52% 52%,66% 34%,80% 56%,92% 38%,100% 58%,100% 100%,0 100%)}
+.hills2{position:fixed;left:0;right:0;bottom:0;z-index:2;height:24vh;pointer-events:none;
+  background:linear-gradient(180deg,rgba(6,8,22,.0),rgba(4,6,16,.96));
+  clip-path:polygon(0 70%,16% 50%,30% 66%,46% 44%,60% 64%,76% 46%,90% 66%,100% 52%,100% 100%,0 100%)}
+/* 竖排诗 + 印章 */
+.poembox{position:fixed;left:5%;top:50%;transform:translateY(-50%);z-index:4;display:flex;align-items:flex-start;gap:10px}
+.poem{writing-mode:vertical-rl;font-family:var(--serif);font-size:clamp(20px,5.4vw,36px);letter-spacing:.28em;
+  color:#f3ead0;text-shadow:0 2px 18px rgba(0,0,0,.7);opacity:0;animation:fin 1.6s ease 1s forwards}
+.seal{writing-mode:vertical-rl;margin-top:6px;background:#b5332f;color:#fff;font-family:var(--serif);
+  font-size:clamp(13px,3.4vw,18px);padding:9px 5px;border-radius:4px;letter-spacing:.12em;
+  box-shadow:0 2px 12px rgba(0,0,0,.5);opacity:0;animation:fin 1.6s ease 1.5s forwards}
+/* 中央标题 */
+.center{position:fixed;left:0;right:0;top:40%;transform:translateY(-50%);z-index:4;text-align:center;padding:0 10%;pointer-events:none}
+.center .big{font-family:var(--serif);font-weight:600;font-size:clamp(46px,15vw,108px);letter-spacing:.16em;
+  color:transparent;background:linear-gradient(180deg,#fff8e0,#ecc878 55%,#caa24a);
+  -webkit-background-clip:text;background-clip:text;text-shadow:0 0 60px rgba(236,200,112,.40);
+  opacity:0;animation:fin 1.6s ease .4s forwards, bob 6s ease-in-out 2s infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.center .verse{margin-top:18px;font-size:clamp(15px,4.4vw,24px);color:#ece3cc;letter-spacing:.1em;
+  text-shadow:0 2px 20px rgba(0,0,0,.6);transition:opacity .8s}
+.hint{position:fixed;bottom:14px;left:0;right:0;z-index:5;text-align:center;font-family:var(--sans);
+  font-size:12px;color:#aab0c8;letter-spacing:.22em;opacity:0;animation:fin 1.5s ease 2.4s forwards}
 @keyframes fin{to{opacity:1}}
+/* 旅程模式 */
+.journey{position:fixed;inset:0;z-index:8;display:none;flex-direction:column;align-items:center;justify-content:center;
+  opacity:0;transition:opacity .8s ease}
+.journey.on{display:flex;opacity:1}
+.journey[data-g="warm"]{background:radial-gradient(circle at 50% 45%,rgba(120,80,20,.42),rgba(5,7,15,.55))}
+.journey[data-g="red"]{background:radial-gradient(circle at 50% 45%,rgba(110,22,34,.45),rgba(5,7,15,.55))}
+.journey[data-g="blue"]{background:radial-gradient(circle at 50% 45%,rgba(20,40,110,.48),rgba(5,7,15,.55))}
+.journey[data-g="pink"]{background:radial-gradient(circle at 50% 45%,rgba(120,30,86,.46),rgba(5,7,15,.55))}
+.journey[data-g="soft"]{background:radial-gradient(circle at 50% 45%,rgba(80,60,100,.42),rgba(5,7,15,.55))}
+.journey[data-g="amber"]{background:radial-gradient(circle at 50% 45%,rgba(96,72,20,.44),rgba(5,7,15,.55))}
+.journey[data-g="white"]{background:radial-gradient(circle at 50% 45%,rgba(60,72,98,.40),rgba(5,7,15,.55))}
+#warp{position:absolute;inset:0;z-index:1;pointer-events:none}
+.ring{position:absolute;left:50%;top:46%;border:1px solid rgba(255,255,255,.22);border-radius:50%;
+  transform:translate(-50%,-50%);z-index:2;pointer-events:none;animation:ringPulse 4s linear infinite}
+.ring.r2{animation-delay:2s}
+@keyframes ringPulse{0%{width:40px;height:40px;opacity:.5}100%{width:90vmax;height:90vmax;opacity:0}}
+.motif{position:relative;z-index:3;font-size:clamp(84px,28vw,200px);filter:drop-shadow(0 0 44px rgba(236,200,112,.65));
+  animation:motifPulse 4s ease-in-out infinite}
+@keyframes motifPulse{0%,100%{transform:scale(1);opacity:.92}50%{transform:scale(1.13);opacity:1}}
+.chapter{position:absolute;bottom:17%;left:0;right:0;z-index:4;text-align:center;padding:0 8%}
+.chapter .line{font-family:var(--serif);font-size:clamp(22px,6vw,38px);color:#f7efd9;letter-spacing:.16em;
+  text-shadow:0 2px 30px rgba(236,200,112,.6);opacity:0;transform:translateY(16px);
+  transition:opacity 1s ease,transform 1s ease}
+.chapter .line.show{opacity:1;transform:none}
+.chapter .sub{margin-top:14px;font-size:clamp(13px,3.6vw,18px);color:#d6c8a8;letter-spacing:.36em;
+  opacity:0;transition:opacity 1s ease .4s}
+.chapter .sub.show{opacity:.92}
+.exit{position:absolute;top:16px;right:16px;z-index:10;width:42px;height:42px;border-radius:50%;
+  border:1px solid rgba(255,255,255,.25);background:rgba(10,14,28,.55);color:#dce8ff;font-size:16px;cursor:pointer}
 </style>
 </head>
 <body>
-<div class="loader" id="loader">正在点亮月光...</div>
-<div class="scene active" style="--img:url(assets/moon_uns.jpg)"></div>
-<div class="scene" style="--img:url(assets/land3.jpg)"></div>
-<div class="scene" style="--img:url(assets/land4.jpg)"></div>
-<div class="scene" style="--img:url(assets/land1.jpg)"></div>
-<div class="vignette"></div>
-<div class="moon" id="moon" style="--glow:rgba(255,250,230,.42)"></div>
-<div class="bokeh" id="bokeh"></div>
-<div class="content" id="content">
-  <div class="title" id="title">山水 · 明月</div>
-  <div class="sub" id="sub">云海之上</div>
-  <div class="verse" id="verse">愿逐月华流照君。</div>
+<div class="bg"></div>
+<canvas id="sky"></canvas>
+<div class="moon"></div>
+<div class="hills"></div>
+<div class="hills2"></div>
+
+<div class="poembox">
+  <div class="poem">花好月圆人长久</div>
+  <div class="seal">中秋</div>
 </div>
-<div class="dots" id="dots"></div>
-<div class="hint">轻触切换 · 自动流转</div>
+
+<div class="center">
+  <div class="big">中秋快乐</div>
+  <div class="verse" id="verse">海上生明月，天涯共此时。</div>
+</div>
+
+<div class="hint">轻触屏幕，开启中秋之旅 ✨</div>
+
+<div class="journey" id="journey" data-g="warm">
+  <canvas id="warp"></canvas>
+  <div class="ring"></div>
+  <div class="ring r2"></div>
+  <div class="motif" id="motif">🌕</div>
+  <div class="chapter"><div class="line" id="cline"></div><div class="sub" id="csub"></div></div>
+  <button class="exit" id="exit">✕</button>
+</div>
+
 <script>
-const scenes=[
-  {img:'assets/moon_uns.jpg',filter:'brightness(0.62) contrast(1.18) saturate(0.72) hue-rotate(-12deg)',moon:{t:'9%',r:'8%',s:'clamp(130px,28vw,230px)',g:'rgba(255,250,230,.42)'},sub:'云海之上',pool:['愿逐月华流照君。','云深不知处，明月照人来。','轻舟已过万重山。','且将新火试新茶，诗酒趁年华。']},
-  {img:'assets/land3.jpg',filter:'brightness(0.52) contrast(1.25) saturate(0.65) hue-rotate(-5deg)',moon:{t:'15%',r:'12%',s:'clamp(110px,22vw,190px)',g:'rgba(255,245,220,.38)'},sub:'海上明月',pool:['海上生明月，天涯共此时。','春江潮水连海平，海上明月共潮生。','潮起潮落，月亏月圆。','露从今夜白，月是故乡明。']},
-  {img:'assets/land4.jpg',filter:'brightness(0.66) contrast(1.12) saturate(0.62) hue-rotate(-18deg)',moon:{t:'7%',r:'10%',s:'clamp(150px,30vw,250px)',g:'rgba(255,250,230,.45)'},sub:'天山明月',pool:['明月出天山，苍茫云海间。','山高月小，水落石出。','白雪却嫌春色晚，故穿庭树作飞花。','长风几万里，吹度玉门关。']},
-  {img:'assets/land1.jpg',filter:'brightness(0.6) contrast(1.15) saturate(0.7) hue-rotate(-10deg)',moon:{t:'11%',r:'14%',s:'clamp(120px,24vw,210px)',g:'rgba(255,245,220,.4)'},sub:'山水有情',pool:['但愿人长久，千里共婵娟。','青山一道同云雨，明月何曾是两乡。','采菊东篱下，悠然见南山。','人生得意须尽欢，莫使金樽空对月。']}
-];
-const sceneEls=document.querySelectorAll('.scene');
-const moonEl=document.getElementById('moon');
-const titleEl=document.getElementById('title');
-const subEl=document.getElementById('sub');
-const verseEl=document.getElementById('verse');
-const dotEls=Array.from({length:scenes.length},(_,i)=>{const d=document.createElement('div');d.className='dot';document.getElementById('dots').appendChild(d);return d});
-let idx=0,counter=[0,0,0,0],timer=null;
-function pick(i){const p=scenes[i].pool;return p[counter[i]%p.length]}
-function apply(i){
-  sceneEls.forEach((el,j)=>{el.classList.toggle('active',j===i);el.style.backgroundImage=scenes[j].img;el.style.filter=scenes[i].filter});
-  const m=scenes[i].moon; moonEl.style.top=m.t; moonEl.style.right=m.r; moonEl.style.width=m.s; moonEl.style.height=m.s; moonEl.style.setProperty('--glow',m.g);
-  dotEls.forEach((d,j)=>d.classList.toggle('active',j===i));
-  subEl.classList.remove('show'); verseEl.classList.remove('show');
-  setTimeout(()=>{subEl.textContent=scenes[i].sub;verseEl.textContent=pick(i);subEl.classList.add('show');verseEl.classList.add('show');counter[i]++;},260);
+/* ===== 主画布：星空 / 流星 / 落桂 ===== */
+const cv=document.getElementById('sky'),ctx=cv.getContext('2d');
+let W,H,DPR;
+function resize(){DPR=Math.min(devicePixelRatio||1,2);W=cv.width=innerWidth*DPR;H=cv.height=innerHeight*DPR;cv.style.width=innerWidth+'px';cv.style.height=innerHeight+'px';}
+resize();addEventListener('resize',resize);
+
+const stars=[];
+function initStars(){stars.length=0;const n=Math.round(innerWidth*innerHeight/8000);for(let i=0;i<n;i++)stars.push({x:Math.random()*W,y:Math.random()*H*0.86,r:(Math.random()*1.4+0.3)*DPR,ph:Math.random()*6.28,sp:Math.random()*0.02+0.005});}
+initStars();addEventListener('resize',initStars);
+
+const petals=[];
+function spawnPetal(){petals.push({x:Math.random()*W,y:-10*DPR,vx:(Math.random()-0.5)*0.4*DPR,vy:(Math.random()*0.6+0.4)*DPR,r:(Math.random()*2+1.4)*DPR,ph:Math.random()*6.28,s:Math.random()*0.02+0.01,col:Math.random()<0.5?'236,200,112':'255,240,210'});}
+for(let i=0;i<46;i++){spawnPetal();petals.forEach(p=>p.y=Math.random()*H);}
+
+const meteors=[];
+function maybeMeteor(){if(Math.random()<0.018&&meteors.length<3){const L=Math.random()<0.5;meteors.push({x:L?-60*DPR:W+60*DPR,y:Math.random()*H*0.4,vx:(L?1:-1)*(7+Math.random()*4)*DPR,vy:(3+Math.random()*2.4)*DPR,life:1});}}
+
+function frame(){
+  ctx.clearRect(0,0,W,H);
+  for(const s of stars){s.ph+=s.sp;const a=0.35+Math.sin(s.ph)*0.45;ctx.globalAlpha=Math.max(0,a);ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,6.28);ctx.fill();}
+  ctx.globalAlpha=1;
+  maybeMeteor();
+  for(let i=meteors.length-1;i>=0;i--){const m=meteors[i];m.x+=m.vx;m.y+=m.vy;
+    const g=ctx.createLinearGradient(m.x,m.y,m.x-m.vx*5,m.y-m.vy*5);
+    g.addColorStop(0,'rgba(255,255,255,.9)');g.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.strokeStyle=g;ctx.lineWidth=2*DPR;ctx.beginPath();ctx.moveTo(m.x,m.y);ctx.lineTo(m.x-m.vx*5,m.y-m.vy*5);ctx.stroke();
+    if(m.x< -100*DPR||m.x>W+100*DPR||m.y>H)meteors.splice(i,1);}
+  for(const p of petals){p.ph+=p.s;p.x+=p.vx+Math.sin(p.ph)*0.5*DPR;p.y+=p.vy;
+    ctx.globalAlpha=0.85;ctx.fillStyle='rgba('+p.col+',.9)';ctx.shadowColor='rgba('+p.col+',.8)';ctx.shadowBlur=8*DPR;
+    ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,6.28);ctx.fill();
+    if(p.y>H+10*DPR){p.y=-10*DPR;p.x=Math.random()*W;}}
+  ctx.globalAlpha=1;ctx.shadowBlur=0;
+  requestAnimationFrame(frame);
 }
-function next(){apply(idx=(idx+1)%scenes.length)}
-function start(){clearInterval(timer);timer=setInterval(next,8500)}
-window.addEventListener('load',()=>{apply(0);titleEl.classList.add('show');document.getElementById('loader').classList.add('hide');start();});
-window.addEventListener('pointerdown',()=>{next();start();});
-(function(){const b=document.getElementById('bokeh');const n=innerWidth<480?18:28;
-for(let i=0;i<n;i++){const o=document.createElement('div');o.className='orb';
-  const sz=4+Math.random()*18;o.style.width=o.style.height=sz+'px';
-  o.style.left=(Math.random()*100)+'%';o.style.top=(100+Math.random()*30)+'%';
-  o.style.background='radial-gradient(circle,'+(Math.random()<.5?'rgba(236,200,112,.85)':'rgba(255,255,255,.8)')+',transparent)';
-  o.style.setProperty('--dx',(Math.random()*120-60)+'px');o.style.animationDelay=(Math.random()*6)+'s';o.style.animationDuration=(7+Math.random()*7)+'s';b.appendChild(o);}})();
+frame();
+
+/* ===== 中央诗句轮换（无交互也持续） ===== */
+const baseVerses=['海上生明月，天涯共此时。','但愿人长久，千里共婵娟。','露从今夜白，月是故乡明。','明月几时有，把酒问青天。','皎皎空中孤月轮，照尽人间万千春。'];
+const verseEl=document.getElementById('verse');let bv=0;
+setInterval(()=>{verseEl.style.opacity=0;setTimeout(()=>{bv=(bv+1)%baseVerses.length;verseEl.textContent=baseVerses[bv];verseEl.style.opacity=1;},800);},6000);
+
+/* ===== 旅程模式：warp + 章节 + 烟花 ===== */
+const wc=document.getElementById('warp'),wctx=wc.getContext('2d');
+function resizeWarp(){wc.width=innerWidth*DPR;wc.height=innerHeight*DPR;wc.style.width=innerWidth+'px';wc.style.height=innerHeight+'px';}
+resizeWarp();addEventListener('resize',resizeWarp);
+
+const chapters=[
+  {m:'🌕',g:'warm', line:'举杯邀明月',     sub:'把酒问青天'},
+  {m:'🏮',g:'red',  line:'灯火可亲',       sub:'人间团圆时'},
+  {m:'🌌',g:'blue', line:'星河滚烫',       sub:'你是人间理想'},
+  {m:'🎆',g:'pink', line:'烟花升空',       sub:'岁岁皆欢颜'},
+  {m:'🌸',g:'soft', line:'桂子月中落',     sub:'天香云外飘'},
+  {m:'🍵',g:'amber',line:'且坐听晚风',     sub:'慢煮一壶秋'},
+  {m:'✨',g:'white',line:'愿你所念皆所愿', sub:'所行皆坦途'}
+];
+const hueMap={warm:'236,200,112',red:'255,140,150',blue:'150,180,255',pink:'255,160,200',soft:'210,180,230',amber:'240,190,120',white:'220,230,255'};
+
+const journey={on:false,t:0,hue:'236,200,112'};
+const fw=[];
+function boom(x,y,hue){const n=64;for(let i=0;i<n;i++){const a=Math.PI*2*i/n,sp=(Math.random()*2.4+2)*DPR;fw.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,col:hue});}}
+function boomAt(px,py){boom(px*DPR,py*DPR,Math.random()<0.5?'236,200,112':'255,160,180');}
+
+let jIdx=0,jTimer=null;
+const jEl=document.getElementById('journey'),motifEl=document.getElementById('motif'),
+      clineEl=document.getElementById('cline'),csubEl=document.getElementById('csub');
+function showChapter(i){const c=chapters[i];jEl.dataset.g=c.g;journey.hue=hueMap[c.g];motifEl.textContent=c.m;
+  clineEl.classList.remove('show');csubEl.classList.remove('show');
+  setTimeout(()=>{clineEl.textContent=c.line;csubEl.textContent=c.sub;clineEl.classList.add('show');csubEl.classList.add('show');},320);}
+function startJourney(){if(journey.on)return;journey.on=true;journey.t=0;jEl.classList.add('on');jIdx=0;showChapter(0);jTimer=setInterval(()=>{jIdx=(jIdx+1)%chapters.length;showChapter(jIdx);},4800);}
+function stopJourney(){journey.on=false;jEl.classList.remove('on');clearInterval(jTimer);fw.length=0;}
+
+function warpFrame(){
+  wctx.clearRect(0,0,wc.width,wc.height);
+  if(journey.on){
+    journey.t+=0.016;
+    const cx=wc.width/2,cy=wc.height*0.46,maxR=Math.hypot(wc.width,wc.height);
+    for(let i=0;i<80;i++){const a=i/80*Math.PI*2+journey.t*0.08;
+      const r=((journey.t*300*DPR+i*46)%maxR);
+      const x0=cx+Math.cos(a)*r,y0=cy+Math.sin(a)*r,x1=cx+Math.cos(a)*(r+34*DPR),y1=cy+Math.sin(a)*(r+34*DPR);
+      wctx.strokeStyle='rgba('+journey.hue+','+(0.55*(1-r/maxR))+')';wctx.lineWidth=1.6*DPR;
+      wctx.beginPath();wctx.moveTo(x0,y0);wctx.lineTo(x1,y1);wctx.stroke();}
+  }
+  for(let i=fw.length-1;i>=0;i--){const p=fw[i];p.vy+=0.05*DPR;p.x+=p.vx;p.y+=p.vy;p.life-=0.012;
+    if(p.life<=0){fw.splice(i,1);continue;}
+    wctx.globalAlpha=Math.max(0,p.life);wctx.fillStyle='rgba('+p.col+',1)';wctx.shadowColor='rgba('+p.col+',.9)';wctx.shadowBlur=10*DPR;
+    wctx.beginPath();wctx.arc(p.x,p.y,2.2*DPR,0,6.28);wctx.fill();}
+  wctx.globalAlpha=1;wctx.shadowBlur=0;
+  requestAnimationFrame(warpFrame);
+}
+warpFrame();
+
+/* ===== 交互 ===== */
+addEventListener('pointerdown',e=>{
+  if(!journey.on){startJourney();return;}
+  boomAt(e.clientX,e.clientY);
+});
+document.getElementById('exit').addEventListener('pointerdown',ev=>{ev.stopPropagation();stopJourney();});
 </script>
 </body>
 </html>
