@@ -116,6 +116,8 @@
   flex-shrink:0;
 }
 .ai-chips:empty{display:none}
+/* .ai-chips 本身是 display:flex，不加这条 hidden 属性会被压掉，收不起来 */
+.ai-chips[hidden]{display:none!important}
 .ai-chip{
   padding:7px 13px;border-radius:20px;cursor:pointer;
   background:rgba(0,85,163,.05);border:1px solid var(--hair);

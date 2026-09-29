@@ -84,6 +84,7 @@
   function ask(q) {
     if (busy || !q) return;
     setBusy(true);
+    setChips(false);          // 开始对话了，快捷提问收起来
 
     addMsg('user', q);
     history.push({ role: 'user', content: q });
@@ -186,6 +187,13 @@
     });
   }
 
+  /* 快捷提问只在「空对话」时露脸：一旦用户问过一句就收起来，别一直杵在那儿。
+     点「清空」重新开始对话时再放出来。（跟豆包的做法一致） */
+  function setChips(show) {
+    if (!chips) return;
+    chips.hidden = !show;
+  }
+
   function init() {
     log = document.getElementById('aiLog');
     input = document.getElementById('aiInput');
@@ -199,6 +207,7 @@
     setBusy(false);
     greet();
     buildChips();
+    setChips(true);
 
     form.addEventListener('submit', function (e) {
       e.preventDefault();
@@ -225,6 +234,7 @@
         history = [];
         log.innerHTML = '';
         greet();
+        setChips(true);          // 回到空对话，快捷提问重新出现
         if (input) input.focus();
       });
     }
