@@ -19,14 +19,29 @@ if (!fs.existsSync(DATA)) fs.mkdirSync(DATA, { recursive: true });
    ========================================================================= */
 const PROVIDERS = {
   deepseek:  { base: 'https://api.deepseek.com/v1',                      model: 'deepseek-chat' },
-  zhipu:     { base: 'https://open.bigmodel.cn/api/paas/v4',             model: 'glm-4.7-flash' },
+  zhipu:     { base: 'https://open.bigmodel.cn/api/paas/v4',             model: 'glm-4-flash-250414' },
   moonshot:  { base: 'https://api.moonshot.cn/v1',                       model: 'moonshot-v1-8k' },
   dashscope: { base: 'https://dashscope.aliyuncs.com/compatible-mode/v1', model: 'qwen-plus' }
 };
 const LLM_KEY = process.env.LLM_API_KEY || '';
-const LLM_PRESET = PROVIDERS[String(process.env.LLM_PROVIDER || '').trim().toLowerCase()] || null;
+const LLM_PROVIDER_KEY = String(process.env.LLM_PROVIDER || '').trim().toLowerCase();
+const LLM_PRESET = PROVIDERS[LLM_PROVIDER_KEY] || null;
 const LLM_BASE = (process.env.LLM_BASE_URL || (LLM_PRESET && LLM_PRESET.base) || PROVIDERS.deepseek.base).replace(/\/+$/, '');
 const LLM_MODEL = process.env.LLM_MODEL || (LLM_PRESET && LLM_PRESET.model) || PROVIDERS.deepseek.model;
+
+/* 智谱 GLM-4.5 / 4.7 系列默认开着「深度思考」：内容走 delta.reasoning_content，
+   delta.content 长时间为空，前端就什么都看不到，max_tokens 还可能被思考吃光。
+   所以走智谱时统一显式关掉；别的服务商不认这个字段，不能乱发。 */
+const LLM_EXTRA = (LLM_PROVIDER_KEY === 'zhipu' || /^glm/i.test(LLM_MODEL)) ? { thinking: { type: 'disabled' } } : {};
+
+/** 把上游错误码翻译成用户看得懂的一句话（智谱免费模型常报 1305 拥堵） */
+function friendlyError(code, message) {
+  const c = String(code == null ? '' : code);
+  if (c === '1305') return '模型这会儿太忙了，等十几秒再问一次';
+  if (c === '1113') return '模型服务账户余额不足';
+  if (c === '1002' || c === '401') return '模型 Key 无效或已过期';
+  return message || '模型出错';
+}
 
 const SYSTEM = `你是「科大 AI 学长」，河南科技大学（HAUST）新生指南网站里的答疑助手，服务对象是 2026 级大一新生。
 
@@ -48,7 +63,13 @@ const SYSTEM = `你是「科大 AI 学长」，河南科技大学（HAUST）新�
 - 开元图书馆：洛阳鼎造型，建筑面积约6.9万㎡，藏书约450万册，8:00-22:30 开馆。
 - 宿舍区：嘉园、菁园、乾园。
 - 报到注册 2026-09-10 至 09-11；军训开始 2026-09-12（以学校官方通知为准）。
-- 本站板块：首页（导航中枢）、校区、生活、入学、社团、工具箱、新生墙、互动、AI 学长。`;
+- 本站板块：首页（导航中枢）、校区、生活、入学、社团、工具箱、新生墙、互动、AI 学长。
+
+【交卷前自检】
+开口之前先逐句核对：这句话在上面能找到依据吗？
+找不到的（比如「宿舍几人间」「有没有空调」「学费多少」这种没写的），
+就直说「这个我资料里没有，建议问辅导员或看录取通知书」。
+不要用常识、经验或别的学校的情况去补全。宁可少说一句，也不要编。`;
 
 function chatJSON(res, code, obj) {
   res.writeHead(code, {
@@ -111,17 +132,20 @@ function handleChat(req, res) {
       const upstream = await fetch(LLM_BASE + '/chat/completions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + LLM_KEY },
-        body: JSON.stringify({
+        body: JSON.stringify(Object.assign({
           model: LLM_MODEL,
           messages: [{ role: 'system', content: SYSTEM }].concat(history),
           stream: true,
           temperature: 0.6,
           max_tokens: 800
-        })
+        }, LLM_EXTRA))
       });
       if (!upstream.ok) {
         const t = await upstream.text();
-        send({ error: '模型服务返回 ' + upstream.status + '：' + t.slice(0, 200) });
+        let code = '', msg = '';
+        try { const j = JSON.parse(t); if (j && j.error) { code = j.error.code || ''; msg = j.error.message || ''; } }
+        catch (e2) { msg = t.slice(0, 200); }
+        send({ error: '模型服务返回 ' + upstream.status + '：' + friendlyError(code, msg) });
         res.write('data: [DONE]\n\n');
         return res.end();
       }
@@ -141,6 +165,7 @@ function handleChat(req, res) {
           if (!payload || payload === '[DONE]') continue;
           let o;
           try { o = JSON.parse(payload); } catch (e) { continue; }
+          if (o.error) { send({ error: friendlyError(o.error.code, o.error.message) }); continue; }
           const delta = o.choices && o.choices[0] && o.choices[0].delta;
           if (delta && delta.content) send({ t: delta.content });
         }

@@ -55,15 +55,23 @@ EdgeOne 控制台 → 找到「边缘存储 / KV」（或 Pages 项目里的函�
 
 | `LLM_PROVIDER` | 服务商 | 默认模型 | 说明 |
 |---|---|---|---|
-| `zhipu` | 智谱 GLM | `glm-4.7-flash` | **推荐**，这个模型免费，200K 上下文 |
+| `zhipu` | 智谱 GLM | `glm-4-flash-250414` | **推荐**，长期免费、实测稳定 |
 | `deepseek` | DeepSeek | `deepseek-chat` | 便宜，需充值（10 元够用很久） |
 | `moonshot` | Kimi | `moonshot-v1-8k` | |
 | `dashscope` | 通义千问 | `qwen-plus` | |
+
+> 智谱的 `glm-4.7-flash` 更新更强，但免费额度上**经常拥堵**（报错码 1305），
+> 实测连打 5 次只成功 1 次，所以默认没用它。想换：加一条 `LLM_MODEL=glm-4.7-flash` 即可。
+> 另外 `glm-4.5-flash` 官方已公告下线，别用。
 
 **以智谱为例**（免费，推荐）：
 - 打开 https://bigmodel.cn/ → 注册登录 → 右上角「API Keys」（或 https://bigmodel.cn/usercenter/proj-mgmt/apikeys）→ 新建一个，复制出来。
 - 智谱的 Key 形如 `xxxxxxxxxxxxxxxx.xxxxxxxxxxxxxxxx`（中间一个点），整串复制，别只复制一半。
 - 免费额度直接在 https://bigmodel.cn/console/trialcenter 看。
+
+> 智谱 GLM-4.5 / 4.7 系列**默认开启「深度思考」**，内容会走 `reasoning_content` 而
+> `delta.content` 一直为空，前端就会一直转圈不吐字。后端已自动对 GLM 关掉思考
+> （发 `thinking: {type:"disabled"}`），不用手动管。
 
 ### 2. 在 EdgeOne 里加环境变量
 控制台 → 「Pages 服务」→ 你的项目 → **设置 → 环境变量**（或函数配置处），加两条就够：
