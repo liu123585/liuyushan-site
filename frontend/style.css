@@ -735,6 +735,9 @@ footer .welcome{
 .music-player .mp-prev:active,.music-player .mp-next:active{transform:scale(.9);background:rgba(184,134,11,.18)}
 .music-player .mp-lyrics{position:absolute;left:0;right:0;bottom:calc(100% + 10px);font-size:11px;color:var(--gold);background:rgba(255,255,255,.96);border:1px solid rgba(184,134,11,.3);padding:5px 12px;border-radius:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:0;transform:translateY(4px);transition:opacity .3s,transform .3s;pointer-events:none;box-shadow:0 6px 18px rgba(20,40,80,.14)}
 .music-player.playing .mp-lyrics{opacity:1;transform:translateY(0)}
+/* 播放中但当前这句歌词为空（没歌词 / 纯音乐 / 间奏）时，别在播放器上方留一条
+   只有白底没有文字的空条——看着就像页面多了条没用的白线。 */
+.music-player .mp-lyrics:empty{display:none}
 @keyframes eqBounce{0%,100%{height:4px}50%{height:16px}}
 
 /* ===== 播放器收纳：360 悬浮球（可拖动、松手贴边吸附） ===== */
