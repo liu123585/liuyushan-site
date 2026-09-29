@@ -206,3 +206,13 @@ footer{padding-top:60px}
 /* ---------------- 新人引导浮层：步骤可点 ---------------- */
 .guide-step[data-page-link]{cursor:pointer;transition:border-color .2s,background .2s}
 .guide-step[data-page-link]:hover{border-color:var(--gold);background:rgba(184,134,11,.08)}
+
+/* ---------------- 旧长滚动的装饰分隔条：必须隐藏 ----------------
+   .divider-flow 是「一长条往下滚」时代用来隔开各 section 的渐变分隔条（各 120px 高），
+   它们挂在 body 层级、不在任何 [data-page] 里，所以 router 的 .pg-off 管不到它们。
+   切页之后这些条会在页面上方一层层堆起来：
+     生活 +120px、入学 +240、社团 +360、工具箱/新生墙 +480、互动/AI 学长 +600px。
+   结果就是点「互动」「AI 学长」时内容被顶到首屏以外，看着像"跳过去打不开"。
+   新的切页布局里每页本来就是独立的一屏，不需要分隔条，直接隐藏。 */
+.divider-flow{display:none!important}
+
