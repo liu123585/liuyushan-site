@@ -740,6 +740,10 @@ function rafThrottle(fn){var scheduled=false,lastArgs;return function(){lastArgs
   document.querySelectorAll('#guide .guide-step[data-page-link]').forEach(function(el){
     el.addEventListener('click', close);
   });
+  // 点遮罩空白处、或按 Esc 也关掉。
+  // 不加这个的话，浮层会整块盖住顶部导航，用户点导航一点反应都没有（只当是"点了没跳转"）。
+  g.addEventListener('click',function(e){ if(e.target===g) close(); });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape') close(); });
 })();
 
 // 卡片跳转：点一下在新标签打开跳转链接（如百度地图），不跳学校官网（免 VPN）
