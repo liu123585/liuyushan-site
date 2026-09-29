@@ -12,7 +12,7 @@
 
 <link rel="stylesheet" href="style.css?v=2">
 <link rel="stylesheet" href="pages.css?v=2">
-<link rel="stylesheet" href="assistant.css?v=4">
+<link rel="stylesheet" href="assistant.css?v=5">
 </head>
 <body>
 
@@ -905,8 +905,13 @@
 
     <div class="ai-chips" id="aiChips"></div>
 
+    <div class="ai-pending-imgs" id="aiPendingImgs"></div>
     <form class="ai-input-row" id="aiForm" autocomplete="off">
-      <textarea id="aiInput" rows="1" maxlength="300" placeholder="想问点什么？比如「宿舍几人间」"></textarea>
+      <input type="file" id="aiImgInput" accept="image/*" multiple hidden>
+      <button type="button" class="ai-img-btn" id="aiImgBtn" title="发图片" aria-label="发图片">
+        <svg viewBox="0 0 24 24"><path d="M21 19V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2ZM8.5 13.5l2.5 3 3.5-4.5 4.5 6H5l3.5-4.5Z"/><circle cx="10.5" cy="7.5" r="1.5"/></svg>
+      </button>
+      <textarea id="aiInput" rows="1" maxlength="300" placeholder="想问点什么？比如「宿舍几人间」，也可以粘贴图片"></textarea>
       <button class="ai-send" id="aiSend" type="submit" aria-label="发送">
         <svg viewBox="0 0 24 24"><path d="M4 11.5 20 4l-7.5 16-2.2-6.3L4 11.5Z"/></svg>
       </button>
@@ -1012,11 +1017,11 @@
   </div>
 </div>
 <script src="api-config.js"></script>
-<script src="app.js?v=3"></script>
+<script src="app.js?v=2"></script>
 <script src="router.js?v=1"></script>
 <script src="campus-explorer.js?v=6"></script>
 <script src="freshman-insights.js"></script>
 <script src="freshman-toolkit.js?v=1"></script>
-<script src="assistant.js?v=4"></script>
+<script src="assistant.js?v=5"></script>
 </body>
 </html>

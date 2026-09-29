@@ -320,6 +320,7 @@ function rafThrottle(fn){var scheduled=false,lastArgs;return function(){lastArgs
     idx=(i+playlist.length)%playlist.length;
     var s=playlist[idx];
     audio.src=s.src;
+    audio.load();
     if(titleEl)titleEl.textContent=s.title;
     if(subEl)subEl.textContent=s.artist;
     if(lyricsEl)lyricsEl.textContent='';
@@ -365,7 +366,7 @@ function rafThrottle(fn){var scheduled=false,lastArgs;return function(){lastArgs
   if(btn)btn.addEventListener('click',function(e){e.stopPropagation();audio.paused?play():pause();});
   if(prevBtn)prevBtn.addEventListener('click',function(e){e.stopPropagation();nextSong();});
   if(nextBtn)nextBtn.addEventListener('click',function(e){e.stopPropagation();nextSong();});
-  audio.addEventListener('ended',function(){ nextSong(); });
+  audio.addEventListener('ended',function(){ loadSong(randomIdx()); play(); });
   audio.addEventListener('play',function(){setState(true);});
   audio.addEventListener('pause',function(){setState(false);});
 

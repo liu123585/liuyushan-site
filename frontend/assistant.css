@@ -233,3 +233,53 @@
   margin:0 18px 12px;padding:10px 13px;border-radius:11px;font-size:12.5px;line-height:1.7;
   background:rgba(184,134,11,.09);border:1px solid rgba(184,134,11,.32);color:#7a5a06;
 }
+
+/* ---------- 图片上传 ---------- */
+.ai-img-btn{
+  flex-shrink:0;width:36px;height:36px;border-radius:50%;border:none;
+  background:rgba(184,134,11,.12);color:#7a5a06;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .2s,transform .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.ai-img-btn svg{width:18px;height:18px;fill:currentColor}
+.ai-img-btn:hover{background:rgba(184,134,11,.22)}
+.ai-img-btn:active{transform:scale(.92)}
+
+/* 待发送图片预览条 */
+.ai-pending-imgs{
+  display:flex;gap:8px;padding:8px 18px 0;flex-shrink:0;flex-wrap:wrap;
+}
+.ai-pending-imgs[hidden]{display:none!important}
+.ai-pending-thumb{
+  position:relative;width:64px;height:64px;border-radius:10px;overflow:hidden;
+  background:#f0f2f6;border:1px solid rgba(0,0,0,.06);
+}
+.ai-pending-thumb img{width:100%;height:100%;object-fit:cover}
+.ai-pending-del{
+  position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;
+  border:none;background:rgba(0,0,0,.5);color:#fff;font-size:13px;line-height:18px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  -webkit-tap-highlight-color:transparent;
+}
+.ai-pending-del:hover{background:rgba(0,0,0,.7)}
+
+/* 用户消息里的图片 */
+.ai-user-imgs{
+  display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;
+}
+.ai-user-imgs img{
+  max-width:160px;max-height:120px;border-radius:8px;object-fit:cover;
+  border:1px solid rgba(0,0,0,.06);background:#f0f2f6;
+}
+
+/* 拖拽到对话区的高亮 */
+.ai-log.ai-dragover{outline:2px dashed rgba(11,90,168,.35);outline-offset:-4px;background:rgba(11,90,168,.03)}
+
+@media(max-width:768px){
+  .ai-pending-imgs{padding:6px 13px 0}
+  .ai-pending-thumb{width:56px;height:56px}
+  .ai-user-imgs img{max-width:120px;max-height:90px}
+  .ai-img-btn{width:32px;height:32px}
+  .ai-img-btn svg{width:16px;height:16px}
+}

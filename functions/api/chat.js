@@ -182,9 +182,14 @@ const SYSTEM = `你是「科大 AI 学长」，河南科技大学（HAUST）新�
 - 说明写 6-12 字，比如 [[img:jiayuan_dorm_real.jpg|嘉园宿舍·上床下桌]]。
 - 图放在文字最后，不要插在句子中间。
 
-【说话方式】
+【说话方式 · 像真人学长】
 - 中文，语气像热心的直系学长：口语、干脆、有温度，不说套话。
+- 可以自然地用emoji（😄👍🎉😎💪之类），但别堆砌，1-3个就够。
+- 会用一点小调侃、小感叹，让对话有「人味」。
+  例：「嘉园餐厅那个麻辣香锅真的绝，我当年一周去三次 😂」
+  例：「乾园六人间上下铺，空调可以申请装，但得自己掏电费 💸」
 - 结尾不要写「希望对你有所帮助」这类客套话。
+- 如果用户发了图片，先描述你看到了什么，再回答问题。
 
 【事实纪律 · 同样重要】
 - 只依据下面【站点资料】回答。资料里没有的，就直接说「这个我资料里没有，建议问辅导员或看录取通知书」，绝对不要编造。
@@ -243,7 +248,24 @@ function sanitize(list) {
     if (!m || typeof m !== 'object') continue;
     var role = m.role === 'assistant' ? 'assistant' : (m.role === 'user' ? 'user' : null);
     if (!role) continue;
-    var text = String(m.content == null ? '' : m.content).trim();
+    var content = m.content;
+    // 支持 OpenAI vision 格式：content 为数组（含 text / image_url）
+    if (Array.isArray(content)) {
+      var kept = [];
+      for (var j = 0; j < content.length; j++) {
+        var part = content[j];
+        if (!part || typeof part !== 'object') continue;
+        if (part.type === 'text' && part.text) {
+          kept.push({ type: 'text', text: String(part.text).slice(0, 1200) });
+        } else if (part.type === 'image_url' && part.image_url && part.image_url.url) {
+          kept.push({ type: 'image_url', image_url: { url: String(part.image_url.url).slice(0, 50000) } });
+        }
+      }
+      if (!kept.length) continue;
+      out.push({ role: role, content: kept });
+      continue;
+    }
+    var text = String(content == null ? '' : content).trim();
     if (!text) continue;
     out.push({ role: role, content: text.slice(0, 1200) });
   }
@@ -252,12 +274,12 @@ function sanitize(list) {
 
 /* ---------------- 服务商预设 ----------------
    都是 OpenAI 兼容接口，所以只要换 Base URL + 模型名就能切。
-   默认模型优先挑各家免费/便宜的，够这个答疑场景用。
-   注：智谱 glm-4.7-flash 更新但免费额度上经常拥堵（错误码 1305），
-   所以默认用稳定得多的 glm-4-flash-250414；想换在环境变量里改 LLM_MODEL 即可。 */
+   默认模型优先挑各家免费/便宜的，够这个答疑场景用。 */
 const PROVIDERS = {
   deepseek:  { base: 'https://api.deepseek.com/v1',                    model: 'deepseek-chat' },
-  zhipu:     { base: 'https://open.bigmodel.cn/api/paas/v4',           model: 'glm-4-flash-250414' },
+  // 智谱：glm-4.5-flash 回答质量最好、会配图，但免费额度约 3/5 成功率（1305 拥堵）；
+  //       所以配了备用模型 glm-4-flash-250414（实测 5/5），堵了自动降级。
+  zhipu:     { base: 'https://open.bigmodel.cn/api/paas/v4',           model: 'glm-4.5-flash', fallback: 'glm-4-flash-250414' },
   moonshot:  { base: 'https://api.moonshot.cn/v1',                     model: 'moonshot-v1-8k' },
   dashscope: { base: 'https://dashscope.aliyuncs.com/compatible-mode/v1', model: 'qwen-plus' }
 };
@@ -275,6 +297,10 @@ export async function onRequest(context) {
   const preset = PROVIDERS[providerKey] || null;
   const BASE = String(E.LLM_BASE_URL || (preset && preset.base) || PROVIDERS.deepseek.base).replace(/\/+$/, '');
   const MODEL = E.LLM_MODEL || (preset && preset.model) || PROVIDERS.deepseek.model;
+  /* 降级链：主模型拥堵（智谱 1305 / HTTP 429）就自动换下一个再试。
+     手工指定了 LLM_MODEL 时，仍会用该服务商的 fallback 兜底。 */
+  const MODEL_CHAIN = [MODEL];
+  if (preset && preset.fallback && preset.fallback !== MODEL) MODEL_CHAIN.push(preset.fallback);
 
   /* 智谱 GLM-4.5 / 4.7 系列默认开着「深度思考」：内容会走 delta.reasoning_content，
      而 delta.content 长时间为空，前端就只能干等，max_tokens 还可能被思考过程吃光。
@@ -303,41 +329,77 @@ export async function onRequest(context) {
 
   const messages = [{ role: 'system', content: sys }].concat(history);
 
-  let upstream;
-  try {
-    upstream = await fetch(BASE + '/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + KEY
-      },
-      body: JSON.stringify(Object.assign({
-        model: MODEL,
-        messages: messages,
-        stream: true,
-        temperature: 0.6,
-        max_tokens: 1400
-      }, extra))
-    });
-  } catch (e) {
-    return json({ error: '连不上模型服务：' + (e && e.message ? e.message : '网络异常') }, 502);
+  /* 如果用户发了图片，需要 vision 模型；智谱用 glm-4v-flash（免费） */
+  var hasImage = false;
+  for (var hi = 0; hi < history.length; hi++) {
+    var hm = history[hi];
+    if (Array.isArray(hm.content)) {
+      for (var ci = 0; ci < hm.content.length; ci++) {
+        if (hm.content[ci].type === 'image_url') { hasImage = true; break; }
+      }
+    }
+    if (hasImage) break;
+  }
+  var modelChain = MODEL_CHAIN;
+  if (hasImage && (providerKey === 'zhipu' || /^glm/i.test(MODEL))) {
+    var visionChain = ['glm-4v-flash'];
+    for (var mi = 0; mi < MODEL_CHAIN.length; mi++) {
+      if (MODEL_CHAIN[mi] !== 'glm-4v-flash') visionChain.push(MODEL_CHAIN[mi]);
+    }
+    modelChain = visionChain;
   }
 
-  if (!upstream.ok) {
+  /* 按降级链逐个试。拥堵（1305 / 429）就换下一个模型；
+     其它错误（Key 无效、余额不足…）直接返回，不用重试。 */
+  let upstream = null;
+  let errStatus = 0, errCode = '', errDetail = '';
+  for (let mi = 0; mi < modelChain.length; mi++) {
+    const useModel = modelChain[mi];
+    let res;
+    try {
+      res = await fetch(BASE + '/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + KEY
+        },
+        body: JSON.stringify(Object.assign({
+          model: useModel,
+          messages: messages,
+          stream: true,
+          temperature: 0.6,
+          max_tokens: 1400
+        }, extra))
+      });
+    } catch (e) {
+      return json({ error: '连不上模型服务：' + (e && e.message ? e.message : '网络异常') }, 502);
+    }
+
+    if (res.ok) { upstream = res; break; }
+
     let code = '', detail = '';
     try {
-      const t = await upstream.text();
+      const t = await res.text();
       try {
         const j = JSON.parse(t);
-        if (j && j.error) { code = j.error.code || ''; detail = j.error.message || ''; }
+        if (j && j.error) { code = String(j.error.code || ''); detail = j.error.message || ''; }
       } catch (e2) { detail = t.slice(0, 200); }
     } catch (e) { /* ignore */ }
-    const hint = upstream.status === 401 ? '（Key 无效或没权限）'
-      : upstream.status === 402 ? '（账户余额不足）'
-      : upstream.status === 429 ? '（请求太频繁）'
+
+    const congested = res.status === 429 || code === '1305';
+    if (congested && mi < MODEL_CHAIN.length - 1) continue;   // 换下一个模型再试
+
+    errStatus = res.status; errCode = code; errDetail = detail;
+    break;
+  }
+
+  if (!upstream) {
+    const hint = errStatus === 401 ? '（Key 无效或没权限）'
+      : errStatus === 402 ? '（账户余额不足）'
+      : errStatus === 429 ? '（请求太频繁）'
       : '';
-    const msg = friendlyError(code, detail);
-    return json({ error: '模型服务返回 ' + upstream.status + hint + (msg ? '：' + msg : '') }, 502);
+    const msg = friendlyError(errCode, errDetail);
+    return json({ error: '模型服务返回 ' + errStatus + hint + (msg ? '：' + msg : '') }, 502);
   }
 
   // 把上游的 OpenAI 格式 SSE 归一化成 { t: "增量" }

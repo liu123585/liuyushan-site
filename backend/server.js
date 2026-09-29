@@ -19,7 +19,9 @@ if (!fs.existsSync(DATA)) fs.mkdirSync(DATA, { recursive: true });
    ========================================================================= */
 const PROVIDERS = {
   deepseek:  { base: 'https://api.deepseek.com/v1',                      model: 'deepseek-chat' },
-  zhipu:     { base: 'https://open.bigmodel.cn/api/paas/v4',             model: 'glm-4-flash-250414' },
+  // 智谱：glm-4.5-flash 回答质量最好、会配图，但免费额度约 3/5 成功率（1305 拥堵）；
+  //       所以配了备用模型 glm-4-flash-250414（实测 5/5），堵了自动降级。
+  zhipu:     { base: 'https://open.bigmodel.cn/api/paas/v4',             model: 'glm-4.5-flash', fallback: 'glm-4-flash-250414' },
   moonshot:  { base: 'https://api.moonshot.cn/v1',                       model: 'moonshot-v1-8k' },
   dashscope: { base: 'https://dashscope.aliyuncs.com/compatible-mode/v1', model: 'qwen-plus' }
 };
@@ -28,6 +30,11 @@ const LLM_PROVIDER_KEY = String(process.env.LLM_PROVIDER || '').trim().toLowerCa
 const LLM_PRESET = PROVIDERS[LLM_PROVIDER_KEY] || null;
 const LLM_BASE = (process.env.LLM_BASE_URL || (LLM_PRESET && LLM_PRESET.base) || PROVIDERS.deepseek.base).replace(/\/+$/, '');
 const LLM_MODEL = process.env.LLM_MODEL || (LLM_PRESET && LLM_PRESET.model) || PROVIDERS.deepseek.model;
+/* 降级链：主模型拥堵（智谱 1305 / HTTP 429）就自动换下一个再试 */
+const LLM_MODEL_CHAIN = [LLM_MODEL];
+if (LLM_PRESET && LLM_PRESET.fallback && LLM_PRESET.fallback !== LLM_MODEL) {
+  LLM_MODEL_CHAIN.push(LLM_PRESET.fallback);
+}
 
 /* 智谱 GLM-4.5 / 4.7 系列默认开着「深度思考」：内容走 delta.reasoning_content，
    delta.content 长时间为空，前端就什么都看不到，max_tokens 还可能被思考吃光。
@@ -74,7 +81,23 @@ function sanitize(list) {
     if (!m || typeof m !== 'object') continue;
     const role = m.role === 'assistant' ? 'assistant' : (m.role === 'user' ? 'user' : null);
     if (!role) continue;
-    const text = String(m.content == null ? '' : m.content).trim();
+    let content = m.content;
+    // 支持 OpenAI vision 格式：content 为数组（含 text / image_url）
+    if (Array.isArray(content)) {
+      const kept = [];
+      for (const part of content) {
+        if (!part || typeof part !== 'object') continue;
+        if (part.type === 'text' && part.text) {
+          kept.push({ type: 'text', text: String(part.text).slice(0, 1200) });
+        } else if (part.type === 'image_url' && part.image_url && part.image_url.url) {
+          kept.push({ type: 'image_url', image_url: { url: String(part.image_url.url).slice(0, 50000) } });
+        }
+      }
+      if (!kept.length) continue;
+      out.push({ role: role, content: kept });
+      continue;
+    }
+    const text = String(content == null ? '' : content).trim();
     if (!text) continue;
     out.push({ role: role, content: text.slice(0, 1200) });
   }
@@ -116,27 +139,56 @@ function handleChat(req, res) {
       return;
     }
 
-    try {
-      const upstream = await fetch(LLM_BASE + '/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + LLM_KEY },
-        body: JSON.stringify(Object.assign({
-          model: LLM_MODEL,
-          messages: [{ role: 'system', content: SYSTEM }].concat(history),
-          stream: true,
-          temperature: 0.6,
-          max_tokens: 1400
-        }, LLM_EXTRA))
-      });
-      if (!upstream.ok) {
-        const t = await upstream.text();
-        let code = '', msg = '';
-        try { const j = JSON.parse(t); if (j && j.error) { code = j.error.code || ''; msg = j.error.message || ''; } }
-        catch (e2) { msg = t.slice(0, 200); }
-        send({ error: '模型服务返回 ' + upstream.status + '：' + friendlyError(code, msg) });
+    /* 如果用户发了图片，需要 vision 模型；智谱用 glm-4v-flash（免费） */
+    const hasImage = history.some(function (m) {
+      return Array.isArray(m.content) && m.content.some(function (p) { return p.type === 'image_url'; });
+    });
+    const modelChain = hasImage && LLM_PROVIDER_KEY === 'zhipu'
+      ? ['glm-4v-flash'].concat(LLM_MODEL_CHAIN.filter(function (m) { return m !== 'glm-4v-flash'; }))
+      : LLM_MODEL_CHAIN;
+
+    let upstream = null;
+    let errStatus = 0, errCode = '', errMsg = '';
+    for (let mi = 0; mi < modelChain.length; mi++) {
+      const useModel = modelChain[mi];
+      let res;
+      try {
+        res = await fetch(LLM_BASE + '/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + LLM_KEY },
+          body: JSON.stringify(Object.assign({
+            model: useModel,
+            messages: [{ role: 'system', content: SYSTEM }].concat(history),
+            stream: true,
+            temperature: 0.6,
+            max_tokens: 1400
+          }, LLM_EXTRA))
+        });
+      } catch (e) {
+        send({ error: '连不上模型服务：' + (e && e.message ? e.message : '网络异常') });
         res.write('data: [DONE]\n\n');
         return res.end();
       }
+      if (res.ok) { upstream = res; break; }
+      let code = '', detail = '';
+      try {
+        const t = await res.text();
+        try { const j = JSON.parse(t); if (j && j.error) { code = String(j.error.code || ''); detail = j.error.message || ''; } }
+        catch (e2) { detail = t.slice(0, 200); }
+      } catch (e) { /* ignore */ }
+      const congested = res.status === 429 || code === '1305';
+      if (congested && mi < modelChain.length - 1) continue;
+      errStatus = res.status; errCode = code; errMsg = detail;
+      break;
+    }
+
+    if (!upstream) {
+      send({ error: '模型服务返回 ' + errStatus + '：' + friendlyError(errCode, errMsg) });
+      res.write('data: [DONE]\n\n');
+      return res.end();
+    }
+
+    try {
       const reader = upstream.body.getReader();
       const dec = new TextDecoder();
       let buf = '';
@@ -161,7 +213,7 @@ function handleChat(req, res) {
       res.write('data: [DONE]\n\n');
       res.end();
     } catch (e) {
-      send({ error: '连不上模型服务：' + (e && e.message ? e.message : '网络异常') });
+      send({ error: '生成中断了：' + (e && e.message ? e.message : '网络异常') });
       res.write('data: [DONE]\n\n');
       res.end();
     }

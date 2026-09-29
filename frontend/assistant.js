@@ -31,6 +31,8 @@
   var IMG_RE = /\[\[img:\s*([A-Za-z0-9_.\-]+)\s*(?:\|\s*([^\]]*))?\]\]/g;
 
   var log, input, form, sendBtn, chips, clearBtn, fab;
+  var imgInput, imgBtn, pendingWrap;
+  var pendingImages = [];   // 待发送的 base64 图片数组
   var history = [];
   var busy = false;
   var controller = null;
@@ -38,6 +40,57 @@
   /* ---------------- 小工具 ---------------- */
   function scrollBottom() {
     if (log) log.scrollTop = log.scrollHeight;
+  }
+
+  function fileToBase64(file) {
+    return new Promise(function (resolve, reject) {
+      var reader = new FileReader();
+      reader.onload = function () { resolve(reader.result); };
+      reader.onerror = function () { reject(new Error('读取图片失败')); };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function updatePendingPreview() {
+    if (!pendingWrap) return;
+    pendingWrap.innerHTML = '';
+    if (!pendingImages.length) { pendingWrap.hidden = true; return; }
+    pendingWrap.hidden = false;
+    pendingImages.forEach(function (url, idx) {
+      var box = document.createElement('div');
+      box.className = 'ai-pending-thumb';
+      var img = document.createElement('img');
+      img.src = url;
+      img.alt = '待发送图片';
+      var del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'ai-pending-del';
+      del.innerHTML = '×';
+      del.title = '移除';
+      del.addEventListener('click', function () {
+        pendingImages.splice(idx, 1);
+        updatePendingPreview();
+      });
+      box.appendChild(img);
+      box.appendChild(del);
+      pendingWrap.appendChild(box);
+    });
+  }
+
+  function clearPending() {
+    pendingImages = [];
+    updatePendingPreview();
+  }
+
+  function handleFiles(files) {
+    var arr = Array.from(files).filter(function (f) { return /^image\//.test(f.type); });
+    if (!arr.length) return;
+    var todo = arr.slice(0, 3 - pendingImages.length); // 最多 3 张
+    if (!todo.length) return;
+    Promise.all(todo.map(function (f) { return fileToBase64(f); })).then(function (urls) {
+      pendingImages = pendingImages.concat(urls);
+      updatePendingPreview();
+    });
   }
 
   /* 把回答渲染进气泡：正文照写，[[img:…]] 换成图片。
@@ -78,7 +131,7 @@
     });
   }
 
-  function addMsg(role, text) {
+  function addMsg(role, text, userImgs) {
     var wrap = document.createElement('div');
     wrap.className = 'ai-msg ' + (role === 'user' ? 'me' : 'bot');
 
@@ -92,6 +145,19 @@
     span.className = 'ai-text';
     span.textContent = text || '';
     bubble.appendChild(span);
+
+    // 用户发的图片也显示在气泡里
+    if (role === 'user' && userImgs && userImgs.length) {
+      var uImgs = document.createElement('div');
+      uImgs.className = 'ai-user-imgs';
+      userImgs.forEach(function (src) {
+        var img = document.createElement('img');
+        img.src = src;
+        img.alt = '图片';
+        uImgs.appendChild(img);
+      });
+      bubble.appendChild(uImgs);
+    }
 
     var imgs = null;
     if (role !== 'user') {
@@ -137,12 +203,26 @@
 
   /* ---------------- 发问 ---------------- */
   function ask(q) {
-    if (busy || !q) return;
+    if (busy) return;
+    var text = String(q != null ? q : (input ? input.value : '')).trim();
+    if (!text && !pendingImages.length) return;
     setBusy(true);
     setChips(false);          // 开始对话了，快捷提问收起来
 
-    addMsg('user', q);
-    history.push({ role: 'user', content: q });
+    // 构造用户消息：纯文字 → string；有图 → OpenAI vision 数组
+    var userContent = text;
+    var userImgs = pendingImages.slice();
+    if (userImgs.length) {
+      var parts = [];
+      if (text) parts.push({ type: 'text', text: text });
+      userImgs.forEach(function (url) { parts.push({ type: 'image_url', image_url: { url: url } }); });
+      userContent = parts;
+    }
+
+    addMsg('user', text, userImgs);
+    history.push({ role: 'user', content: userContent });
+    clearPending();
+    if (input) { input.value = ''; autoGrow(); }
 
     var bot = addMsg('assistant', '');
     showDots(bot);
@@ -257,6 +337,9 @@
     chips = document.getElementById('aiChips');
     clearBtn = document.getElementById('aiClear');
     fab = document.getElementById('aiFab');
+    imgInput = document.getElementById('aiImgInput');
+    imgBtn = document.getElementById('aiImgBtn');
+    pendingWrap = document.getElementById('aiPendingImgs');
     if (!log || !form || !input || !sendBtn) return;
 
     setBusy(false);
@@ -267,11 +350,7 @@
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       if (busy) { if (controller) controller.abort(); return; }
-      var q = input.value.trim();
-      if (!q) return;
-      input.value = '';
-      autoGrow();
-      ask(q);
+      ask();   // ask() 自己会读 input.value 和 pendingImages
     });
 
     input.addEventListener('input', autoGrow);
@@ -290,7 +369,40 @@
         log.innerHTML = '';
         greet();
         setChips(true);          // 回到空对话，快捷提问重新出现
+        clearPending();
         if (input) input.focus();
+      });
+    }
+
+    // 图片上传按钮
+    if (imgBtn && imgInput) {
+      imgBtn.addEventListener('click', function () { imgInput.click(); });
+      imgInput.addEventListener('change', function () { handleFiles(imgInput.files); imgInput.value = ''; });
+    }
+
+    // 粘贴图片（Ctrl+V / Cmd+V）
+    if (input) {
+      input.addEventListener('paste', function (e) {
+        var items = e.clipboardData && e.clipboardData.items;
+        if (!items) return;
+        var files = [];
+        for (var i = 0; i < items.length; i++) {
+          if (items[i].kind === 'file' && /^image\//.test(items[i].type)) {
+            files.push(items[i].getAsFile());
+          }
+        }
+        if (files.length) { e.preventDefault(); handleFiles(files); }
+      });
+    }
+
+    // 拖拽图片到对话区
+    if (log) {
+      log.addEventListener('dragover', function (e) { e.preventDefault(); log.classList.add('ai-dragover'); });
+      log.addEventListener('dragleave', function (e) { log.classList.remove('ai-dragover'); });
+      log.addEventListener('drop', function (e) {
+        e.preventDefault();
+        log.classList.remove('ai-dragover');
+        handleFiles(e.dataTransfer.files);
       });
     }
 
