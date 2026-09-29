@@ -727,24 +727,31 @@ function rafThrottle(fn){var scheduled=false,lastArgs;return function(){lastArgs
   load();
 })();
 
-// 新人引导浮层（两个按钮效果不同：一个带你逛生活指南，一个放你自己去互动区）
+// 新人引导浮层（只在首次访问时弹；关闭后记住，不再打扰回访同学）
 (function(){
   var g=document.getElementById('guide');
   if(!g)return;
-  // 每次打开都显示引导浮层；若只想要首次显示，把下一行取消注释即可
-  // try{ if(localStorage.getItem('haust_guide_v1')){g.style.display='none';return;} }catch(e){}
-  function close(){g.style.display='none';}
+  var KEY='haust_guide_v1';
+  var seen=false; try{ seen=!!localStorage.getItem(KEY); }catch(e){}
+  if(seen){ g.style.display='none'; return; }   // 已经看过 → 直接不显示
+  var closed=false;
+  function close(){
+    if(closed)return;
+    closed=true;
+    g.style.display='none';
+    try{ localStorage.setItem(KEY,'1'); }catch(e){}   // 记住"已看过"，下次访问不再弹
+  }
   var s=document.getElementById('guideStart'),k=document.getElementById('guideSkip');
   if(s)s.addEventListener('click',function(){close();});   // 好，我知道了 → 直接关闭
-  if(k)k.addEventListener('click',function(){close();});    // 不用教了 → 也直接关闭
+  if(k)k.addEventListener('click',function(){close();});   // 不用教了 → 也直接关闭
   // 浮层里的入口卡可直接跳页：跳转交给 router.js，这里只负责把浮层收起来
   document.querySelectorAll('#guide .guide-step[data-page-link]').forEach(function(el){
     el.addEventListener('click', close);
   });
-  // 点遮罩空白处、或按 Esc 也关掉。
-  // 不加这个的话，浮层会整块盖住顶部导航，用户点导航一点反应都没有（只当是"点了没跳转"）。
-  g.addEventListener('click',function(e){ if(e.target===g) close(); });
+  // 遮罩已设为 pointer-events:none（不会吃掉导航的点击），所以这里只保留 Esc 关闭；
+  // 另外只要发生切页（点导航/点卡片）也把浮层收起来，不会再挡住新页面。
   document.addEventListener('keydown',function(e){ if(e.key==='Escape') close(); });
+  window.addEventListener('hashchange', close);
 })();
 
 // 卡片跳转：点一下在新标签打开跳转链接（如百度地图），不跳学校官网（免 VPN）
