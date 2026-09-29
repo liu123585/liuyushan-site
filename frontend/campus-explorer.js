@@ -58,12 +58,12 @@
     fb.innerHTML = '<div class="fb-inner">' +
       '<div class="fb-ico">🗺️</div>' +
       '<p><b>地图控件已加载，但底图没有显示出来。</b></p>' +
-      '<p>最常见原因：① 高德 Key 未授权当前域名 <code>site.liuyushan.top</code>；② 浏览器/网络拦截了地图瓦片；③ 高德服务临时波动。</p>' +
+      '<p>常见原因：① 高德 Key 的「域名白名单」里没有当前域名；② 安全密钥（securityJsCode）与 Key 不匹配；③ 浏览器/网络拦截了地图瓦片；④ 高德服务临时波动。</p>' +
       '<div class="fb-btns">' +
       '<button class="game-btn" id="mapRetryBtn">重新加载地图</button>' +
       '<a class="game-btn" href="https://uri.amap.com/marker?position=' + CENTER.kaiyuan[0] + ',' + CENTER.kaiyuan[1] + '&name=河南科技大学开元校区&src=liuyushan&coordinate=gaode&callnative=1" target="_blank" rel="noopener">用高德地图打开校园</a>' +
       '</div>' +
-      '<p class="fb-tip">若一直空白，请去 <a href="https://lbs.amap.com" target="_blank" rel="noopener">高德控制台</a> → 应用管理 → HAUST_Campus → 域名白名单里添加 <code>site.liuyushan.top</code>。</p>' +
+      '<p class="fb-tip">若一直空白：去 <a href="https://console.amap.com/dev/key/app" target="_blank" rel="noopener">高德控制台</a> → 应用管理 → HAUST_Campus → 「设置」里确认 <b>域名白名单</b>（留空=不限制，或填当前访问域名），并核对 <b>安全密钥</b> 与 <code>frontend/api-config.js</code> 里的值一致。</p>' +
       '</div>';
     fb.hidden = false;
     var btn = $('mapRetryBtn');
@@ -71,33 +71,52 @@
   }
 
 
+  /* 高德 JSAPI 版本策略
+     - 1.4.x 官方已声明「不在维护」（lbs.amap.com/api/javascript-api/summary），随时可能失效；
+     - 2.0 才是当前维护版本。但 2021-12-02 之后申请的 Key 必须配合安全密钥，
+       且密钥要通过 window._AMapSecurityConfig 在「脚本加载之前」设置好，
+       否则会出现「控件能看见、底图一片空白」——这正是当初退回 1.4.x 的真正原因。
+     所以：优先用 2.0 + 正确的密钥设置；2.0 脚本加载失败再退回 1.4.15。 */
+  var AMAP_PLUGINS = 'AMap.ToolBar,AMap.ControlBar,AMap.Walking,AMap.Geolocation';
+
+  function loadAMapScript(ver, onOk, onFail) {
+    var url = 'https://webapi.amap.com/maps?v=' + ver + '&key=' + encodeURIComponent(AMAP_KEY);
+    if (ver === '2.0') {
+      // 2.0：安全密钥走 _AMapSecurityConfig，必须在脚本加载前挂到 window 上
+      if (AMAP_SEC) window._AMapSecurityConfig = { securityJsCode: AMAP_SEC };
+    } else if (AMAP_SEC) {
+      // 1.4.x：安全密钥走 URL 的 jscode 参数
+      url += '&jscode=' + encodeURIComponent(AMAP_SEC);
+    }
+    url += '&plugin=' + AMAP_PLUGINS;
+    var s = document.createElement('script');
+    s.src = url;
+    s.async = true;
+    s.onload = function () { onOk(ver); };
+    s.onerror = function () { console.error('[campus] AMap ' + ver + ' 脚本加载失败'); onFail(ver); };
+    document.head.appendChild(s);
+  }
+
   function initAmap() {
     console.log('[campus] initAmap called. box:', !!$('amapContainer'), 'AMAP_KEY:', !!AMAP_KEY);
     var box = $('amapContainer');
     if (!box) return;
     if (!AMAP_KEY) { console.log('[campus] no AMAP_KEY, abort'); showMsg('还未配置高德 Key：在 api-config.js 里填 window.__AMAP_KEY__ 即可开启立体校园地图（免费申请）。'); return; }
-    // 1.4.x 传统栅格地图：安全密钥通过 URL 的 jscode 参数传入。
-    // window._AMapSecurityConfig 是 JSAPI 2.0 的写法，1.4.x 无效。
 
-    // 改用高德 1.4.x 传统栅格地图脚本，避免 JSAPI 2.0 WebGL 矢量底图
-    // 在某些 Key/浏览器/域名组合下出现「控件可见、底图空白」的问题。
-    var s = document.createElement('script');
-    s.src = 'https://webapi.amap.com/maps?v=1.4.15&key=' + encodeURIComponent(AMAP_KEY) + (AMAP_SEC ? '&jscode=' + encodeURIComponent(AMAP_SEC) : '') + '&plugin=AMap.ToolBar,AMap.Walking,AMap.Geolocation';
-    s.async = true;
-    s.onload = function () {
-      console.log('[campus] AMap 1.4.x script loaded');
+    function bootVer(ver) {
+      console.log('[campus] AMap ' + ver + ' script loaded');
       window.AMap = window.AMap || AMap;
       // 显式等插件就绪，避免直接 new AMap.Walking 时插件还没加载完
-      AMap.plugin(['AMap.ToolBar', 'AMap.Walking', 'AMap.Geolocation'], function () {
-        console.log('[campus] AMap plugins ready');
+      AMap.plugin(['AMap.ToolBar', 'AMap.ControlBar', 'AMap.Walking', 'AMap.Geolocation'], function () {
+        console.log('[campus] AMap plugins ready (' + ver + ')');
         buildMap();
       });
-    };
-    s.onerror = function () {
-      console.error('[campus] AMap 1.4.x script load error');
-      showMapFallback();
-    };
-    document.head.appendChild(s);
+    }
+
+    loadAMapScript('2.0', bootVer, function () {
+      // 2.0 加载失败时退回 1.4.15 再试一次
+      loadAMapScript('1.4.15', bootVer, function () { showMapFallback(); });
+    });
   }
 
   function buildMap() {
