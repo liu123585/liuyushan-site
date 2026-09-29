@@ -20,6 +20,16 @@
   var SEND_SVG = '<svg viewBox="0 0 24 24"><path d="M4 11.5 20 4l-7.5 16-2.2-6.3L4 11.5Z"/></svg>';
   var STOP_SVG = '<svg viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="2"/></svg>';
 
+  /* AI 可以在回答里写 [[img:文件名|说明]] 来发图。
+     这里做**白名单校验**——只认下面这些确实存在的图，
+     防止模型编出别的路径（比如外部 URL 或 ../ 穿越）。 */
+  var IMG_ALLOW = [
+    'bdm.jpg', 'tsg.jpg', 'ztyc.jpg', 'by.jpg', 'xiyuan_campus.jpg',
+    'jiayuan_dorm_real.jpg', 'jingyuan_dorm_real.jpg', 'qianyuan_dorm_real.png',
+    'jiayuan_canteen_real.jpg', 'jiayuan_canteen_interior.png', 'jiayuan_canteen_area.png'
+  ];
+  var IMG_RE = /\[\[img:\s*([A-Za-z0-9_.\-]+)\s*(?:\|\s*([^\]]*))?\]\]/g;
+
   var log, input, form, sendBtn, chips, clearBtn, fab;
   var history = [];
   var busy = false;
@@ -28,6 +38,44 @@
   /* ---------------- 小工具 ---------------- */
   function scrollBottom() {
     if (log) log.scrollTop = log.scrollHeight;
+  }
+
+  /* 把回答渲染进气泡：正文照写，[[img:…]] 换成图片。
+     流式过程中末尾如果是半个标记（"[[img:xxx" 还没闭合），先藏起来等后面的 chunk 补齐，
+     否则用户会看到一闪而过的原始标记。 */
+  function renderRich(node, raw) {
+    var text = String(raw == null ? '' : raw);
+    var open = text.lastIndexOf('[[');
+    if (open > -1 && text.indexOf(']]', open) === -1) text = text.slice(0, open);
+
+    var pics = [];
+    var clean = text.replace(IMG_RE, function (all, file, cap) {
+      if (IMG_ALLOW.indexOf(file) > -1) pics.push({ file: file, cap: (cap || '').trim() });
+      return '';
+    });
+    clean = clean.replace(/\n{3,}/g, '\n\n').replace(/[ \t]+$/gm, '').replace(/^\s+|\s+$/g, '');
+
+    node.text.textContent = clean;
+    if (!node.imgs) return;
+    node.imgs.innerHTML = '';
+    pics.slice(0, 3).forEach(function (it) {
+      var fig = document.createElement('figure');
+      fig.className = 'ai-img';
+      var im = document.createElement('img');
+      im.loading = 'lazy';
+      im.decoding = 'async';
+      im.alt = it.cap || '校园实拍';
+      im.src = 'img/' + it.file;
+      // 图挂了就别留个破图框
+      im.addEventListener('error', function () { if (fig.parentNode) fig.parentNode.removeChild(fig); });
+      fig.appendChild(im);
+      if (it.cap) {
+        var fc = document.createElement('figcaption');
+        fc.textContent = it.cap;
+        fig.appendChild(fc);
+      }
+      node.imgs.appendChild(fig);
+    });
   }
 
   function addMsg(role, text) {
@@ -45,12 +93,19 @@
     span.textContent = text || '';
     bubble.appendChild(span);
 
+    var imgs = null;
+    if (role !== 'user') {
+      imgs = document.createElement('div');
+      imgs.className = 'ai-imgs';
+      bubble.appendChild(imgs);
+    }
+
     wrap.appendChild(mini);
     wrap.appendChild(bubble);
     log.appendChild(wrap);
     scrollBottom();
 
-    return { wrap: wrap, bubble: bubble, text: span };
+    return { wrap: wrap, bubble: bubble, text: span, imgs: imgs };
   }
 
   function showDots(node) {
@@ -134,7 +189,7 @@
             if (o && o.error) throw new Error(o.error);
             if (o && o.t) {
               answer += o.t;
-              bot.text.textContent = answer;
+              renderRich(bot, answer);
               scrollBottom();
             }
           }
@@ -238,6 +293,20 @@
         if (input) input.focus();
       });
     }
+
+    // 点 AI 发来的图 → 全屏放大看（点任意处关掉）
+    log.addEventListener('click', function (e) {
+      var t = e.target;
+      if (!t || t.tagName !== 'IMG' || !t.closest || !t.closest('.ai-img')) return;
+      var box = document.createElement('div');
+      box.className = 'ai-lightbox';
+      var big = document.createElement('img');
+      big.src = t.src;
+      big.alt = t.alt || '';
+      box.appendChild(big);
+      box.addEventListener('click', function () { if (box.parentNode) box.parentNode.removeChild(box); });
+      document.body.appendChild(box);
+    });
 
     // 悬浮球：在 AI 页时收起来
     document.addEventListener('wb:pageshow', function (e) {

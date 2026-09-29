@@ -88,6 +88,36 @@
   color:#fff;border-top-right-radius:5px;
   box-shadow:0 6px 18px rgba(0,85,163,.24);
 }
+
+/* AI 发来的实拍图（回答里写 [[img:xxx.jpg|说明]] 时渲染出来） */
+.ai-imgs{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}
+.ai-imgs:empty{display:none}
+.ai-imgs .ai-img{
+  margin:0;width:180px;max-width:100%;border-radius:12px;overflow:hidden;
+  border:1px solid var(--hair);background:rgba(255,255,255,.9);
+  box-shadow:0 4px 14px rgba(20,40,80,.08);
+  animation:aiMsgIn .3s ease both;
+}
+.ai-imgs .ai-img img{display:block;width:100%;height:118px;object-fit:cover;cursor:zoom-in}
+.ai-imgs .ai-img figcaption{
+  padding:6px 9px;font-size:11.5px;line-height:1.45;color:var(--grey);
+  border-top:1px solid var(--hair);
+}
+@media(max-width:768px){
+  .ai-imgs .ai-img{width:calc(50% - 4px)}
+  .ai-imgs .ai-img img{height:96px}
+}
+
+/* 点图放大 */
+.ai-lightbox{
+  position:fixed;inset:0;z-index:900;display:flex;align-items:center;justify-content:center;
+  padding:24px;background:rgba(10,20,40,.86);cursor:zoom-out;
+  animation:aiMsgIn .2s ease both;
+}
+.ai-lightbox img{
+  max-width:100%;max-height:100%;border-radius:12px;
+  box-shadow:0 24px 70px rgba(0,0,0,.5);
+}
 .ai-msg .ai-mini{
   width:28px;height:28px;border-radius:50%;flex-shrink:0;margin-top:2px;
   display:flex;align-items:center;justify-content:center;
