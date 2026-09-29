@@ -3,9 +3,15 @@
  * AI 学长后端：把前端的对话转发给大模型，用 SSE 流式回传。
  *
  * 需要在 EdgeOne 控制台 → Pages 项目 → 函数 / 环境变量里配置：
- *   LLM_API_KEY   必填。模型服务商的 Key（DeepSeek / 通义 / 智谱 / Moonshot / OpenAI 兼容接口都行）
- *   LLM_BASE_URL  选填。默认 https://api.deepseek.com/v1
- *   LLM_MODEL     选填。默认 deepseek-chat
+ *   LLM_PROVIDER  选填。快捷选择服务商，可选 deepseek / zhipu / moonshot / dashscope
+ *                 （填了就自动套用对应的 Base URL 和默认模型，只填这一个 + Key 即可）
+ *   LLM_API_KEY   必填。模型服务商的 Key
+ *   LLM_BASE_URL  选填。手动指定接口地址，优先级高于 LLM_PROVIDER
+ *   LLM_MODEL     选填。手动指定模型名，优先级高于 LLM_PROVIDER
+ *
+ * 例：用智谱 GLM，只要填两行
+ *   LLM_PROVIDER = zhipu
+ *   LLM_API_KEY  = 你的智谱 Key
  *
  * Key 只存在服务端环境变量里，前端永远拿不到，也不会进 git。
  */
@@ -106,6 +112,16 @@ function sanitize(list) {
   return out.slice(-10);
 }
 
+/* ---------------- 服务商预设 ----------------
+   都是 OpenAI 兼容接口，所以只要换 Base URL + 模型名就能切。
+   默认模型优先挑各家免费/便宜的，够这个答疑场景用。 */
+const PROVIDERS = {
+  deepseek:  { base: 'https://api.deepseek.com/v1',                    model: 'deepseek-chat' },
+  zhipu:     { base: 'https://open.bigmodel.cn/api/paas/v4',           model: 'glm-4.7-flash' },
+  moonshot:  { base: 'https://api.moonshot.cn/v1',                     model: 'moonshot-v1-8k' },
+  dashscope: { base: 'https://dashscope.aliyuncs.com/compatible-mode/v1', model: 'qwen-plus' }
+};
+
 /* ---------------- 主入口 ---------------- */
 export async function onRequest(context) {
   const { request, env } = context;
@@ -115,11 +131,12 @@ export async function onRequest(context) {
   if (request.method !== 'POST') return json({ error: '只支持 POST' }, 405);
 
   const KEY = E.LLM_API_KEY || (typeof LLM_API_KEY !== 'undefined' && LLM_API_KEY) || '';
-  const BASE = String(E.LLM_BASE_URL || 'https://api.deepseek.com/v1').replace(/\/+$/, '');
-  const MODEL = E.LLM_MODEL || 'deepseek-chat';
+  const preset = PROVIDERS[String(E.LLM_PROVIDER || '').trim().toLowerCase()] || null;
+  const BASE = String(E.LLM_BASE_URL || (preset && preset.base) || PROVIDERS.deepseek.base).replace(/\/+$/, '');
+  const MODEL = E.LLM_MODEL || (preset && preset.model) || PROVIDERS.deepseek.model;
 
   if (!KEY) {
-    return json({ error: '后端还没配置模型 Key：请在 EdgeOne 控制台给这个函数加环境变量 LLM_API_KEY' }, 500);
+    return json({ error: '后端还没配置模型 Key：请在 EdgeOne 控制台给这个函数加环境变量 LLM_API_KEY（用智谱就再加一个 LLM_PROVIDER=zhipu）' }, 500);
   }
 
   let body;

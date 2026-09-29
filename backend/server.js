@@ -12,11 +12,21 @@ if (!fs.existsSync(DATA)) fs.mkdirSync(DATA, { recursive: true });
    AI 学长 · /api/chat
    线上走的是 functions/api/chat.js（EdgeOne 边缘函数），那份才是线上生效的版本，
    下面的 SYSTEM 与它保持一致，仅用于本地 node server.js 调试。
-   本地：LLM_API_KEY=xxx node server.js      # 不设 Key 时用 MOCK 假数据跑通界面
+   本地：
+     LLM_PROVIDER=zhipu LLM_API_KEY=xxx node server.js   # 用智谱 GLM
+     LLM_API_KEY=xxx node server.js                       # 默认 DeepSeek
+     node server.js                                       # 不设 Key 时用 MOCK 假数据跑通界面
    ========================================================================= */
+const PROVIDERS = {
+  deepseek:  { base: 'https://api.deepseek.com/v1',                      model: 'deepseek-chat' },
+  zhipu:     { base: 'https://open.bigmodel.cn/api/paas/v4',             model: 'glm-4.7-flash' },
+  moonshot:  { base: 'https://api.moonshot.cn/v1',                       model: 'moonshot-v1-8k' },
+  dashscope: { base: 'https://dashscope.aliyuncs.com/compatible-mode/v1', model: 'qwen-plus' }
+};
 const LLM_KEY = process.env.LLM_API_KEY || '';
-const LLM_BASE = (process.env.LLM_BASE_URL || 'https://api.deepseek.com/v1').replace(/\/+$/, '');
-const LLM_MODEL = process.env.LLM_MODEL || 'deepseek-chat';
+const LLM_PRESET = PROVIDERS[String(process.env.LLM_PROVIDER || '').trim().toLowerCase()] || null;
+const LLM_BASE = (process.env.LLM_BASE_URL || (LLM_PRESET && LLM_PRESET.base) || PROVIDERS.deepseek.base).replace(/\/+$/, '');
+const LLM_MODEL = process.env.LLM_MODEL || (LLM_PRESET && LLM_PRESET.model) || PROVIDERS.deepseek.model;
 
 const SYSTEM = `你是「科大 AI 学长」，河南科技大学（HAUST）新生指南网站里的答疑助手，服务对象是 2026 级大一新生。
 

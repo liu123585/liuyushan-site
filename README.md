@@ -37,7 +37,9 @@ cd backend
 node server.js
 # 默认 http://localhost:3000
 # 自定义端口： PORT=8080 node server.js
-# 想本地测 AI 真回答： LLM_API_KEY=sk-xxx node server.js（不传则返回占位文本）
+# 想本地测 AI 真回答（用智谱 GLM，glm-4.7-flash 免费）：
+#   LLM_PROVIDER=zhipu LLM_API_KEY=xxx node server.js
+# 用 DeepSeek 就省略 LLM_PROVIDER；不传 Key 则返回占位文本
 ```
 
 启动后访问 `http://localhost:3000` 即可。
@@ -64,7 +66,10 @@ POST `/api/chat` 请求体：
 
 - 前端：`assistant.js` 负责对话、流式渲染、中断、快捷提问。
 - 后端：`functions/api/chat.js`（线上）/ `backend/server.js`（本地）把对话转发给大模型。
-- **Key 只放服务端环境变量**，前端永远拿不到：`LLM_API_KEY` / `LLM_BASE_URL` / `LLM_MODEL`。
+- **Key 只放服务端环境变量**，前端永远拿不到。
+- 环境变量：`LLM_PROVIDER`（选填，`zhipu`/`deepseek`/`moonshot`/`dashscope`，自动套好地址和模型）+ `LLM_API_KEY`（必填）；
+  也可以用 `LLM_BASE_URL` / `LLM_MODEL` 手动指定（优先级更高）。
+- 任何 **OpenAI 兼容接口**都能接。智谱 GLM 用 `LLM_PROVIDER=zhipu`，默认模型 `glm-4.7-flash`（免费）。
 - 配置步骤见 `DEPLOY_EDGEONE.md` 的「步骤 5.5」。不配 Key 时页面会明确提示，不会静默失败。
 
 ## 部署到服务器（腾讯云 CVM）

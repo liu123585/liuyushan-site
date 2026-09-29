@@ -49,29 +49,57 @@ EdgeOne 控制台 → 找到「边缘存储 / KV」（或 Pages 项目里的函�
 
 「AI 学长」页面的回答由 `functions/api/chat.js` 这个边缘函数转发给大模型。**Key 只存在服务端环境变量里，不会进前端、也不会进 git。**
 
-### 1. 去拿一个模型 Key（推荐 DeepSeek）
-- 打开 https://platform.deepseek.com/ → 注册 → 「API keys」→ 新建一个，复制出来（形如 `sk-xxxxxx`）。
-- 充值 10 元就够这个站用很久（`deepseek-chat` 很便宜）。
-- 也支持通义 / 智谱 / Moonshot 等任何 **OpenAI 兼容接口**，换的话把 `LLM_BASE_URL` 和 `LLM_MODEL` 一起改掉即可。
+### 1. 去拿一个模型 Key
+
+支持任何 **OpenAI 兼容接口**。内置了四个预设，填 `LLM_PROVIDER` 就自动套好接口地址和模型名：
+
+| `LLM_PROVIDER` | 服务商 | 默认模型 | 说明 |
+|---|---|---|---|
+| `zhipu` | 智谱 GLM | `glm-4.7-flash` | **推荐**，这个模型免费，200K 上下文 |
+| `deepseek` | DeepSeek | `deepseek-chat` | 便宜，需充值（10 元够用很久） |
+| `moonshot` | Kimi | `moonshot-v1-8k` | |
+| `dashscope` | 通义千问 | `qwen-plus` | |
+
+**以智谱为例**（免费，推荐）：
+- 打开 https://bigmodel.cn/ → 注册登录 → 右上角「API Keys」（或 https://bigmodel.cn/usercenter/proj-mgmt/apikeys）→ 新建一个，复制出来。
+- 智谱的 Key 形如 `xxxxxxxxxxxxxxxx.xxxxxxxxxxxxxxxx`（中间一个点），整串复制，别只复制一半。
+- 免费额度直接在 https://bigmodel.cn/console/trialcenter 看。
 
 ### 2. 在 EdgeOne 里加环境变量
-控制台 → 「Pages 服务」→ 你的项目 → **设置 → 环境变量**（或函数配置处），加三条：
+控制台 → 「Pages 服务」→ 你的项目 → **设置 → 环境变量**（或函数配置处），加两条就够：
 
 | 变量名 | 是否必填 | 值 |
 |---|---|---|
-| `LLM_API_KEY` | **必填** | 刚复制的 `sk-xxxxxx` |
-| `LLM_BASE_URL` | 选填 | 默认 `https://api.deepseek.com/v1` |
-| `LLM_MODEL` | 选填 | 默认 `deepseek-chat` |
+| `LLM_PROVIDER` | **推荐填** | `zhipu`（用智谱）／`deepseek`（用 DeepSeek） |
+| `LLM_API_KEY` | **必填** | 刚复制的 Key |
+
+想手动指定（不用预设、或接别的服务商）再加这两条，**优先级高于 `LLM_PROVIDER`**：
+
+| 变量名 | 说明 |
+|---|---|
+| `LLM_BASE_URL` | 接口地址，如 `https://open.bigmodel.cn/api/paas/v4`（末尾不要带 `/`） |
+| `LLM_MODEL` | 模型名，如 `glm-4.7-flash` |
+
+> `LLM_PROVIDER` 填错了不会报错，会自动回退到 DeepSeek 默认值。
 
 ### 3. 重新部署
 改完环境变量后 **必须再点一次「重新部署」**，否则函数读不到新变量。
 
 ### 4. 验证
 打开网站 → 「AI 学长」→ 随便问一句（比如「宿舍几人间」）。能逐字吐字就说明通了。
-如果提示「后端还没配置模型 Key」，说明第 2 步或第 3 步没生效。
 
-> 本地调试：`cd backend && LLM_API_KEY=sk-xxx node server.js`。
+常见报错对照：
+| 提示 | 原因 |
+|---|---|
+| 「后端还没配置模型 Key」 | 第 2 步或第 3 步没生效 |
+| `401 令牌已过期或验证不正确` | 智谱 Key 复制不全（漏了 `.` 后面的部分）或已失效 |
+| `401 Authentication Fails` | DeepSeek Key 无效 |
+| `402 余额不足` | 账户没充值 |
+| `429 请求太频繁` | 触发限流，等一会儿再问 |
+
+> 本地调试：`cd backend && LLM_PROVIDER=zhipu LLM_API_KEY=xxx node server.js`
 > 不传 Key 时本地会返回一段占位文本，用来先把界面流程跑通。
+
 
 ---
 
