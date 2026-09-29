@@ -128,6 +128,39 @@
 .ai-chip:active{transform:scale(.96)}
 @media(max-width:768px){.ai-chips{padding:0 13px 10px;gap:6px}.ai-chip{font-size:12px;padding:6px 11px}}
 
+/* ---------- 手机上：AI 页做成「全屏聊天」 ----------
+   问题：.ai-shell 高度由内容撑开，加上页面上方那一大块标题，
+   在多数手机上会把输入框顶到底部 Tab 栏后面 —— 打开 AI 页根本看不到输入框。
+   做法：隐藏装饰性标题，让对话区正好填满「顶部导航」与「底部 Tab」之间的空间，
+   输入框永远在屏幕内，跟豆包/微信那种聊天页一个形态。 */
+@media(max-width:768px){
+  body[data-current-page="assistant"] #assistant{
+    display:block!important;          /* 取消 .section 的 flex 垂直居中 */
+    min-height:0!important;
+    padding:88px 10px 0!important;    /* 让开固定导航，底部不留白 */
+    justify-content:flex-start!important;
+  }
+  body[data-current-page="assistant"] #assistant .section-eyebrow,
+  body[data-current-page="assistant"] #assistant .section-title,
+  body[data-current-page="assistant"] #assistant .section-desc{display:none!important}
+  body[data-current-page="assistant"] .ai-shell{
+    /* 100vh 给老浏览器兜底，100dvh 处理手机地址栏伸缩 */
+    height:calc(100vh - 88px - 58px);
+    height:calc(100dvh - 88px - 58px - env(safe-area-inset-bottom,0px));
+    max-height:none;
+    border-radius:14px 14px 0 0;
+    box-shadow:0 -4px 20px rgba(20,40,80,.08);
+  }
+  body[data-current-page="assistant"] .ai-log{
+    min-height:0!important;max-height:none!important;flex:1;
+  }
+  /* 「弹幕」是全局悬浮开关，在手机上正好压住对话头部的「清空对话」，收起来。
+     跟 AI 悬浮球在 AI 页收起来是同一个道理。 */
+  body[data-current-page="assistant"] #dmToggle,
+  body[data-current-page="assistant"] #dmBar{display:none!important}
+}
+
+
 /* ---------- 输入区 ---------- */
 .ai-input-row{
   display:flex;align-items:flex-end;gap:9px;
