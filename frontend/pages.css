@@ -1,0 +1,208 @@
+/* =========================================================
+   pages.css —— 顶部导航切页 / 首页中枢 / 移动端导航
+   在 style.css 之后加载，只负责「单页切页」体系的新样式，
+   不改动原有卡片、表单、地图等模块的既有规则。
+   ========================================================= */
+
+/* ---------------- 页面容器 ---------------- */
+.pg-off{display:none!important}
+
+.page-in{animation:pgIn .42s cubic-bezier(.22,.8,.28,1) both}
+@keyframes pgIn{
+  from{opacity:0;transform:translateY(16px)}
+  to{opacity:1;transform:none}
+}
+
+/* 切页后不再强制每个 section 满屏，页面紧凑很多 */
+.hero{height:auto;min-height:0;padding:112px 20px 42px}
+.hero .scroll-cue{display:none}
+
+/* 首屏压缩：让首页的中枢宫格在第一屏就能看到（原来 hero 占满整屏，宫格被挤到折叠线下） */
+.hero .hero-content > div:first-child{margin-bottom:16px!important}
+.hero .hero-content img{width:84px!important;height:84px!important;padding:5px!important}
+.hero .hero-tag{margin-bottom:13px}
+.hero h1{font-size:clamp(30px,4.8vw,62px);letter-spacing:4px;margin-bottom:12px}
+.hero-sub{font-size:clamp(15px,2vw,22px);letter-spacing:5px;margin-bottom:8px}
+.hero-motto{font-size:clamp(12px,1.4vw,16px);letter-spacing:12px}
+.hero-taglines{margin-top:14px;height:22px}
+
+@media(min-width:769px){
+  .section{min-height:auto;padding:76px 6vw}
+}
+/* 首页的统计带 / 倒计时压扁一点，让中枢宫格尽量一屏可见 */
+body[data-current-page="home"] .stats-band{padding:4px 6vw}
+body[data-current-page="home"] .stat{padding:8px 16px}
+body[data-current-page="home"] .stat .num{font-size:clamp(22px,3.2vw,34px)}
+body[data-current-page="home"] #countdown{padding-top:52px;padding-bottom:60px}
+
+/* ---------------- 顶部导航（切页版） ---------------- */
+.nav{gap:16px}
+.nav-logo{text-decoration:none;cursor:pointer;flex-shrink:0}
+.nav-links{gap:clamp(10px,1.5vw,26px)}
+.nav-links a{
+  font-size:clamp(12px,1vw,13.5px);letter-spacing:.5px;
+  white-space:nowrap;cursor:pointer;
+}
+.nav-links a[aria-current="page"]{opacity:1;color:var(--primary);font-weight:700}
+.nav-links a[aria-current="page"]::after{width:100%}
+
+/* 平板先收紧 */
+@media(max-width:1120px){
+  .nav{padding-left:3vw;padding-right:3vw}
+  .nav-links{gap:9px}
+  .nav-links a{font-size:11.5px;letter-spacing:0}
+  .nav-logo span{font-size:13px}
+}
+
+/* 窄屏交给汉堡抽屉 */
+@media(max-width:880px){
+  .nav-links{display:none!important}
+  .menu-toggle{display:block}
+}
+
+/* ---------------- 首页：导航中枢宫格 ---------------- */
+.hub{
+  width:100%;max-width:1240px;margin:0 auto;
+  padding:4px 6vw 74px;
+}
+.hub-head{text-align:center;margin-bottom:30px}
+.hub-title{
+  font-size:clamp(19px,2.3vw,28px);font-weight:700;letter-spacing:1px;
+  color:var(--white);
+}
+.hub-title .accent{
+  background:linear-gradient(90deg,var(--primary),var(--gold));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+}
+.hub-sub{font-size:13.5px;color:var(--grey);margin-top:9px;letter-spacing:.4px}
+
+.hub-grid{display:grid;gap:16px;grid-template-columns:repeat(4,1fr)}
+@media(max-width:1120px){.hub-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:768px){
+  .hub{padding:2px 16px 46px}
+  .hub-grid{grid-template-columns:repeat(2,1fr);gap:11px}
+  /* 手机上首屏也压一压，别让宫格掉到折叠线下太远 */
+  .hero{min-height:auto;padding:94px 16px 34px}
+  .hero .hero-content img{width:70px!important;height:70px!important}
+  .hero h1{font-size:clamp(28px,9.5vw,46px);letter-spacing:3px;margin-bottom:10px}
+  .hero-sub{font-size:clamp(14px,4vw,20px);letter-spacing:4px}
+  .hero-motto{letter-spacing:7px}
+  .hero-taglines{margin-top:12px}
+}
+
+.hub-card{
+  position:relative;display:flex;flex-direction:column;gap:9px;
+  padding:20px 18px 18px;border-radius:16px;cursor:pointer;
+  text-align:left;font-family:inherit;color:var(--white);
+  background:var(--card);border:1px solid var(--hair);
+  box-shadow:0 8px 22px rgba(20,40,80,.07);
+  transition:transform .28s cubic-bezier(.2,.8,.2,1),box-shadow .28s,border-color .28s;
+  overflow:hidden;-webkit-tap-highlight-color:transparent;
+}
+.hub-card::after{
+  content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(140deg,rgba(0,85,163,.08),rgba(184,134,11,.09));
+  opacity:0;transition:opacity .28s;
+}
+.hub-card:hover{
+  transform:translateY(-5px);border-color:rgba(184,134,11,.45);
+  box-shadow:0 18px 40px rgba(20,40,80,.14);
+}
+.hub-card:hover::after{opacity:1}
+.hub-card:active{transform:scale(.985)}
+.hub-card>*{position:relative;z-index:1}
+
+.hub-ico{
+  width:40px;height:40px;border-radius:12px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,rgba(0,85,163,.13),rgba(184,134,11,.15));
+  color:var(--primary);
+}
+.hub-ico svg{width:21px;height:21px;display:block}
+.hub-card h3{font-size:15.5px;font-weight:700;letter-spacing:.5px;line-height:1.3}
+.hub-card p{font-size:12.5px;color:var(--grey);line-height:1.55;margin:0}
+.hub-idx{
+  position:absolute;top:15px;right:16px;z-index:1;
+  font-size:10.5px;font-weight:700;letter-spacing:1.2px;
+  color:rgba(184,134,11,.55);
+}
+
+/* AI 助手入口：唯一一张实底卡，做视觉焦点 */
+.hub-card.hub-ai{
+  background:linear-gradient(140deg,#0b5aa8,#1E88E5 62%,#2fa8d8);
+  border-color:transparent;
+  box-shadow:0 12px 30px rgba(0,85,163,.28);
+}
+.hub-card.hub-ai h3,.hub-card.hub-ai p{color:#fff}
+.hub-card.hub-ai p{color:rgba(255,255,255,.82)}
+.hub-card.hub-ai .hub-ico{background:rgba(255,255,255,.2);color:#fff}
+.hub-card.hub-ai .hub-idx{color:rgba(255,255,255,.6)}
+.hub-card.hub-ai::after{background:linear-gradient(140deg,rgba(255,255,255,.16),transparent)}
+.hub-card.hub-ai:hover{border-color:transparent}
+
+/* ---------------- 移动端抽屉导航 ---------------- */
+.nav-drawer{position:fixed;inset:0;z-index:420}
+.nav-drawer[hidden]{display:none}
+.nd-mask{
+  position:absolute;inset:0;background:rgba(10,25,50,.44);
+  animation:ndFade .22s ease both;
+}
+.nd-panel{
+  position:absolute;top:0;right:0;height:100%;width:min(82vw,330px);
+  background:#fff;display:flex;flex-direction:column;
+  box-shadow:-16px 0 44px rgba(20,40,80,.2);
+  animation:ndIn .28s cubic-bezier(.2,.8,.2,1) both;
+}
+@keyframes ndFade{from{opacity:0}to{opacity:1}}
+@keyframes ndIn{from{transform:translateX(100%)}to{transform:none}}
+.nd-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 18px;border-bottom:1px solid var(--hair);flex-shrink:0;
+}
+.nd-head b{font-size:13px;letter-spacing:3px;color:var(--primary)}
+.nd-close{
+  background:none;border:none;font-size:19px;line-height:1;
+  color:var(--grey);cursor:pointer;padding:6px 8px;font-family:inherit;
+}
+.nd-list{list-style:none;flex:1;overflow-y:auto;padding:6px 0}
+.nd-list a{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 20px;text-decoration:none;color:var(--white);
+  font-size:14.5px;border-bottom:1px solid var(--hair);
+  -webkit-tap-highlight-color:transparent;
+}
+.nd-list a .nd-arw{color:rgba(184,134,11,.6);font-size:12px}
+.nd-list a[aria-current="page"]{
+  color:var(--primary);font-weight:700;background:rgba(0,85,163,.05);
+}
+.nd-foot{
+  padding:14px 20px calc(14px + env(safe-area-inset-bottom,0px));
+  font-size:11px;color:rgba(21,35,61,.45);border-top:1px solid var(--hair);
+  flex-shrink:0;line-height:1.7;
+}
+
+/* ---------------- 移动端底部 Tab（5 项） ---------------- */
+.bottom-tab-bar .btab{
+  background:none;border:none;font-family:inherit;flex:1;min-width:0;
+}
+.btab svg{
+  width:21px;height:21px;display:block;
+  fill:none;stroke:currentColor;stroke-width:1.7;
+  stroke-linecap:round;stroke-linejoin:round;
+}
+.btab.active,.btab[aria-current="page"]{color:var(--primary);font-weight:600}
+.btab.active svg,.btab[aria-current="page"] svg{stroke-width:2.1}
+
+/* 旧的悬浮 FAB 菜单已被抽屉导航取代 */
+.mobile-fab,.mobile-fab-menu{display:none!important}
+
+/* 当前页第一个区块：让开顶部固定导航（导航+制作人条） */
+.pg-first{padding-top:124px!important}
+@media(max-width:768px){.pg-first{padding-top:96px!important}}
+
+/* ---------------- 页脚：所有页面共用，放在最后 ---------------- */
+footer{padding-top:60px}
+
+/* ---------------- 新人引导浮层：步骤可点 ---------------- */
+.guide-step[data-page-link]{cursor:pointer;transition:border-color .2s,background .2s}
+.guide-step[data-page-link]:hover{border-color:var(--gold);background:rgba(184,134,11,.08)}

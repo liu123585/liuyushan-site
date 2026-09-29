@@ -45,12 +45,43 @@ EdgeOne 控制台 → 找到「边缘存储 / KV」（或 Pages 项目里的函�
 
 ---
 
+## 步骤 5.5：配置 AI 学长（重要，不配就答不了）
+
+「AI 学长」页面的回答由 `functions/api/chat.js` 这个边缘函数转发给大模型。**Key 只存在服务端环境变量里，不会进前端、也不会进 git。**
+
+### 1. 去拿一个模型 Key（推荐 DeepSeek）
+- 打开 https://platform.deepseek.com/ → 注册 → 「API keys」→ 新建一个，复制出来（形如 `sk-xxxxxx`）。
+- 充值 10 元就够这个站用很久（`deepseek-chat` 很便宜）。
+- 也支持通义 / 智谱 / Moonshot 等任何 **OpenAI 兼容接口**，换的话把 `LLM_BASE_URL` 和 `LLM_MODEL` 一起改掉即可。
+
+### 2. 在 EdgeOne 里加环境变量
+控制台 → 「Pages 服务」→ 你的项目 → **设置 → 环境变量**（或函数配置处），加三条：
+
+| 变量名 | 是否必填 | 值 |
+|---|---|---|
+| `LLM_API_KEY` | **必填** | 刚复制的 `sk-xxxxxx` |
+| `LLM_BASE_URL` | 选填 | 默认 `https://api.deepseek.com/v1` |
+| `LLM_MODEL` | 选填 | 默认 `deepseek-chat` |
+
+### 3. 重新部署
+改完环境变量后 **必须再点一次「重新部署」**，否则函数读不到新变量。
+
+### 4. 验证
+打开网站 → 「AI 学长」→ 随便问一句（比如「宿舍几人间」）。能逐字吐字就说明通了。
+如果提示「后端还没配置模型 Key」，说明第 2 步或第 3 步没生效。
+
+> 本地调试：`cd backend && LLM_API_KEY=sk-xxx node server.js`。
+> 不传 Key 时本地会返回一段占位文本，用来先把界面流程跑通。
+
+---
+
 ## 架构对照
 | 原架构（本地） | EdgeOne 线上 |
 |---------------|--------------|
 | `frontend/`（静态） | Pages 托管 |
-| `backend/server.js`（/api） | `frontend/functions/api/wall.js` + `danmaku.js`（边缘函数） |
+| `backend/server.js`（/api） | `functions/api/wall.js` + `danmaku.js` + `chat.js`（边缘函数） |
 | `backend/data/*.json` | KV 命名空间（`MY_KV`） |
+| AI 学长的模型调用 | `functions/api/chat.js` + 环境变量 `LLM_API_KEY` |
 
 - 原 `backend/server.js` 仅本地测试用，线上不需要。
 - 免费额度：边缘函数 100 万次/月、KV 10GB、CDN 流量免费，个人站绰绰有余。

@@ -466,16 +466,26 @@
     console.log('[campus] boot. amapContainer found:', !!document.getElementById('amapContainer'));
     if (!document.getElementById('amapContainer')) return;
 
-    // 地图容器（.map-wrap）已被强制可见且尺寸固定，无需再等滚动/显形时序。
-    // 直接初始化，创建后由 buildMap 内的 resize 循环兜底，彻底避免底图空白。
+    // 切页改造后 #campusMap 初始是 display:none，容器宽高为 0 —— 此时建图会得到一张空白底图。
+    // 因此推迟到「校区」页第一次真正显示时再建图；之后每次进这页只做 resize。
     var mapInited = false;
     function initWhenReady() {
       if (mapInited) return;
       mapInited = true;
       initAmap();
     }
-    // 立即初始化，最稳妥；若 AMap 脚本还没加载完，initAmap 内部会等 onload 再建图。
-    initWhenReady();
+    function onPageShow(e) {
+      var p = e && e.detail && e.detail.page;
+      if (p !== 'campus') return;
+      if (!mapInited) { initWhenReady(); return; }
+      if (map) {
+        setTimeout(function () { try { map.resize(); } catch (err) {} }, 60);
+        setTimeout(function () { try { map.resize(); } catch (err) {} }, 420);
+      }
+    }
+    document.addEventListener('wb:pageshow', onPageShow);
+    // 首屏 hash 直接落在 #/campus（分享链接）时，router 已先于本脚本广播过，这里补一次
+    if (window.WBPage && window.WBPage.current && window.WBPage.current() === 'campus') initWhenReady();
     window.addEventListener('load', function () { if (map) { try { map.resize(); } catch (e) {} } });
     window.addEventListener('resize', function () { if (map) { try { map.resize(); } catch (e) {} } });
 

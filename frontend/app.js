@@ -25,12 +25,21 @@ function rafThrottle(fn){var scheduled=false,lastArgs;return function(){lastArgs
   if (typeof THREE === 'undefined') return;
   try {
   var canvas = document.getElementById('heroCanvas');
+  var heroEl = document.querySelector('.hero');
+  // 画布铺满 hero 自身（切页后 hero 不再是整屏高，按视口铺会溢出被裁）
+  function heroBox(){
+    return {
+      w: (heroEl && heroEl.clientWidth)  || window.innerWidth,
+      h: (heroEl && heroEl.clientHeight) || window.innerHeight
+    };
+  }
   var scene = new THREE.Scene();
-  var camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 1, 2000);
+  var box0 = heroBox();
+  var camera = new THREE.PerspectiveCamera(60, box0.w/box0.h, 1, 2000);
   camera.position.z = 600;
 
   var renderer = new THREE.WebGLRenderer({canvas:canvas, alpha:true, antialias:true});
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setSize(box0.w, box0.h);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
   var isMobile = window.innerWidth < 768;
@@ -85,8 +94,7 @@ function rafThrottle(fn){var scheduled=false,lastArgs;return function(){lastArgs
     }
   });
 
-    // 滚动暂停：滑出首屏时停掉渲染循环，避免一直吃 GPU/电（"页面卡"的主因）
-    var heroVisible = true;
+    // hero 不在视野内（或切到了别的页）就停掉渲染循环，避免一直吃 GPU/电
     var rafId = null;
     var lastFrame = 0;
     function animate(now){
@@ -120,21 +128,27 @@ function rafThrottle(fn){var scheduled=false,lastArgs;return function(){lastArgs
     }
     function startLoop(){ if(rafId===null) animate(); }
     function stopLoop(){ if(rafId!==null){ cancelAnimationFrame(rafId); rafId=null; } }
-    startLoop();
-    window.addEventListener('scroll', function(){
-      var v = window.scrollY < window.innerHeight * 0.85;
-      if(v !== heroVisible){ heroVisible = v; v ? startLoop() : stopLoop(); }
-    }, {passive:true});
+    function inView(){
+      if(!heroEl) return false;
+      var r = heroEl.getBoundingClientRect();
+      return r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < window.innerHeight;
+    }
+    function sync(){ if(inView()) startLoop(); else stopLoop(); }
+    sync();
+    window.addEventListener('scroll', sync, {passive:true});
+    // 切页后 hero 可能重新出现（或被隐藏），重新判断一次
+    document.addEventListener('wb:pageshow', function(){ setTimeout(sync, 60); });
     // 标签页隐藏时暂停渲染，省电省 GPU
     document.addEventListener('visibilitychange', function(){
-      if(document.hidden) stopLoop();
-      else if(window.scrollY < window.innerHeight*0.85) startLoop();
+      if(document.hidden) stopLoop(); else sync();
     });
 
     window.addEventListener('resize', function(){
-      camera.aspect = window.innerWidth/window.innerHeight;
+      var b = heroBox();
+      camera.aspect = b.w/b.h;
       camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setSize(b.w, b.h);
+      sync();
     });
     } catch(e){ /* WebGL/Three.js 出错也不要影响页面其余功能 */ console.warn('hero particle error', e); }
     }
@@ -144,82 +158,47 @@ function rafThrottle(fn){var scheduled=false,lastArgs;return function(){lastArgs
     else initHeroParticles();
   })();
 
-// ===== Navigation solid on scroll =====
+// ===== 顶部导航：切页模式下常驻实底（原「滚动变色」逻辑已不需要）=====
 (function(){
   var nav = document.getElementById('nav');
-  window.addEventListener('scroll', rafThrottle(function(){
-    if(window.scrollY > 80) nav.classList.add('solid');
-    else nav.classList.remove('solid');
-  }), {passive:true});
-  // Smooth scroll for anchors
-  document.querySelectorAll('.nav-links a[href^="#"]').forEach(function(a){
-    a.addEventListener('click', function(e){
-      e.preventDefault();
-      var target = document.querySelector(a.getAttribute('href'));
-      if(target){ target.scrollIntoView({behavior:'smooth'}); }
-      document.getElementById('navLinks').classList.remove('open');
-    });
-  });
-  // Mobile menu
-  document.getElementById('menuToggle').addEventListener('click', function(){
-    document.getElementById('navLinks').classList.toggle('open');
-  });
+  if(nav) nav.classList.add('solid');
 })();
 
 // ===== Reveal on scroll (IntersectionObserver) =====
 (function(){
-  var els = document.querySelectorAll('.reveal, .reveal-stagger, .timeline-item');
-  // 兜底：浏览器不支持 IntersectionObserver 时直接全部显示，避免内容永远不可见
-  if (!('IntersectionObserver' in window)) {
-    els.forEach(function(el){ el.classList.add('in'); });
-    return;
+  var supported = ('IntersectionObserver' in window);
+  var observer = null;
+  if (supported) {
+    observer = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if(entry.isIntersecting){
+          entry.target.classList.add('in');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, {threshold:0.01, rootMargin:'0px 0px -8% 0px'});
   }
-  var observer = new IntersectionObserver(function(entries){
-    entries.forEach(function(entry){
-      if(entry.isIntersecting){
-        entry.target.classList.add('in');
-        observer.unobserve(entry.target);
-      }
+  // 兜底：不支持 IO 时直接全部显示，避免内容永远不可见
+  function refresh(){
+    var els = document.querySelectorAll('.reveal, .reveal-stagger, .timeline-item');
+    els.forEach(function(el){
+      if(el.classList.contains('in')) return;
+      if(!supported){ el.classList.add('in'); return; }
+      observer.observe(el);   // 重复 observe 同一元素是幂等的
     });
-  }, {threshold:0.01, rootMargin:'0px 0px -8% 0px'});
-  els.forEach(function(el){
-    observer.observe(el);
-  });
+  }
+  // 切页后必须重新入队：隐藏页面里的元素 IO 不会触发，否则切回来一直是隐形的
+  window.__revealRefresh = refresh;
+  refresh();
 })();
 
+// ===== 底部 Tab 的高亮由 router.js 统一管理（见 [data-page-link] 与 aria-current）=====
+
+
 // ===== Mobile: Bottom Tab Bar =====
-(function(){
-  if(window.innerWidth > 768) return;
-  var bar = document.getElementById('bottomTabBar');
-  if(!bar) return;
-  var tabs = bar.querySelectorAll('.btab');
-  var sections = {campus:'#campus', life:'#life', prepare:'#prepare', club:'#club'};
-  // Highlight active tab on scroll
-  var sectEls = [document.getElementById('campus'), document.getElementById('life'), document.getElementById('prepare'), document.getElementById('club'), document.getElementById('freshman'), document.getElementById('fun')];
-  function updateTab(){
-    var scrollY = window.scrollY + window.innerHeight/3;
-    var active = 0;
-    sectEls.forEach(function(s,i){ if(s && s.offsetTop <= scrollY) active = i; });
-    tabs.forEach(function(t,i){ t.classList.toggle('active', i === active); });
-  }
-  window.addEventListener('scroll', rafThrottle(updateTab), {passive:true});
-  updateTab();
-  // Tab click -> smooth scroll
-  tabs.forEach(function(tab){
-    tab.addEventListener('click', function(){
-      var target = document.querySelector(this.dataset.href);
-      if(target) target.scrollIntoView({behavior:'smooth', block:'start'});
-    });
-  });
-  // Show/hide tab bar based on scroll direction
-  var lastScroll = 0;
-  window.addEventListener('scroll', rafThrottle(function(){
-    var cur = window.scrollY;
-    if(cur > lastScroll && cur > 200) bar.style.transform = 'translateY(100%)';
-    else bar.style.transform = 'translateY(0)';
-    lastScroll = cur;
-  }), {passive:true});
-})();
+// 切页改造后，底部 Tab 的高亮与跳转由 router.js 统一处理（[data-page-link] + aria-current），
+// 这里不再做「按滚动位置高亮」。
+
 
 // ===== Mobile: Card Expand on Tap =====
 (function(){
@@ -259,44 +238,9 @@ function rafThrottle(fn){var scheduled=false,lastArgs;return function(){lastArgs
   document.head.appendChild(style);
 })();
 
-// ===== Mobile: FAB (Floating Action Button) =====
-(function(){
-  if(window.innerWidth > 768) return;
-  var fab = document.getElementById('mobileFab');
-  if(!fab) return;
-  var menu = document.getElementById('fabMenu');
-  var isOpen = false;
-  fab.addEventListener('click', function(){
-    isOpen = !isOpen;
-    menu.classList.toggle('open', isOpen);
-    fab.classList.toggle('open', isOpen);
-    fab.querySelector('.fab-icon').textContent = isOpen ? '✕' : '↑';
-  });
-  // FAB menu item clicks
-  menu.querySelectorAll('.fab-item').forEach(function(item){
-    item.addEventListener('click', function(){
-      if(this.dataset.external){
-        window.open(this.dataset.href, '_blank');
-      } else {
-        var target = document.querySelector(this.dataset.href);
-        if(target) target.scrollIntoView({behavior:'smooth'});
-      }
-      isOpen = false;
-      menu.classList.remove('open');
-      fab.classList.remove('open');
-      fab.querySelector('.fab-icon').textContent = '↑';
-    });
-  });
-  // Auto-hide FAB on scroll down, show on scroll up
-  var lastY = 0;
-  window.addEventListener('scroll', rafThrottle(function(){
-    var y = window.scrollY;
-    if(y > lastY && y > 400) { fab.style.opacity = '0'; fab.style.pointerEvents = 'none'; }
-    else { fab.style.opacity = '1'; fab.style.pointerEvents = 'auto'; }
-    lastY = y;
-  }), {passive:true});
-})();
-
+// ===== Mobile: FAB（悬浮菜单）已在切页改造中移除 =====
+// 原来靠 FAB 展开的「快速跳转」列表，现在由顶部汉堡抽屉（#navDrawer）承担，
+// 底部 Tab 也覆盖了最常用的几个入口，故整段逻辑删除。
 
 // ===== 滚动进度条 =====
 (function(){
@@ -789,10 +733,13 @@ function rafThrottle(fn){var scheduled=false,lastArgs;return function(){lastArgs
   // 每次打开都显示引导浮层；若只想要首次显示，把下一行取消注释即可
   // try{ if(localStorage.getItem('haust_guide_v1')){g.style.display='none';return;} }catch(e){}
   function close(){g.style.display='none';}
-  function goTo(id){close();setTimeout(function(){var t=document.getElementById(id);if(t)t.scrollIntoView({behavior:'smooth',block:'start'});},80);}
   var s=document.getElementById('guideStart'),k=document.getElementById('guideSkip');
-  if(s)s.addEventListener('click',function(){close();});   // 好，我知道了 → 直接关闭，留在顶部
-  if(k)k.addEventListener('click',function(){close();});    // 不用教了 → 也直接关闭，留在顶部
+  if(s)s.addEventListener('click',function(){close();});   // 好，我知道了 → 直接关闭
+  if(k)k.addEventListener('click',function(){close();});    // 不用教了 → 也直接关闭
+  // 浮层里的入口卡可直接跳页：跳转交给 router.js，这里只负责把浮层收起来
+  document.querySelectorAll('#guide .guide-step[data-page-link]').forEach(function(el){
+    el.addEventListener('click', close);
+  });
 })();
 
 // 卡片跳转：点一下在新标签打开跳转链接（如百度地图），不跳学校官网（免 VPN）

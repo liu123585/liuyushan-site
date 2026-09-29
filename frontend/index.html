@@ -11,6 +11,8 @@
 
 
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="pages.css">
+<link rel="stylesheet" href="assistant.css">
 </head>
 <body>
 
@@ -24,29 +26,51 @@
 
 <div class="stars" id="stars"></div>
 
-<!-- Navigation -->
+<!-- Navigation（切页导航） -->
 <nav class="nav" id="nav">
-  <div class="nav-logo">
+  <a class="nav-logo" href="#/home" data-page-link="home">
     <img src="img/logo.png" alt="校徽" style="width:34px;height:34px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(212,175,55,.5)">
     <span>HAUST · 新生指南</span>
-  </div>
+  </a>
   <ul class="nav-links" id="navLinks">
-    <li><a href="#campus">校区概览</a></li>
-    <li><a href="#campusMap">校园地图</a></li>
-    <li><a href="#dorms">宿舍参考</a></li>
-    <li><a href="#life">生活指南</a></li>
-    <li><a href="#prepare">入学准备</a></li>
-    <li><a href="#club">社团活动</a></li>
-    <li><a href="#hero">回到顶部</a></li>
-    <li><a href="#freshman">新生墙</a></li>
-    <li><a href="#fun">互动玩法</a></li>
-    <li><a href="#toolkit">新生工具箱</a></li>
+    <li><a href="#/home" data-page-link="home">首页</a></li>
+    <li><a href="#/campus" data-page-link="campus">校区</a></li>
+    <li><a href="#/life" data-page-link="life">生活</a></li>
+    <li><a href="#/prepare" data-page-link="prepare">入学</a></li>
+    <li><a href="#/club" data-page-link="club">社团</a></li>
+    <li><a href="#/toolkit" data-page-link="toolkit">工具箱</a></li>
+    <li><a href="#/freshman" data-page-link="freshman">新生墙</a></li>
+    <li><a href="#/fun" data-page-link="fun">互动</a></li>
+    <li><a href="#/assistant" data-page-link="assistant">AI 学长</a></li>
   </ul>
-  <button class="menu-toggle" id="menuToggle" aria-label="菜单">&#9776;</button>
+  <button class="menu-toggle" id="menuToggle" aria-label="打开导航菜单">&#9776;</button>
 </nav>
 
+<!-- 移动端抽屉导航 -->
+<div class="nav-drawer" id="navDrawer" hidden>
+  <div class="nd-mask" data-drawer-close></div>
+  <div class="nd-panel" role="dialog" aria-label="站点导航">
+    <div class="nd-head">
+      <b>HAUST 导航</b>
+      <button class="nd-close" type="button" data-drawer-close aria-label="关闭">&#10005;</button>
+    </div>
+    <ul class="nd-list">
+      <li><a href="#/home" data-page-link="home">首页<span class="nd-arw">&#8250;</span></a></li>
+      <li><a href="#/campus" data-page-link="campus">校区概览 · 地图 · 宿舍<span class="nd-arw">&#8250;</span></a></li>
+      <li><a href="#/life" data-page-link="life">生活指南<span class="nd-arw">&#8250;</span></a></li>
+      <li><a href="#/prepare" data-page-link="prepare">入学准备<span class="nd-arw">&#8250;</span></a></li>
+      <li><a href="#/club" data-page-link="club">社团活动<span class="nd-arw">&#8250;</span></a></li>
+      <li><a href="#/toolkit" data-page-link="toolkit">新生工具箱<span class="nd-arw">&#8250;</span></a></li>
+      <li><a href="#/freshman" data-page-link="freshman">新生墙<span class="nd-arw">&#8250;</span></a></li>
+      <li><a href="#/fun" data-page-link="fun">互动玩法<span class="nd-arw">&#8250;</span></a></li>
+      <li><a href="#/assistant" data-page-link="assistant">AI 学长<span class="nd-arw">&#8250;</span></a></li>
+    </ul>
+    <div class="nd-foot">非官方新生指南 · 信息以河南科技大学官方发布为准</div>
+  </div>
+</div>
+
 <!-- Hero -->
-<section class="hero" id="hero">
+<section class="hero" id="hero" data-page="home">
   <canvas class="hero-canvas" id="heroCanvas"></canvas>
   <div class="hero-vignette"></div>
   <span class="float-deco" style="top:16%;left:11%">🎓</span>
@@ -74,15 +98,83 @@
 </section>
 
 <!-- 数据看板 -->
-<section class="stats-band" id="statsBand">
+<section class="stats-band" id="statsBand" data-page="home">
   <div class="stat"><div class="num" data-target="4100" data-suffix="亩">0</div><div class="lbl">校园占地面积</div></div>
   <div class="stat"><div class="num" data-target="450" data-suffix="万册">0</div><div class="lbl">图书馆藏书</div></div>
   <div class="stat"><div class="num" data-target="2" data-suffix="个">0</div><div class="lbl">主要校区</div></div>
   <div class="stat"><div class="num" data-target="300" data-suffix="+">0</div><div class="lbl">学生社团</div></div>
 </section>
 
+<!-- ===== 首页：导航中枢 ===== -->
+<section class="hub" id="hub" data-page="home">
+  <div class="hub-head reveal">
+    <h2 class="hub-title">你想先看<span class="accent">哪一块</span>？</h2>
+    <p class="hub-sub">点卡片直接进对应页，不用一路往下翻</p>
+  </div>
+
+  <div class="hub-grid reveal-stagger">
+
+    <button class="hub-card" type="button" data-page-link="campus">
+      <span class="hub-idx">01</span>
+      <span class="hub-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V9.5l7-5 7 5V21"/><path d="M9.5 21v-5.5h5V21"/><path d="M9.5 11.5h.01M14.5 11.5h.01"/></svg></span>
+      <h3>校区概览</h3>
+      <p>开元 / 西苑两大校区、3D 校园地图、宿舍实拍</p>
+    </button>
+
+    <button class="hub-card" type="button" data-page-link="life">
+      <span class="hub-idx">02</span>
+      <span class="hub-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11h18a9 9 0 0 1-18 0Z"/><path d="M12 11V7.5"/><path d="M8.2 4c0 1 1 1.4 1 2.4M12 3.6c0 1 1 1.4 1 2.4M15.8 4c0 1 1 1.4 1 2.4"/></svg></span>
+      <h3>生活指南</h3>
+      <p>食堂、快递、洗浴、超市、龙翔街觅食地图</p>
+    </button>
+
+    <button class="hub-card" type="button" data-page-link="prepare">
+      <span class="hub-idx">03</span>
+      <span class="hub-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3.5h6v2.5H9z"/><rect x="4.5" y="5" width="15" height="16" rx="2.2"/><path d="M8.6 11h6.8M8.6 15h4"/></svg></span>
+      <h3>入学准备</h3>
+      <p>报到时间轴、行李清单、军训生存指南</p>
+    </button>
+
+    <button class="hub-card" type="button" data-page-link="club">
+      <span class="hub-idx">04</span>
+      <span class="hub-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M2.8 20c0-3.4 2.8-6.2 6.2-6.2S15.2 16.6 15.2 20"/><path d="M16.2 5.4a3.2 3.2 0 0 1 0 5.6"/><path d="M17.6 14.2c2.2.8 3.6 2.8 3.6 5.4"/></svg></span>
+      <h3>社团活动</h3>
+      <p>五大类社团、学生会、洛阳周边周末去处</p>
+    </button>
+
+    <button class="hub-card" type="button" data-page-link="toolkit">
+      <span class="hub-idx">05</span>
+      <span class="hub-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="12" rx="2.2"/><path d="M8.5 8V6.2A2.2 2.2 0 0 1 10.7 4h2.6a2.2 2.2 0 0 1 2.2 2.2V8"/><path d="M3 13.2h18"/><path d="M10.5 13.2v2h3v-2"/></svg></span>
+      <h3>新生工具箱</h3>
+      <p>军训清单可勾选、快递地址一键复制</p>
+    </button>
+
+    <button class="hub-card" type="button" data-page-link="freshman">
+      <span class="hub-idx">06</span>
+      <span class="hub-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="8" height="7" rx="1.8"/><rect x="13" y="4" width="8" height="7" rx="1.8"/><rect x="3" y="13" width="8" height="7" rx="1.8"/><rect x="13" y="13" width="8" height="7" rx="1.8"/></svg></span>
+      <h3>新生墙</h3>
+      <p>贴张身份卡，找同专业、同乡、同兴趣的同学</p>
+    </button>
+
+    <button class="hub-card" type="button" data-page-link="fun">
+      <span class="hub-idx">07</span>
+      <span class="hub-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M11 3.2l1.7 4.6 4.6 1.7-4.6 1.7L11 15.8 9.3 11.2 4.7 9.5l4.6-1.7z"/><path d="M18.2 15.6l.75 1.95 1.95.75-1.95.75-.75 1.95-.75-1.95-1.95-.75 1.95-.75z"/></svg></span>
+      <h3>互动玩法</h3>
+      <p>今日运势抽卡、食堂盲盒、两款学长自制小游戏</p>
+    </button>
+
+    <button class="hub-card hub-ai" type="button" data-page-link="assistant">
+      <span class="hub-idx">08</span>
+      <span class="hub-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20.2 12a7.6 7.6 0 0 1-7.6 7.6H9.4L4.6 22l1.3-4.2A7.6 7.6 0 1 1 20.2 12Z"/><path d="M12 8.6l.85 2.2 2.2.85-2.2.85-.85 2.2-.85-2.2-2.2-.85 2.2-.85z"/></svg></span>
+      <h3>AI 学长</h3>
+      <p>懒得翻页？直接把问题丢给 AI 学长，秒回</p>
+    </button>
+
+  </div>
+</section>
+
 <!-- 开学倒计时 -->
-<section class="section" id="countdown">
+<section class="section" id="countdown" data-page="home">
   <span class="section-eyebrow reveal">COUNTDOWN · 开学倒计时</span>
   <h2 class="section-title reveal">还有几天，<span class="accent">你就到科大了</span></h2>
   <p class="section-desc reveal">报到、军训、放假这些关键节点都在这儿，每天打开看一眼就不会错过。</p>
@@ -90,7 +182,7 @@
 </section>
 
 <!-- 01 校区概览 -->
-<section class="section one" id="campus">
+<section class="section one" id="campus" data-page="campus">
   <span class="section-eyebrow reveal">CAMPUS OVERVIEW · 校区概览</span>
   <h2 class="section-title reveal">开元 · 西苑，<span class="accent">两大校区</span></h2>
   <p class="section-desc reveal">河南科技大学坐落于"千年帝都、牡丹花城"洛阳，现有开元、西苑两个本科教学校区，占地总面积约4100亩。切换下方标签，看看你将在哪个校区开启大学四年 👇</p>
@@ -215,7 +307,7 @@
 </section>
 
 <!-- 立体校园地图 -->
-<section class="section" id="campusMap">
+<section class="section" id="campusMap" data-page="campus">
   <span class="section-eyebrow reveal">CAMPUS MAP · 立体校园</span>
   <h2 class="section-title reveal">立体看校园，一键<span class="accent">高德导航到宿舍</span></h2>
   <p class="section-desc reveal">开元 / 西苑两个校区都能立体俯瞰——可拖动旋转、调整俯仰角看楼块。选好校区后，点下方按钮直接跳转到高德地图导航到校区。</p>
@@ -249,7 +341,7 @@
 </section>
 
 <!-- 宿舍分布参考 -->
-<section class="section" id="dorms">
+<section class="section" id="dorms" data-page="campus">
   <span class="section-eyebrow reveal">DORMS · 宿舍参考</span>
   <h2 class="section-title reveal">各园区楼栋、<span class="accent">床位与性别</span></h2>
   <p class="section-desc reveal">下面从历年宿舍分配表整理出开元校区（菁园 / 嘉园 / 乾园）和西苑校区各楼栋的床位类型、住宿性别，方便新生提前了解；专业和学院每年可能调整，因此只保留楼栋信息，<span style="color:var(--gold2)">实际分配以学校当年安排为准</span>。</p>
@@ -333,7 +425,7 @@
 <div class="divider-flow"></div>
 
 <!-- 02 生活指南 -->
-<section class="section two" id="life">
+<section class="section two" id="life" data-page="life">
   <span class="section-eyebrow reveal">LIFE GUIDE · 生活指南</span>
   <h2 class="section-title reveal">在科大的<span class="accent">日常起居</span></h2>
   <p class="section-desc reveal">三个宿舍区、三个食堂，加上各种配套设施，让你的大学四年既舒适又有烟火气；别忘了开元小北门正对面的<span style="color:var(--gold2)">龙翔街</span>，是干饭逛吃的第二战场。</p>
@@ -438,7 +530,7 @@
 <div class="divider-flow"></div>
 
 <!-- 03 入学准备 -->
-<section class="section three" id="prepare">
+<section class="section three" id="prepare" data-page="prepare">
   <span class="section-eyebrow reveal">PREPARATION · 入学准备</span>
   <h2 class="section-title reveal">从录取通知书<span class="accent">到宿舍楼</span></h2>
   <p class="section-desc reveal">一份时间轴从抵达车站起，把报到全过程拉直给你看。带齐清单，按步操作即可。</p>
@@ -490,7 +582,7 @@
 <div class="divider-flow"></div>
 
 <!-- 04 社团活动 -->
-<section class="section four" id="club">
+<section class="section four" id="club" data-page="club">
   <span class="section-eyebrow reveal">ACTIVITIES · 社团与活动</span>
   <h2 class="section-title reveal">不止<span class="accent">读书</span>的大学四年</h2>
   <p class="section-desc reveal">河科大有数百个学生社团，3大类型校级活动贯穿全年。洛阳本身就是十三朝古都，周边景点和美食足以让四年都逛不完。</p>
@@ -574,7 +666,7 @@
 
 
 <!-- 新生实用工具箱 -->
-<section class="section" id="toolkit">
+<section class="section" id="toolkit" data-page="toolkit">
   <span class="section-eyebrow reveal">TOOLKIT · 新生工具箱</span>
   <h2 class="section-title reveal">来科大，这几样最<span class="accent">顶用</span></h2>
   <p class="section-desc reveal">学长把新生最容易懵的几件事做成了工具：军训要带啥、怎么来学校、快递填哪、宿舍啥不能带。都是实打实用得上的 🧰</p>
@@ -700,7 +792,7 @@
 </section>
 
 <!-- 新生墙 -->
-<section class="section" id="freshman">
+<section class="section" id="freshman" data-page="freshman">
   <span class="section-eyebrow reveal">FRESHMAN WALL · 新生墙</span>
   <h2 class="section-title reveal">遇见和你<span class="accent">一样的 TA</span></h2>
   <p class="section-desc reveal">这是 2026 级新生的专属墙——填上你的学院、专业、家乡和一句宣言，生成你的「新生身份卡」并上墙。看看有没有同专业、同乡、同星座的缘分同学就在你旁边 👀</p>
@@ -748,7 +840,7 @@
 
 <div class="divider-flow"></div>
 <!-- 05 互动玩法 -->
-<section class="section five" id="fun">
+<section class="section five" id="fun" data-page="fun">
   <span class="section-eyebrow reveal">INTERACTIVE · 互动玩法</span>
   <h2 class="section-title reveal">不止能看，还能<span class="accent">玩</span></h2>
   <p class="section-desc reveal">学长给新生埋了一整面互动彩蛋墙：运势卡想抽几次抽几次、纠结今天吃啥就摇个食堂盲盒。玩够了再去「新生墙」认领身份卡、把右下角「弹幕」打开给学弟学妹留句话 🎉</p>
@@ -793,6 +885,36 @@
   </div>
 </section>
 
+<!-- ===== AI 学长 ===== -->
+<section class="section" id="assistant" data-page="assistant">
+  <span class="section-eyebrow reveal">AI ASSISTANT · AI 学长</span>
+  <h2 class="section-title reveal">有问<span class="accent">必答</span>的学长</h2>
+  <p class="section-desc reveal">报到要带什么、宿舍几人间、快递地址怎么写、哪家食堂好吃——直接问，不用自己一页页翻。</p>
+
+  <div class="ai-shell reveal">
+    <div class="ai-head">
+      <div class="ai-avatar">AI</div>
+      <div class="ai-head-meta">
+        <b>科大 AI 学长</b>
+        <span>基于本站内容回答 · 拿不准的会直说</span>
+      </div>
+      <button class="ai-clear" id="aiClear" type="button">清空对话</button>
+    </div>
+
+    <div class="ai-log" id="aiLog"></div>
+
+    <div class="ai-chips" id="aiChips"></div>
+
+    <form class="ai-input-row" id="aiForm" autocomplete="off">
+      <textarea id="aiInput" rows="1" maxlength="300" placeholder="想问点什么？比如「宿舍几人间」"></textarea>
+      <button class="ai-send" id="aiSend" type="submit" aria-label="发送">
+        <svg viewBox="0 0 24 24"><path d="M4 11.5 20 4l-7.5 16-2.2-6.3L4 11.5Z"/></svg>
+      </button>
+    </form>
+    <div class="ai-tip">AI 回答基于本站整理的信息，仅供参考；重要信息请以河南科技大学官方通知为准。</div>
+  </div>
+</section>
+
 <!-- Footer -->
 <footer>
   <p class="welcome">欢迎成为新的鼎宝</p>
@@ -809,75 +931,33 @@
   </p>
 </footer>
 
-<!-- ===== Mobile Bottom Tab Bar ===== -->
+<!-- ===== Mobile Bottom Tab Bar（切页导航） ===== -->
 <nav class="bottom-tab-bar" id="bottomTabBar">
-  <div class="btab active" data-href="#campus">
-    <img class="btab-icon" loading="lazy" src="img/bdm.jpg" alt="校区" style="width:22px;height:22px;border-radius:4px;object-fit:cover">
+  <button class="btab" type="button" data-page-link="home">
+    <svg viewBox="0 0 24 24"><path d="M3.5 10.6 12 3.9l8.5 6.7"/><path d="M5.6 9.9V20h12.8V9.9"/><path d="M9.9 20v-5.3h4.2V20"/></svg>
+    <span>首页</span>
+  </button>
+  <button class="btab" type="button" data-page-link="campus">
+    <svg viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V9.5l7-5 7 5V21"/><path d="M9.6 21v-5.4h4.8V21"/></svg>
     <span>校区</span>
-  </div>
-  <div class="btab" data-href="#life">
-    <img class="btab-icon" loading="lazy" src="img/nyzt1.jpg" alt="生活" style="width:22px;height:22px;border-radius:4px;object-fit:cover">
+  </button>
+  <button class="btab" type="button" data-page-link="life">
+    <svg viewBox="0 0 24 24"><path d="M3 11h18a9 9 0 0 1-18 0Z"/><path d="M12 11V7.5"/><path d="M9.6 20.4h4.8"/></svg>
     <span>生活</span>
-  </div>
-  <div class="btab" data-href="#prepare">
-    <img class="btab-icon" loading="lazy" src="img/logo.png" alt="入学" style="width:22px;height:22px;border-radius:4px;object-fit:cover">
-    <span>入学</span>
-  </div>
-  <div class="btab" data-href="#club">
-    <img class="btab-icon" loading="lazy" src="img/gkzt.jpg" alt="社团" style="width:22px;height:22px;border-radius:4px;object-fit:cover">
-    <span>社团</span>
-  </div>
-  <div class="btab" data-href="#toolkit">
-    <img class="btab-icon" loading="lazy" src="img/logo.png" alt="工具" style="width:22px;height:22px;border-radius:4px;object-fit:cover">
-    <span>工具箱</span>
-  </div>
-  <div class="btab" data-href="#freshman">
-      <img class="btab-icon" loading="lazy" src="img/tsg.jpg" alt="墙" style="width:22px;height:22px;border-radius:4px;object-fit:cover">
-      <span>新生墙</span>
-    </div>
-    <div class="btab" data-href="#fun">
-    <img class="btab-icon" loading="lazy" src="img/tsg.jpg" alt="互动" style="width:22px;height:22px;border-radius:4px;object-fit:cover">
-    <span>互动</span>
-  </div>
+  </button>
+  <button class="btab" type="button" data-page-link="freshman">
+    <svg viewBox="0 0 24 24"><rect x="3" y="4" width="8" height="7" rx="1.8"/><rect x="13" y="4" width="8" height="7" rx="1.8"/><rect x="3" y="13" width="8" height="7" rx="1.8"/><rect x="13" y="13" width="8" height="7" rx="1.8"/></svg>
+    <span>新生墙</span>
+  </button>
+  <button class="btab" type="button" data-page-link="assistant">
+    <svg viewBox="0 0 24 24"><path d="M20.2 12a7.6 7.6 0 0 1-7.6 7.6H9.4L4.6 22l1.3-4.2A7.6 7.6 0 1 1 20.2 12Z"/><path d="M12 8.6l.85 2.2 2.2.85-2.2.85-.85 2.2-.85-2.2-2.2-.85 2.2-.85z"/></svg>
+    <span>AI 学长</span>
+  </button>
 </nav>
 
-<!-- ===== Mobile FAB ===== -->
-<div class="mobile-fab-menu" id="fabMenu">
-  <div class="fab-item" data-href="#campus">
-    <img src="img/bdm.jpg" alt="校区" loading="lazy" style="width:18px;height:18px;border-radius:3px;object-fit:cover">
-    <span>校区概览</span>
-  </div>
-  <div class="fab-item" data-href="#life">
-    <img src="img/nyzt1.jpg" alt="生活" loading="lazy" style="width:18px;height:18px;border-radius:3px;object-fit:cover">
-    <span>生活指南</span>
-  </div>
-  <div class="fab-item" data-href="#prepare">
-    <img src="img/logo.png" alt="入学" loading="lazy" style="width:18px;height:18px;border-radius:3px;object-fit:cover">
-    <span>入学准备</span>
-  </div>
-  <div class="fab-item" data-href="#club">
-    <img src="img/gkzt.jpg" alt="社团" loading="lazy" style="width:18px;height:18px;border-radius:3px;object-fit:cover">
-    <span>社团活动</span>
-  </div>
-  <div class="fab-item" data-href="#toolkit">
-    <img src="img/logo.png" alt="工具" loading="lazy" style="width:18px;height:18px;border-radius:3px;object-fit:cover">
-    <span>新生工具箱</span>
-  </div>
-  <div class="fab-item" data-href="#campus">
-    <img src="img/logo.png" alt="校区" loading="lazy" style="width:18px;height:18px;border-radius:3px;object-fit:cover">
-    <span>校区概览</span>
-  </div>
-  <div class="fab-item" data-href="#freshman">
-      <img src="img/tsg.jpg" alt="墙" loading="lazy" style="width:18px;height:18px;border-radius:3px;object-fit:cover">
-      <span>新生墙</span>
-    </div>
-    <div class="fab-item" data-href="#fun">
-    <img src="img/tsg.jpg" alt="互动" loading="lazy" style="width:18px;height:18px;border-radius:3px;object-fit:cover">
-    <span>互动玩法</span>
-  </div>
-</div>
-<button class="mobile-fab" id="mobileFab" aria-label="快速导航">
-  <span class="fab-icon">↑</span>
+<!-- ===== AI 学长悬浮入口 ===== -->
+<button class="ai-fab" id="aiFab" type="button" data-page-link="assistant" aria-label="打开 AI 学长">
+  <span class="ai-fab-orb">AI</span><span>问学长</span>
 </button>
 
 <!-- ===== BGM 播放器（默认收进侧边，点音符钮展开） ===== -->
@@ -920,21 +1000,23 @@
 <div id="guide" class="guide-mask">
   <div class="guide-card">
     <h2>嗨，2026 级新生</h2>
-    <p class="guide-sub">先别急着翻，这几个入口是学长觉得你最可能用到的：</p>
+    <p class="guide-sub">顶部导航就能切页，这几个入口是学长觉得你最可能用到的：</p>
     <div class="guide-steps">
-      <div class="guide-step"><div class="gs-ico">1</div><div><b>科大生活</b><span>开元/西苑宿舍、食堂、交通，一篇看完</span></div></div>
-      <div class="guide-step"><div class="gs-ico">2</div><div><b>入学准备</b><span>照着清单收拾行李，开学不抓瞎</span></div></div>
-      <div class="guide-step"><div class="gs-ico">3</div><div><b>互动彩蛋</b><span>抽运势、摇食堂、测你是哪种鼎宝</span></div></div>
-      <div class="guide-step"><div class="gs-ico">4</div><div><b>新生墙</b><span>填张身份卡，找同专业/同乡的同学</span></div></div>
+      <div class="guide-step" data-page-link="campus"><div class="gs-ico">1</div><div><b>校区概览</b><span>开元/西苑两大校区、3D 校园地图、宿舍实拍</span></div></div>
+      <div class="guide-step" data-page-link="prepare"><div class="gs-ico">2</div><div><b>入学准备</b><span>照着清单收拾行李，开学不抓瞎</span></div></div>
+      <div class="guide-step" data-page-link="assistant"><div class="gs-ico">3</div><div><b>AI 学长</b><span>懒得一页页翻？直接把问题丢给它</span></div></div>
+      <div class="guide-step" data-page-link="freshman"><div class="gs-ico">4</div><div><b>新生墙</b><span>填张身份卡，找同专业/同乡的同学</span></div></div>
     </div>
     <button id="guideStart" class="guide-start">好，我知道了</button>
     <span id="guideSkip" class="guide-skip">不用教了，我自己逛</span>
   </div>
 </div>
 <script src="api-config.js"></script>
-<script src="app.js"></script>
-<script src="campus-explorer.js?v=4"></script>
+<script src="app.js?v=2"></script>
+<script src="router.js?v=1"></script>
+<script src="campus-explorer.js?v=5"></script>
 <script src="freshman-insights.js"></script>
 <script src="freshman-toolkit.js?v=1"></script>
+<script src="assistant.js?v=1"></script>
 </body>
 </html>

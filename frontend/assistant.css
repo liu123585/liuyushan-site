@@ -1,0 +1,170 @@
+/* =========================================================
+   assistant.css —— AI 学长对话界面
+   ========================================================= */
+
+/* 悬浮入口：右下角，跟旧的 FAB 同位置 */
+.ai-fab{
+  position:fixed;right:20px;bottom:calc(80px + env(safe-area-inset-bottom,0px));
+  z-index:196;display:flex;align-items:center;gap:7px;
+  padding:9px 15px 9px 10px;border-radius:30px;cursor:pointer;
+  border:1px solid rgba(184,134,11,.45);
+  background:linear-gradient(135deg,#0b5aa8,#1E88E5);
+  color:#fff;font-family:inherit;font-size:13px;font-weight:600;letter-spacing:.5px;
+  box-shadow:0 8px 26px rgba(0,85,163,.36);
+  transition:transform .25s cubic-bezier(.2,.8,.2,1),opacity .25s,box-shadow .25s;
+  -webkit-tap-highlight-color:transparent;
+}
+.ai-fab:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,85,163,.45)}
+.ai-fab:active{transform:scale(.94)}
+.ai-fab .ai-fab-orb{
+  width:24px;height:24px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,.2);font-size:11px;font-weight:800;letter-spacing:0;
+}
+.ai-fab.pg-off{display:none!important}
+/* [hidden] 必须压过 display:flex，否则在 AI 页藏不起来 */
+.ai-fab[hidden]{display:none!important}
+@media(max-width:768px){
+  /* 手机上底部 Tab 已经有「AI 学长」入口，悬浮球会压住卡片，直接收起来 */
+  .ai-fab{display:none!important}
+}
+
+/* ---------- 对话容器 ---------- */
+.ai-shell{
+  width:100%;max-width:900px;margin:0 auto;
+  background:var(--card);border:1px solid var(--hair);border-radius:20px;
+  box-shadow:0 18px 46px rgba(20,40,80,.11);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+
+.ai-head{
+  display:flex;align-items:center;gap:12px;
+  padding:15px 18px;border-bottom:1px solid var(--hair);
+  background:linear-gradient(90deg,rgba(0,85,163,.07),rgba(184,134,11,.06));
+  flex-shrink:0;
+}
+.ai-avatar{
+  width:38px;height:38px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#0b5aa8,#1E88E5);
+  color:#fff;font-size:13px;font-weight:800;letter-spacing:1px;
+  box-shadow:0 4px 14px rgba(0,85,163,.32);
+}
+.ai-head-meta{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.ai-head-meta b{font-size:14.5px;color:var(--white);letter-spacing:.5px}
+.ai-head-meta span{font-size:11.5px;color:var(--grey)}
+.ai-clear{
+  flex-shrink:0;background:rgba(0,85,163,.06);border:1px solid var(--hair);
+  color:rgba(21,35,61,.72);border-radius:20px;padding:6px 14px;
+  font-size:12px;font-family:inherit;cursor:pointer;transition:all .2s;
+}
+.ai-clear:hover{border-color:var(--gold);color:var(--gold)}
+
+/* ---------- 消息区 ---------- */
+.ai-log{
+  flex:1;overflow-y:auto;padding:20px 18px;
+  display:flex;flex-direction:column;gap:14px;
+  min-height:340px;max-height:min(58vh,520px);
+  scroll-behavior:smooth;
+}
+@media(max-width:768px){
+  .ai-log{min-height:300px;max-height:56vh;padding:16px 13px}
+}
+
+.ai-msg{display:flex;gap:9px;max-width:100%;animation:aiMsgIn .3s ease both}
+@keyframes aiMsgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.ai-msg .ai-bubble{
+  padding:11px 15px;border-radius:14px;font-size:14px;line-height:1.75;
+  white-space:pre-wrap;word-break:break-word;
+}
+.ai-msg.bot{align-self:flex-start;max-width:86%}
+.ai-msg.bot .ai-bubble{
+  background:rgba(0,85,163,.06);border:1px solid var(--hair);
+  color:var(--white);border-top-left-radius:5px;
+}
+.ai-msg.me{align-self:flex-end;flex-direction:row-reverse;max-width:80%}
+.ai-msg.me .ai-bubble{
+  background:linear-gradient(135deg,#0b5aa8,#1E88E5);
+  color:#fff;border-top-right-radius:5px;
+  box-shadow:0 6px 18px rgba(0,85,163,.24);
+}
+.ai-msg .ai-mini{
+  width:28px;height:28px;border-radius:50%;flex-shrink:0;margin-top:2px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:800;letter-spacing:.5px;
+  background:linear-gradient(135deg,#0b5aa8,#1E88E5);color:#fff;
+}
+.ai-msg.me .ai-mini{background:rgba(21,35,61,.12);color:var(--white)}
+
+/* 打字光标 / 等待点 */
+.ai-caret{
+  display:inline-block;width:2px;height:15px;vertical-align:-2px;
+  margin-left:2px;background:var(--primary);animation:aiBlink 1s steps(1) infinite;
+}
+@keyframes aiBlink{50%{opacity:0}}
+.ai-dots{display:inline-flex;gap:4px;align-items:center;height:18px}
+.ai-dots i{width:6px;height:6px;border-radius:50%;background:var(--primary);opacity:.35;animation:aiDot 1.2s infinite}
+.ai-dots i:nth-child(2){animation-delay:.2s}
+.ai-dots i:nth-child(3){animation-delay:.4s}
+@keyframes aiDot{0%,60%,100%{opacity:.25;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
+
+.ai-err{color:#b3261e;font-size:12.5px;margin-top:6px}
+
+/* ---------- 快捷提问 ---------- */
+.ai-chips{
+  display:flex;gap:8px;flex-wrap:wrap;padding:0 18px 12px;
+  flex-shrink:0;
+}
+.ai-chips:empty{display:none}
+.ai-chip{
+  padding:7px 13px;border-radius:20px;cursor:pointer;
+  background:rgba(0,85,163,.05);border:1px solid var(--hair);
+  color:rgba(21,35,61,.8);font-size:12.5px;font-family:inherit;
+  transition:all .2s;-webkit-tap-highlight-color:transparent;
+}
+.ai-chip:hover{border-color:var(--gold);color:var(--gold);background:rgba(184,134,11,.07)}
+.ai-chip:active{transform:scale(.96)}
+@media(max-width:768px){.ai-chips{padding:0 13px 10px;gap:6px}.ai-chip{font-size:12px;padding:6px 11px}}
+
+/* ---------- 输入区 ---------- */
+.ai-input-row{
+  display:flex;align-items:flex-end;gap:9px;
+  padding:12px 18px 6px;border-top:1px solid var(--hair);
+  background:rgba(255,255,255,.6);flex-shrink:0;
+}
+.ai-input-row textarea{
+  flex:1;resize:none;max-height:132px;min-height:44px;
+  padding:11px 14px;border-radius:13px;font-family:inherit;
+  font-size:14px;line-height:1.6;outline:none;
+  background:#fff;border:1px solid var(--hair);color:var(--white);
+  transition:border-color .2s;
+}
+.ai-input-row textarea:focus{border-color:var(--primary)}
+.ai-input-row textarea::placeholder{color:rgba(21,35,61,.38)}
+.ai-send{
+  width:44px;height:44px;flex-shrink:0;border-radius:13px;border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#0b5aa8,#1E88E5);color:#fff;
+  box-shadow:0 6px 18px rgba(0,85,163,.28);
+  transition:transform .18s,opacity .18s;
+}
+.ai-send svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.ai-send:active{transform:scale(.92)}
+.ai-send[disabled]{opacity:.45;cursor:not-allowed;box-shadow:none}
+.ai-send.stop{background:linear-gradient(135deg,#8a1f1f,#c0392b)}
+.ai-send.stop svg{fill:currentColor;stroke:none}
+
+.ai-tip{
+  padding:0 18px 14px;font-size:11px;color:rgba(21,35,61,.42);
+  line-height:1.6;flex-shrink:0;
+}
+@media(max-width:768px){
+  .ai-input-row{padding:10px 13px 4px}
+  .ai-tip{padding:0 13px 12px}
+}
+
+/* 未配置 Key 时的提示条 */
+.ai-notice{
+  margin:0 18px 12px;padding:10px 13px;border-radius:11px;font-size:12.5px;line-height:1.7;
+  background:rgba(184,134,11,.09);border:1px solid rgba(184,134,11,.32);color:#7a5a06;
+}
