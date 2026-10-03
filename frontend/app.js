@@ -447,6 +447,7 @@ function rafThrottle(fn){var scheduled=false,lastArgs;return function(){lastArgs
   }
   // 播放面板弹出位置：按小球"完整停在边缘"的位置弹开，放不下往内侧让
   function open(){
+    if(typeof window.__closeGuide==='function')window.__closeGuide();   // 展开播放器时顺便收起首访引导
     pl.classList.remove('mp-hidden');
     pl.classList.remove('open'); void pl.offsetWidth;
     var pw=pl.offsetWidth||300, ph=pl.offsetHeight||64;

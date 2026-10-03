@@ -939,7 +939,10 @@ a.game-btn{display:block;text-decoration:none;text-align:center}
 .wf-chip:hover{border-color:var(--gold)}
 .wf-chip.on{background:rgba(184,134,11,.18);border-color:var(--gold);color:var(--gold)}
 /* ===== 新人引导浮层 ===== */
-.guide-mask{position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;background:rgba(15,30,60,.55);padding:20px;
+/* z-index 特意压到 190（低于顶部导航 200、弹幕栏 198、悬浮球/BGM 197、AI 悬浮球 196）：
+   这样引导浮层只盖住正文，底部/顶部的悬浮控件在首次访问时照样能点 ——
+   否则手机上引导卡会压住弹幕输入框，用户点一下反而跳到别的页。 */
+.guide-mask{position:fixed;inset:0;z-index:190;display:flex;align-items:center;justify-content:center;background:rgba(15,30,60,.55);padding:20px;
   /* 遮罩本身不拦截点击：否则首次访问时点顶部导航会被"吃掉"（只关浮层、不切页）。
      只有卡片可点，浮层外的导航/内容照常能点，切页时浮层自动收起。 */
   pointer-events:none}
