@@ -204,9 +204,16 @@ body::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#0055A3,#D4AF37)
   cursor:pointer;
   display:block;text-decoration:none;color:inherit;
 }
+/* 悬停反馈：所有卡片给一点轻微提示，但**只有真正能跳转的**才做"可点击"的抬升。
+   原来所有 info-card 一律 translateY(-4px)，可 11 个里只有 2 个带跳转 ——
+   剩下 9 个鼠标移上去会变、点下去却没反应，很迷惑。 */
 .info-card:hover{
-  transform:translateY(-4px);
   border-color:var(--accent,#D4AF37);
+  box-shadow:0 6px 16px rgba(20,40,80,.08);
+}
+.info-card[data-jump]:hover,
+.info-card[data-goto-map]:hover{
+  transform:translateY(-4px);
   box-shadow:0 14px 30px rgba(20,40,80,.14);
 }
 .info-card h3{

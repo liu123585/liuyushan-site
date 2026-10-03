@@ -784,6 +784,23 @@ function rafThrottle(fn){var scheduled=false,lastArgs;return function(){lastArgs
   });
 })();
 
+// 卡片"在地图查看"：滚到校区地图并切到对应校区。
+// 这几个卡片原来跳的是 QQ 搜索页（so.html5.qq.com/page/real/search_news），
+// 那个页面是个空壳 —— 内容全靠 JS 动态拉、还只在 QQ 浏览器里有效，
+// 点开只有一片空白，用户以为"页面没了"。改成站内跳转，永远不会失效。
+(function(){
+  document.querySelectorAll('[data-goto-map]').forEach(function(el){
+    el.style.cursor = 'pointer';
+    el.addEventListener('click', function(){
+      var c = el.getAttribute('data-goto-map') || 'kaiyuan';
+      var tab = document.querySelector('#mapCampusTabs [data-campus="' + c + '"]');
+      if (tab) tab.click();
+      var map = document.getElementById('campusMap');
+      if (map) map.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  });
+})();
+
 // ===== 悬浮元素可拖动（BGM 播放器 / 弹幕栏） =====
 (function(){
   function makeDraggable(el, handle, key){
