@@ -261,7 +261,11 @@ function sanitize(list) {
         if (part.type === 'text' && part.text) {
           kept.push({ type: 'text', text: String(part.text).slice(0, 1200) });
         } else if (part.type === 'image_url' && part.image_url && part.image_url.url) {
-          kept.push({ type: 'image_url', image_url: { url: String(part.image_url.url).slice(0, 50000) } });
+          var iu = String(part.image_url.url);
+          // 前端已压到 ~200KB；600000 字符（约 450KB 图）只是兜底。
+          // 超限时**整张跳过**而不是 slice 截断 —— 截断会得到损坏的 base64，
+          // 模型必然返回 400，还不如不发。
+          if (iu.length <= 600000) kept.push({ type: 'image_url', image_url: { url: iu } });
         }
       }
       if (!kept.length) continue;

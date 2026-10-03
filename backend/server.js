@@ -90,7 +90,8 @@ function sanitize(list) {
         if (part.type === 'text' && part.text) {
           kept.push({ type: 'text', text: String(part.text).slice(0, 1200) });
         } else if (part.type === 'image_url' && part.image_url && part.image_url.url) {
-          kept.push({ type: 'image_url', image_url: { url: String(part.image_url.url).slice(0, 50000) } });
+          const iu = String(part.image_url.url);
+          if (iu.length <= 600000) kept.push({ type: 'image_url', image_url: { url: iu } });
         }
       }
       if (!kept.length) continue;
@@ -161,7 +162,8 @@ function handleChat(req, res) {
             messages: [{ role: 'system', content: SYSTEM }].concat(history),
             stream: true,
             temperature: 0.6,
-            max_tokens: 1400
+            // 智谱视觉模型 glm-4v-flash 的 max_tokens 上限只有 1024，填 1400 直接 400
+            max_tokens: /^glm-4v/i.test(useModel) ? 1024 : 1400
           }, LLM_EXTRA))
         });
       } catch (e) {

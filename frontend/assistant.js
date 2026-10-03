@@ -52,6 +52,38 @@
     });
   }
 
+  /* 发之前先压一遍：原图直接转 base64 动辄好几 MB，
+     一是请求体过大模型直接拒（返回 400），二是白白浪费流量。
+     统一缩到最长边 1024、JPEG 质量 0.82，一般能压到 100-200KB。 */
+  function compressImage(file, maxDim, quality) {
+    return new Promise(function (resolve, reject) {
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function () {
+        try {
+          var w = img.naturalWidth || img.width;
+          var h = img.naturalHeight || img.height;
+          var scale = Math.min(1, maxDim / Math.max(w, h));
+          var nw = Math.max(1, Math.round(w * scale));
+          var nh = Math.max(1, Math.round(h * scale));
+          var cv = document.createElement('canvas');
+          cv.width = nw; cv.height = nh;
+          var ctx = cv.getContext('2d');
+          ctx.fillStyle = '#fff';        // PNG 透明区补白，否则转 JPEG 会变黑
+          ctx.fillRect(0, 0, nw, nh);
+          ctx.drawImage(img, 0, 0, nw, nh);
+          resolve(cv.toDataURL('image/jpeg', quality));
+        } catch (e) {
+          reject(e);
+        } finally {
+          URL.revokeObjectURL(url);
+        }
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); reject(new Error('图片读取失败')); };
+      img.src = url;
+    });
+  }
+
   function updatePendingPreview() {
     if (!pendingWrap) return;
     pendingWrap.innerHTML = '';
@@ -86,11 +118,18 @@
   function handleFiles(files) {
     var arr = Array.from(files).filter(function (f) { return /^image\//.test(f.type); });
     if (!arr.length) return;
-    var todo = arr.slice(0, 3 - pendingImages.length); // 最多 3 张
-    if (!todo.length) return;
-    Promise.all(todo.map(function (f) { return fileToBase64(f); })).then(function (urls) {
+    var room = 3 - pendingImages.length;     // 最多 3 张
+    if (room <= 0) return;
+    var todo = arr.slice(0, room);
+    Promise.all(todo.map(function (f) { return compressImage(f, 1024, 0.82); })).then(function (urls) {
       pendingImages = pendingImages.concat(urls);
       updatePendingPreview();
+    }).catch(function () {
+      // 压缩失败就退回原图，至少还能发出去
+      Promise.all(todo.map(fileToBase64)).then(function (urls) {
+        pendingImages = pendingImages.concat(urls);
+        updatePendingPreview();
+      }).catch(function () {});
     });
   }
 
