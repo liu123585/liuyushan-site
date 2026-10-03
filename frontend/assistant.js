@@ -30,6 +30,8 @@
     'jiayuan_canteen_real.jpg', 'jiayuan_canteen_interior.png', 'jiayuan_canteen_area.png'
   ];
   var IMG_RE = /\[\[img:\s*([A-Za-z0-9_.\-]+)\s*(?:\|\s*([^\]]*))?\]\]/g;
+  /* AI 可以用 [[ask:问题1|问题2|问题3]] 给追问建议，前端渲染成可点的小按钮 */
+  var ASK_RE = /\[\[ask:\s*([^\]]+)\]\]/g;
 
   var log, input, form, sendBtn, chips, clearBtn, fab;
   var imgInput, imgBtn, pendingWrap;
@@ -219,9 +221,30 @@
       if (IMG_ALLOW.indexOf(file) > -1) pics.push({ file: file, cap: (cap || '').trim() });
       return '';
     });
+    // 追问建议：抽出来单独渲染成按钮，正文里不留标记
+    var asks = [];
+    clean = clean.replace(ASK_RE, function (all, body) {
+      String(body).split('|').forEach(function (q) {
+        q = q.trim();
+        if (q && asks.length < 4) asks.push(q);
+      });
+      return '';
+    });
     clean = clean.replace(/\n{3,}/g, '\n\n').replace(/[ \t]+$/gm, '').replace(/^\s+|\s+$/g, '');
 
     node.text.textContent = clean;
+
+    if (node.asks) {
+      node.asks.innerHTML = '';
+      asks.forEach(function (q) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'ai-ask-chip';
+        b.textContent = q;
+        b.addEventListener('click', function () { ask(q); });
+        node.asks.appendChild(b);
+      });
+    }
     if (!node.imgs) return;
     node.imgs.innerHTML = '';
     pics.slice(0, 3).forEach(function (it) {
@@ -272,11 +295,45 @@
       bubble.appendChild(uImgs);
     }
 
-    var imgs = null;
+    var imgs = null, asks = null, ops = null;
     if (role !== 'user') {
       imgs = document.createElement('div');
       imgs.className = 'ai-imgs';
       bubble.appendChild(imgs);
+
+      asks = document.createElement('div');
+      asks.className = 'ai-asks';
+      bubble.appendChild(asks);
+
+      // 操作条（复制）：平时藏起来，鼠标移到气泡上才出现，不干扰阅读
+      ops = document.createElement('div');
+      ops.className = 'ai-ops';
+      var cp = document.createElement('button');
+      cp.type = 'button';
+      cp.className = 'ai-op';
+      cp.textContent = '复制';
+      cp.addEventListener('click', function () {
+        var txt = span.textContent || '';
+        if (!txt) return;
+        var done = function () {
+          cp.textContent = '已复制';
+          setTimeout(function () { cp.textContent = '复制'; }, 1600);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(txt).then(done).catch(function () {});
+        } else {
+          var ta = document.createElement('textarea');
+          ta.value = txt;
+          ta.style.position = 'fixed';
+          ta.style.opacity = '0';
+          document.body.appendChild(ta);
+          ta.select();
+          try { document.execCommand('copy'); done(); } catch (e) { /* ignore */ }
+          document.body.removeChild(ta);
+        }
+      });
+      ops.appendChild(cp);
+      bubble.appendChild(ops);
     }
 
     wrap.appendChild(mini);
@@ -284,7 +341,7 @@
     log.appendChild(wrap);
     scrollBottom();
 
-    return { wrap: wrap, bubble: bubble, text: span, imgs: imgs };
+    return { wrap: wrap, bubble: bubble, text: span, imgs: imgs, asks: asks, ops: ops };
   }
 
   function showDots(node) {
@@ -315,12 +372,14 @@
   }
 
   /* ---------------- 发问 ---------------- */
-  function ask(q) {
+  function ask(q, opts) {
     if (busy) return;
     var text = String(q != null ? q : (input ? input.value : '')).trim();
     if (!text && !pendingImages.length) return;
     setBusy(true);
     setChips(false);          // 开始对话了，快捷提问收起来
+
+    var skipUser = !!(opts && opts.skipUser);   // 「重新回答」时不再插一条用户消息
 
     // 构造用户消息：纯文字 → string；有图 → OpenAI vision 数组
     var userContent = text;
@@ -332,10 +391,12 @@
       userContent = parts;
     }
 
-    addMsg('user', text, userImgs);
-    history.push({ role: 'user', content: userContent });
-    clearPending();
-    if (input) { input.value = ''; autoGrow(); }
+    if (!skipUser) {
+      addMsg('user', text, userImgs);
+      history.push({ role: 'user', content: userContent });
+      clearPending();
+      if (input) { input.value = ''; autoGrow(); }
+    }
 
     var bot = addMsg('assistant', '');
     showDots(bot);
@@ -410,7 +471,24 @@
       setBusy(false);
       scrollBottom();
       if (input) input.focus();
+      if (answer) addRegen(bot, text);   // 生成成功才给「重新回答」
     });
+  }
+
+  /* 重新回答：删掉这条回答（保留问题），用同样的问题再问一次 */
+  function addRegen(bot, q) {
+    if (!bot.ops || !q) return;
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'ai-op';
+    b.textContent = '重新回答';
+    b.addEventListener('click', function () {
+      if (busy) return;
+      if (history.length && history[history.length - 1].role === 'assistant') history.pop();
+      if (bot.wrap.parentNode) bot.wrap.parentNode.removeChild(bot.wrap);
+      ask(q, { skipUser: true });
+    });
+    bot.ops.appendChild(b);
   }
 
   /* ---------------- 初始化 ---------------- */

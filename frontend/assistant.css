@@ -301,6 +301,38 @@
 /* 拖拽到对话区的高亮 */
 .ai-log.ai-dragover{outline:2px dashed rgba(11,90,168,.35);outline-offset:-4px;background:rgba(11,90,168,.03)}
 
+/* 追问建议：AI 回答完给几个可点的问题，省得用户想该问啥 */
+.ai-asks{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.ai-asks:empty{display:none}
+.ai-ask-chip{
+  font-family:inherit;font-size:12.5px;line-height:1.4;
+  padding:6px 12px;border-radius:999px;cursor:pointer;
+  background:rgba(0,85,163,.07);border:1px solid rgba(0,85,163,.2);
+  color:#0b5aa8;transition:background .18s,transform .12s;
+  -webkit-tap-highlight-color:transparent;
+}
+.ai-ask-chip:hover{background:rgba(0,85,163,.14)}
+.ai-ask-chip:active{transform:scale(.96)}
+
+/* 回答操作条（复制 / 重新回答）：桌面端鼠标移到气泡上才出现，不干扰阅读；
+   手机上没 hover，就常显。 */
+.ai-ops{
+  display:flex;gap:6px;margin-top:0;max-height:0;opacity:0;overflow:hidden;
+  transition:max-height .2s,opacity .2s,margin-top .2s;
+}
+.ai-msg.bot:hover .ai-ops{max-height:44px;opacity:1;margin-top:8px}
+.ai-op{
+  font-family:inherit;font-size:11.5px;line-height:1;
+  padding:5px 9px;border-radius:7px;cursor:pointer;
+  background:rgba(21,35,61,.05);border:1px solid rgba(21,35,61,.1);
+  color:rgba(21,35,61,.55);transition:background .15s,color .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.ai-op:hover{background:rgba(0,85,163,.1);color:#0b5aa8}
+@media(max-width:768px){
+  .ai-ops{max-height:44px;opacity:1;margin-top:8px}
+}
+
 @media(max-width:768px){
   .ai-pending-imgs{padding:6px 13px 0}
   .ai-pending-thumb{width:56px;height:56px}
