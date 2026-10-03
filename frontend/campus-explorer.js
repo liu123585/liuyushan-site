@@ -10,17 +10,17 @@
 
   /* 校园地标：开元校区只保留已精确校准的国旗广场；其余开元地标未精校先隐藏，避免误导 */
   var LANDMARKS = [
-    { id: 'flag', name: '国旗广场', campus: 'kaiyuan', lng: 112.42311, lat: 34.60390, cat: '地标', desc: '校园正中央的升旗广场，开学典礼、重大活动都在这里举行，是开元校区的几何中心。', img: 'img/campus2.jpg', emoji: '🚩' },
+    { id: 'flag', name: '国旗广场', campus: 'kaiyuan', lng: 112.42311, lat: 34.60390, cat: '地标', desc: '校园正中央的升旗广场，开学典礼、重大活动都在这里举行，是开元校区的几何中心。', img: 'img/flag_plaza.jpg', emoji: '🚩' },
     { id: 'xy', name: '西苑校区', campus: 'xiyuan', lng: 112.37384, lat: 34.661337, cat: '校区', desc: '老校区，秋天梧桐大道很出片，工科强院聚集地。', img: 'img/xiyuan_campus.jpg', emoji: '🌳' },
-    { id: 'bearing', name: '中国轴承陈列馆', campus: 'xiyuan', lng: 112.3785, lat: 34.6575, cat: '特色', desc: '轴承强校的门面，馆里能看到不少轴承实物。', img: 'img/gkzt.jpg', emoji: '⚙️' },
-    { id: 'bridge', name: '连接天桥', campus: 'xiyuan', lng: 112.3775, lat: 34.6565, cat: '风景', desc: '连南北两院的天桥，经典打卡点。', img: 'img/nyzt1.jpg', emoji: '🌉' }
+    { id: 'bearing', name: '中国轴承陈列馆', campus: 'xiyuan', lng: 112.3785, lat: 34.6575, cat: '特色', desc: '轴承强校的门面，馆里能看到不少轴承实物。', img: 'img/bearing_museum.jpg', emoji: '⚙️' },
+    { id: 'bridge', name: '连接天桥', campus: 'xiyuan', lng: 112.3775, lat: 34.6565, cat: '风景', desc: '连南北两院的天桥，经典打卡点。', img: 'img/xiyuan_bridge.jpg', emoji: '🌉' }
   ];
   /* 每个地标的真实照片相册（复用站点已有素材），"看实景"会打开照片灯箱 */
   var GAL = {
-    flag: ['img/campus2.jpg'],
+    flag: ['img/flag_plaza.jpg'],
     xy: ['img/xiyuan_campus.jpg'],
-    bearing: ['img/gkzt.jpg'],
-    bridge: ['img/nyzt1.jpg']
+    bearing: ['img/bearing_museum.jpg'],
+    bridge: ['img/xiyuan_bridge.jpg']
   };
   LANDMARKS.forEach(function (l) { if (GAL[l.id]) l.gallery = GAL[l.id]; });
   // 开元校区定位到「国旗广场」（校园正中央）；西苑校区定位到校区中心（Bigemap 精确坐标）。

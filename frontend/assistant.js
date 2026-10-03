@@ -24,7 +24,8 @@
      这里做**白名单校验**——只认下面这些确实存在的图，
      防止模型编出别的路径（比如外部 URL 或 ../ 穿越）。 */
   var IMG_ALLOW = [
-    'bdm.jpg', 'tsg.jpg', 'ztyc.jpg', 'by.jpg', 'xiyuan_campus.jpg',
+    'bdm.jpg', 'tsg.jpg', 'ztyc.jpg', 'by.jpg', 'flag_plaza.jpg', 'xiyuan_campus.jpg',
+    'bearing_museum.jpg', 'xiyuan_bridge.jpg',
     'jiayuan_dorm_real.jpg', 'jingyuan_dorm_real.jpg', 'qianyuan_dorm_real.png',
     'jiayuan_canteen_real.jpg', 'jiayuan_canteen_interior.png', 'jiayuan_canteen_area.png'
   ];
