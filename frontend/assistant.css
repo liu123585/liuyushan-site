@@ -246,6 +246,31 @@
 .ai-img-btn:hover{background:rgba(184,134,11,.22)}
 .ai-img-btn:active{transform:scale(.92)}
 
+/* 语音输入：录音时按钮变红并脉冲 */
+.ai-mic-btn{
+  flex-shrink:0;width:36px;height:36px;border-radius:50%;border:none;
+  background:rgba(0,85,163,.10);color:#0b5aa8;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .2s,transform .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.ai-mic-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.ai-mic-btn:hover{background:rgba(0,85,163,.2)}
+.ai-mic-btn:active{transform:scale(.92)}
+.ai-mic-btn.listening{background:#c0392b;color:#fff;animation:micPulse 1.3s ease-in-out infinite}
+@keyframes micPulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(192,57,43,.45)}
+  50%{box-shadow:0 0 0 9px rgba(192,57,43,0)}
+}
+.ai-mic-btn[hidden]{display:none!important}
+
+/* 语音输入的错误提示条 */
+.ai-mic-tip{
+  margin:0 18px 8px;padding:9px 13px;border-radius:10px;font-size:12.5px;line-height:1.6;
+  background:rgba(192,57,43,.08);border:1px solid rgba(192,57,43,.28);color:#96291e;
+}
+.ai-mic-tip[hidden]{display:none!important}
+
 /* 待发送图片预览条 */
 .ai-pending-imgs{
   display:flex;gap:8px;padding:8px 18px 0;flex-shrink:0;flex-wrap:wrap;

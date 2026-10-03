@@ -33,6 +33,7 @@
 
   var log, input, form, sendBtn, chips, clearBtn, fab;
   var imgInput, imgBtn, pendingWrap;
+  var micBtn, recog = null, listening = false;
   var pendingImages = [];   // 待发送的 base64 图片数组
   var history = [];
   var busy = false;
@@ -113,6 +114,78 @@
   function clearPending() {
     pendingImages = [];
     updatePendingPreview();
+  }
+
+  /* ---------------- 语音输入（录音转文字） ----------------
+     用浏览器自带的 Web Speech API。Chrome / Edge 支持；
+     不支持的浏览器直接把这个按钮藏起来 —— 不给用户一个点了没反应的按钮。 */
+  function micTip(msg) {
+    var t = document.getElementById('aiMicTip');
+    if (!t) {
+      t = document.createElement('div');
+      t.id = 'aiMicTip';
+      t.className = 'ai-mic-tip';
+      if (pendingWrap && pendingWrap.parentNode) pendingWrap.parentNode.insertBefore(t, pendingWrap);
+    }
+    t.textContent = msg;
+    t.hidden = false;
+    clearTimeout(t._tm);
+    t._tm = setTimeout(function () { t.hidden = true; }, 4500);
+  }
+
+  function initSpeech() {
+    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!micBtn) return;
+    if (!SR) { micBtn.hidden = true; return; }
+    try { recog = new SR(); } catch (e) { micBtn.hidden = true; return; }
+
+    recog.lang = 'zh-CN';
+    recog.continuous = false;      // 说完一句自动停
+    recog.interimResults = true;   // 边说边出字
+    recog.maxAlternatives = 1;
+
+    var base = '';                 // 开始录音时输入框里已有的内容
+
+    recog.onstart = function () {
+      listening = true;
+      base = input ? input.value : '';
+      micBtn.classList.add('listening');
+      micBtn.setAttribute('title', '正在听…点一下停止');
+    };
+    recog.onresult = function (e) {
+      var txt = '';
+      for (var i = e.resultIndex; i < e.results.length; i++) {
+        txt += e.results[i][0].transcript;
+      }
+      if (input) {
+        input.value = (base + txt).slice(0, 300);
+        autoGrow();
+      }
+    };
+    recog.onerror = function (e) {
+      listening = false;
+      micBtn.classList.remove('listening');
+      micBtn.setAttribute('title', '语音输入');
+      var err = e && e.error;
+      if (err === 'not-allowed' || err === 'service-not-allowed') {
+        micTip('麦克风权限被拒绝了 —— 在浏览器地址栏的权限设置里允许麦克风，再点一次试试。');
+      } else if (err === 'network') {
+        micTip('语音识别服务连不上（部分浏览器要能访问语音服务），先用键盘输入吧。');
+      } else if (err === 'no-speech') {
+        micTip('没听到声音，再说一次？');
+      }
+    };
+    recog.onend = function () {
+      listening = false;
+      micBtn.classList.remove('listening');
+      micBtn.setAttribute('title', '语音输入');
+      if (input) input.focus();
+    };
+
+    micBtn.addEventListener('click', function () {
+      if (listening) { try { recog.stop(); } catch (e) { /* ignore */ } return; }
+      try { recog.start(); } catch (e) { /* 可能已经在录音 */ }
+    });
   }
 
   function handleFiles(files) {
@@ -382,12 +455,14 @@
     imgInput = document.getElementById('aiImgInput');
     imgBtn = document.getElementById('aiImgBtn');
     pendingWrap = document.getElementById('aiPendingImgs');
+    micBtn = document.getElementById('aiMicBtn');
     if (!log || !form || !input || !sendBtn) return;
 
     setBusy(false);
     greet();
     buildChips();
     setChips(true);
+    initSpeech();
 
     form.addEventListener('submit', function (e) {
       e.preventDefault();
