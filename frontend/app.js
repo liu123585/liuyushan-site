@@ -309,16 +309,23 @@ function rafThrottle(fn){var scheduled=false,lastArgs;return function(){lastArgs
     {title:'晴天', artist:'周杰伦', src:'bgm/song11.mp3', lrc:''},
     {title:'相拥星空', artist:'张洛一', src:'bgm/song13.m4a', lrc:''}
   ];
-  var idx=0, lrcLines=[], lrcTimer=null, started=false;
+  var idx=0, lrcLines=[], lrcTimer=null, started=false, loaded=false;
 
   function formatTime(t){
     if(!isFinite(t)||t<0)return '0:00';
     var m=Math.floor(t/60), s=Math.floor(t%60);
     return m+':'+(s<10?'0':'')+s;
   }
+  // 只把歌名/歌手写进播放器，不碰 audio.src（避免一进站就下整首 BGM）
+  function showMeta(i){
+    var s=playlist[i]; if(!s)return;
+    if(titleEl)titleEl.textContent=s.title;
+    if(subEl)subEl.textContent=s.artist;
+  }
   function loadSong(i){
     idx=(i+playlist.length)%playlist.length;
     var s=playlist[idx];
+    loaded=true;
     audio.src=s.src;
     audio.load();
     if(titleEl)titleEl.textContent=s.title;
@@ -327,6 +334,9 @@ function rafThrottle(fn){var scheduled=false,lastArgs;return function(){lastArgs
     lrcLines=[];
     if(s.lrc){ fetch(s.lrc).then(function(r){return r.text();}).then(parseLrc).catch(function(){}); }
   }
+  // 首屏不再加载音频：等用户第一次点击/滚动/触摸（或主动点播放键）时再挂 src。
+  // 一首歌 ~1MB，移动端一进站就偷偷下完整首非常费流量，也拖慢首屏。
+  function ensureLoaded(){ if(!loaded) loadSong(idx); }
   function parseLrc(text){
     lrcLines=[];
     text.split(/\r?\n/).forEach(function(line){
@@ -349,7 +359,7 @@ function rafThrottle(fn){var scheduled=false,lastArgs;return function(){lastArgs
     if(!p&&lrcTimer){clearInterval(lrcTimer);lrcTimer=null;}
     if(p&&lrcLines.length&&!lrcTimer) lrcTimer=setInterval(updateLyrics,300);
   }
-  function play(){audio.play().then(function(){setState(true);}).catch(function(){});}
+  function play(){ensureLoaded();audio.play().then(function(){setState(true);}).catch(function(){});}
   function pause(){audio.pause();setState(false);}
   // 随机切歌：不重复当前这首
   function randomIdx(){
@@ -381,12 +391,13 @@ function rafThrottle(fn){var scheduled=false,lastArgs;return function(){lastArgs
   audio.addEventListener('durationchange',updateProgress);
   audio.addEventListener('loadedmetadata',updateProgress);
 
-  function tryAuto(){if(started)return;started=true;audio.play().then(function(){setState(true);}).catch(function(){});}
+  function tryAuto(){if(started)return;started=true;play();}
   window.addEventListener('click',tryAuto,{once:true});
   window.addEventListener('touchstart',tryAuto,{once:true});
   window.addEventListener('scroll',tryAuto,{once:true});
 
-  loadSong(Math.floor(Math.random()*playlist.length));
+  idx=Math.floor(Math.random()*playlist.length);   // 随机起手曲，只显示歌名不加载
+  showMeta(idx);
   updateProgress();
 })();
 
@@ -645,7 +656,9 @@ function rafThrottle(fn){var scheduled=false,lastArgs;return function(){lastArgs
     setTimeout(function(){if(s.parentNode)s.parentNode.removeChild(s);},dur*1000+200);
   }
   function loop(){spawn(pool[Math.floor(Math.random()*pool.length)]);}
-  function start(){on=true;layer.classList.add('on');btn.textContent='📡 弹幕开';bar.classList.add('show');if(bar.__initDrag)bar.__initDrag();loop();timer=setInterval(loop,1600);}
+  // 弹幕栏和「首次访问引导浮层」在手机上会叠在一起（点输入框其实点在引导卡上，会误跳页）：
+  // 这里一开弹幕就把引导浮层收掉，同时把可能越界的悬浮条位置夹回屏内。
+  function start(){on=true;layer.classList.add('on');btn.textContent='📡 弹幕开';bar.classList.add('show');if(bar.__initDrag)bar.__initDrag();if(bar.__clamp)bar.__clamp();if(typeof window.__closeGuide==='function')window.__closeGuide();loop();timer=setInterval(loop,1600);}
   function stop(){on=false;layer.classList.remove('on');btn.textContent='📡 弹幕';bar.classList.remove('show');if(timer)clearInterval(timer);}
   btn.addEventListener('click',function(){on?stop():start();});
   function emitLocal(v){if(!on)start();spawn(v);}
@@ -748,7 +761,13 @@ function rafThrottle(fn){var scheduled=false,lastArgs;return function(){lastArgs
   document.querySelectorAll('#guide .guide-step[data-page-link]').forEach(function(el){
     el.addEventListener('click', close);
   });
-  // 遮罩已设为 pointer-events:none（不会吃掉导航的点击），所以这里只保留 Esc 关闭；
+  window.__closeGuide = close;   // 供其它模块（弹幕栏等）在需要时主动收起浮层
+  // 遮罩是 pointer-events:none，所以点"卡片以外"的地方事件会继续落到下面的元素上：
+  // 顺手把浮层收起来，免得它继续挡着底部弹幕栏/悬浮球（手机上尤其明显）。
+  document.addEventListener('pointerdown', function(e){
+    if(e.target && e.target.closest && e.target.closest('.guide-card')) return;
+    close();
+  }, true);
   // 另外只要发生切页（点导航/点卡片）也把浮层收起来，不会再挡住新页面。
   document.addEventListener('keydown',function(e){ if(e.key==='Escape') close(); });
   window.addEventListener('hashchange', close);
@@ -770,6 +789,17 @@ function rafThrottle(fn){var scheduled=false,lastArgs;return function(){lastArgs
     if(!el) return;
     handle = handle || el;
     var frozen=false, dragging=false, ox=0, oy=0, moved=false, sx=0, sy=0;
+    // 把已固化的绝对坐标夹回当前视口内。存的位置可能是宽窗口（电脑）下拖的，
+    // 换到窄屏（手机 / 旋转 / 缩小窗口）后 left 会大于屏宽 → 整条悬浮栏跑到屏幕外，点不到。
+    function clampToView(){
+      var w=el.offsetWidth||0, h=el.offsetHeight||0;
+      if(!w || !h) return;                       // 隐藏时拿不到尺寸，别乱夹
+      var x=parseFloat(el.style.left), y=parseFloat(el.style.top);
+      if(!isFinite(x)||!isFinite(y)) return;
+      x=Math.max(4, Math.min(x, Math.max(4, window.innerWidth-w-4)));
+      y=Math.max(4, Math.min(y, Math.max(4, window.innerHeight-h-4)));
+      el.style.left=x+'px'; el.style.top=y+'px';
+    }
     function ensureFrozen(){
       if(frozen) return; frozen=true;
       var r=el.getBoundingClientRect();
@@ -781,10 +811,14 @@ function rafThrottle(fn){var scheduled=false,lastArgs;return function(){lastArgs
         el.style.left=saved.x+'px'; el.style.top=saved.y+'px';
         el.style.right='auto'; el.style.bottom='auto'; el.style.transform='none';
       }
+      clampToView();
     }
     // 初始可见的元素（播放器）直接固化位置；隐藏的（弹幕栏）等首次拖动/显示时再固化
-    if(el.offsetParent!==null) ensureFrozen();
+    if(el.getClientRects().length) ensureFrozen();
     el.__initDrag=ensureFrozen;
+    el.__clamp=clampToView;
+    // 窗口尺寸变了（旋转屏 / 拉窗口）也要保证还在屏幕里
+    window.addEventListener('resize', function(){ if(frozen) clampToView(); });
     handle.style.cursor='grab';
     handle.style.touchAction='none';
     handle.addEventListener('pointerdown', function(e){

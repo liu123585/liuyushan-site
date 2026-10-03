@@ -275,6 +275,14 @@ function sanitize(list) {
 /* ---------------- 服务商预设 ----------------
    都是 OpenAI 兼容接口，所以只要换 Base URL + 模型名就能切。
    默认模型优先挑各家免费/便宜的，够这个答疑场景用。 */
+/* 各家模型对 max_tokens 的上限不一样：智谱的 glm-4v-flash（识图用）只接受 [1,1024]，
+   传 1400 会被直接打回 400，整个图片问答就废了。这里按模型给安全值。 */
+function maxTokensFor(model) {
+  var m = String(model || '').toLowerCase();
+  if (m.indexOf('glm-4v') === 0 || m.indexOf('glm-4.1v') === 0) return 1024;
+  return 1400;
+}
+
 const PROVIDERS = {
   deepseek:  { base: 'https://api.deepseek.com/v1',                    model: 'deepseek-chat' },
   // 智谱：glm-4.5-flash 回答质量最好、会配图，但免费额度约 3/5 成功率（1305 拥堵）；
@@ -368,7 +376,7 @@ export async function onRequest(context) {
           messages: messages,
           stream: true,
           temperature: 0.6,
-          max_tokens: 1400
+          max_tokens: maxTokensFor(useModel)
         }, extra))
       });
     } catch (e) {
@@ -394,11 +402,15 @@ export async function onRequest(context) {
   }
 
   if (!upstream) {
+    // 记到函数日志里方便排查，但不把上游原文（内含参数名之类的内部信息）甩给用户
+    try { console.error('[chat] upstream error', errStatus, errCode, errDetail); } catch (e) { /* ignore */ }
     const hint = errStatus === 401 ? '（Key 无效或没权限）'
       : errStatus === 402 ? '（账户余额不足）'
       : errStatus === 429 ? '（请求太频繁）'
+      : errStatus === 400 ? '（这次请求模型没接受，多半是图片太大或参数受限，换张图 / 换个问法再试）'
       : '';
-    const msg = friendlyError(errCode, errDetail);
+    // 400 这类参数错误不再回显上游原文
+    const msg = errStatus === 400 ? '' : friendlyError(errCode, errDetail);
     return json({ error: '模型服务返回 ' + errStatus + hint + (msg ? '：' + msg : '') }, 502);
   }
 

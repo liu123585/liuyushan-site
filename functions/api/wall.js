@@ -31,7 +31,18 @@ export async function onRequest(context) {
       return json({ post: post });
     }
     if (method === 'DELETE') {
+      // 清空整墙：DELETE /api/wall?clear=haust2026
+      // 只删一条：DELETE /api/wall?del=<id>&clear=haust2026
       if (url.searchParams.get('clear') !== 'haust2026') return json({ error: 'forbidden' }, 403);
+      const delId = url.searchParams.get('del');
+      if (delId) {
+        let raw = await kv.get('wall');
+        let posts = raw ? JSON.parse(raw) : [];
+        const before = posts.length;
+        posts = posts.filter(function (p) { return String(p && p.id) !== String(delId); });
+        await kv.put('wall', JSON.stringify(posts));
+        return json({ success: true, removed: before - posts.length });
+      }
       await kv.put('wall', JSON.stringify([]));
       return json({ success: true });
     }

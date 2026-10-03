@@ -288,7 +288,9 @@
         if (answer) history.push({ role: 'assistant', content: answer });
         else bot.text.textContent = '（已停止）';
       } else {
-        fail(bot, '出错了：' + ((err && err.message) || '网络异常') + '。');
+        // 后端给的提示句末常带句号，这里先去掉再补一个，免得出现"。。"
+        var em = String((err && err.message) || '网络异常').replace(/[。.!！,，]+$/, '');
+        fail(bot, '出错了：' + em + '。');
       }
     }).then(function () {
       controller = null;

@@ -968,7 +968,15 @@ a.game-btn{display:block;text-decoration:none;text-align:center}
 .wc-like:hover{border-color:var(--gold)}
 .wc-like:active{transform:scale(.95)}
 .wall-empty{grid-column:1/-1;text-align:center;padding:30px;color:rgba(21,35,61,.5);font-size:14px}
-@media(max-width:768px){.guide-card{padding:24px 18px}.guide-emoji{font-size:40px}.guide-card h2{font-size:19px}}
+/* 手机上：引导卡贴着顶部、底部留出 ~96px（弹幕栏/悬浮球/底部 Tab 的位置），
+   内容超高就卡内滚动 —— 否则首次访问时卡片会压住弹幕输入框，点一下还会误跳到别的页。 */
+@media(max-width:768px){
+  .guide-mask{align-items:flex-start;padding:14px 14px 96px}
+  .guide-card{padding:22px 18px;max-height:calc(100vh - 200px);max-height:calc(100dvh - 200px);overflow:auto;-webkit-overflow-scrolling:touch}
+  .guide-card h2{font-size:19px}
+  .guide-steps{gap:8px;margin-bottom:18px}
+  .guide-emoji{font-size:40px}
+}
 @media(max-width:860px){
   .wall-layout{grid-template-columns:1fr;gap:20px}
   .wall-right{position:static;flex-direction:row;flex-wrap:wrap;justify-content:center}
