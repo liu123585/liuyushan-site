@@ -459,11 +459,18 @@
       }
     }).catch(function (err) {
       if (err && err.name === 'AbortError') {
-        if (answer) history.push({ role: 'assistant', content: answer });
+        // 中断时把已生成的部分也存进上下文（保持 user/assistant 交替，
+        // 否则下次会连着两条 user）；但标明它是半截的，免得模型当成完整回答。
+        if (answer) history.push({ role: 'assistant', content: answer + '\n（这条回答被用户中断了，并未说完）' });
         else bot.text.textContent = '（已停止）';
       } else {
+        // 网络类错误转成中文 —— 别把 "Failed to fetch" 这种英文甩给新生
+        var raw = String((err && err.message) || '');
+        var em = /fetch|network|load failed|timeout|aborted/i.test(raw)
+          ? '网络好像断了，检查一下网络再试一次'
+          : (raw || '网络异常');
         // 后端给的提示句末常带句号，这里先去掉再补一个，免得出现"。。"
-        var em = String((err && err.message) || '网络异常').replace(/[。.!！,，]+$/, '');
+        em = em.replace(/[。.!！,，]+$/, '');
         fail(bot, '出错了：' + em + '。');
       }
     }).then(function () {
