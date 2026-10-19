@@ -1,3 +1,24 @@
+/* /api/danmaku —— 互动弹幕
+   安全策略（和 /api/wall 对齐）：来源校验 + 爬虫 UA 过滤 + 滑动窗口限流
+   + 请求体限制 + 蜜罐字段 + 重复提交拦截。
+   这个接口原来完全裸奔（谁都能无限刷），这里补齐。 */
+
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type'
+};
+/* API 响应不缓存、不发 Referer、禁止被当脚本执行 */
+const SEC = {
+  'X-Content-Type-Options': 'nosniff',
+  'Cache-Control': 'no-store',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'X-Robots-Tag': 'noindex, nofollow'
+};
+
+const MAX_BODY = 2 * 1024;          // 一条弹幕最大 40 字，2KB 绰绰有余
+const MAX_ITEMS = 500;              // KV 里最多留 500 条
+
 /* 展示基线：早于此刻的历史弹幕不再返回。
    用途一：清空历史（把值改大到当前时间即可）；
    用途二：屏蔽误发的脏数据（例如联调时发的"测试"串）。 */
@@ -26,11 +47,68 @@ const SEED = [
   { id: 18, text: '谁懂啊，行李收拾到怀疑人生', ts: SINCE + 18000 },
 ];
 
+const BAD_UA = /(scrapy|python-requests|python-urllib|aiohttp|httpx|node-fetch|axios\/|go-http-client|java\/|libwww-perl|wget\/|curl\/|ahrefsbot|semrushbot|mj12bot|dotbot|blexbot|dataforseo|petalbot|gptbot|ccbot|claudebot|imagesiftbot|bytespider|masscan|nmap)/i;
+
+/* 单实例内存计数：KV 不可用时的兜底，绝不因为计数失败误伤用户 */
+const _mem = new Map();
+function memHit(key, limit, windowMs) {
+  const now = Date.now();
+  const arr = (_mem.get(key) || []).filter(function (t) { return now - t < windowMs; });
+  if (arr.length >= limit) return false;
+  arr.push(now);
+  _mem.set(key, arr);
+  if (_mem.size > 3000) _mem.clear();
+  return true;
+}
+
+function clientIp(request) {
+  const h = request.headers;
+  const raw = h.get('cf-connecting-ip') || h.get('x-real-ip') || h.get('x-forwarded-for') || '';
+  return String(raw).split(',')[0].trim() || 'unknown';
+}
+
+/* 只放行本站：自己的域名 + EdgeOne 默认域名 + 本地调试 */
+function originAllowed(origin) {
+  if (!origin) return true;
+  if (/^https?:\/\/([a-z0-9-]+\.)*liuyushan\.top(:\d+)?$/i.test(origin)) return true;
+  if (/^https?:\/\/([a-z0-9-]+\.)*(edgeone\.app|edgeone\.site|edgeone\.ai)(:\d+)?$/i.test(origin)) return true;
+  return /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin);
+}
+
+async function rateHit(kv, key, limit, windowMs) {
+  const now = Date.now();
+  if (kv) {
+    try {
+      const raw = await kv.get(key);
+      let arr = [];
+      try { arr = JSON.parse(raw || '[]'); } catch (e) { arr = []; }
+      if (!Array.isArray(arr)) arr = [];
+      arr = arr.filter(function (t) { return typeof t === 'number' && now - t < windowMs; });
+      if (arr.length >= limit) return false;
+      arr.push(now);
+      const val = JSON.stringify(arr);
+      try { await kv.put(key, val, { expirationTtl: Math.ceil(windowMs / 1000) + 120 }); }
+      catch (e) { await kv.put(key, val); }
+      return true;
+    } catch (e) { /* KV 故障 → 内存兜底 */ }
+  }
+  return memHit(key, limit, windowMs);
+}
+
 function json(data, status) {
   return new Response(JSON.stringify(data), {
     status: status || 200,
-    headers: { 'Content-Type': 'application/json; charset=utf-8', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET,POST,OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type' }
+    headers: Object.assign({ 'Content-Type': 'application/json; charset=utf-8' }, CORS, SEC)
   });
+}
+
+/* 去掉控制字符 / 零宽字符，防止用不可见字符刷屏、或者塞 HTML */
+function cleanText(s) {
+  return String(s == null ? '' : s)
+    .replace(/[\u0000-\u001f\u007f\u200b-\u200f\u2028\u2029\u2060\ufeff]/g, '')
+    .replace(/[<>]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 export async function onRequest(context) {
@@ -38,10 +116,22 @@ export async function onRequest(context) {
   // EdgeOne Pages：KV 绑定后作为全局变量注入；Cloudflare Pages 则在 env 里
   const kv = (typeof KV !== 'undefined' && KV) || (context.env && (context.env.KV || context.env.MY_KV));
   if (!kv) return json({ error: 'KV 未绑定：请在 EdgeOne 控制台把 KV 命名空间绑定到变量名 KV' }, 500);
+
   const method = request.method;
-  if (method === 'OPTIONS') return new Response(null, { status: 204, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET,POST,OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type' } });
+  if (method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
+
+  /* ---- 闸门：越便宜的检查越靠前 ---- */
+  const UA = request.headers.get('user-agent') || '';
+  if (!UA || BAD_UA.test(UA)) return json({ error: 'forbidden' }, 403);
+  if (!originAllowed(request.headers.get('origin') || '')) return json({ error: 'forbidden' }, 403);
+
+  const ip = clientIp(request);
+  const ipKey = 'sec:dm:' + ip;
+
   try {
     if (method === 'GET') {
+      // 前端每 15 秒左右轮询一次，留足余量；异常刷会被挡
+      if (!(await rateHit(kv, ipKey + ':g', 90, 60 * 1000))) return json({ error: 'too many requests' }, 429);
       let raw = await kv.get('danmaku');
       let items = raw ? JSON.parse(raw) : [];
       if (!Array.isArray(items)) items = [];
@@ -49,18 +139,47 @@ export async function onRequest(context) {
       items = items.filter((it) => it && typeof it.text === 'string' && it.ts >= SINCE);
       return json({ items: SEED.concat(items).slice(-100) });
     }
+
     if (method === 'POST') {
-      let d; try { d = await request.json(); } catch (e) { return json({ error: 'bad json' }, 400); }
-      let text = String(d.text || '').trim().slice(0, 40);
+      if (!(await rateHit(kv, ipKey + ':m', 4, 60 * 1000))) return json({ error: '发得有点快，喘口气再发' }, 429);
+      if (!(await rateHit(kv, ipKey + ':h', 24, 60 * 60 * 1000))) return json({ error: '今天发得够多啦，明天再来' }, 429);
+      if (!(await rateHit(kv, ipKey + ':d', 80, 24 * 60 * 60 * 1000))) return json({ error: '今天的额度用完了，明天见' }, 429);
+
+      const CL = parseInt(request.headers.get('content-length') || '0', 10);
+      if (CL > MAX_BODY) return json({ error: 'too large' }, 413);
+
+      const rawBody = await request.text();
+      if (!rawBody || rawBody.length > MAX_BODY) return json({ error: 'too large' }, 413);
+
+      let d;
+      try { d = JSON.parse(rawBody); } catch (e) { return json({ error: 'bad json' }, 400); }
+      if (!d || typeof d !== 'object') return json({ error: 'bad json' }, 400);
+
+      // 蜜罐字段：页面上是隐藏的，正常人不会填，脚本会无脑填满 → 直接丢
+      if (d.hp || d.website) return json({ error: 'forbidden' }, 403);
+
+      const text = cleanText(d.text).slice(0, 40);
       if (!text) return json({ error: 'empty' }, 400);
-      let item = { id: Date.now() * 1000 + Math.floor(Math.random() * 1000), text: text, ts: Date.now() };
+
+      // 同一 IP 20 秒内发一模一样的内容 → 当成重复提交
+      const dupKey = 'sec:dm:dup:' + ip;
+      try {
+        if ((await kv.get(dupKey)) === text) return json({ error: '这句刚发过啦' }, 429);
+        try { await kv.put(dupKey, text, { expirationTtl: 20 }); } catch (e) { await kv.put(dupKey, text); }
+      } catch (e) { /* 去重失败不影响发送 */ }
+
+      const item = { id: Date.now() * 1000 + Math.floor(Math.random() * 1000), text: text, ts: Date.now() };
       let raw = await kv.get('danmaku');
       let items = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(items)) items = [];
       items.push(item);
-      if (items.length > 500) items = items.slice(-500);
+      if (items.length > MAX_ITEMS) items = items.slice(-MAX_ITEMS);
       await kv.put('danmaku', JSON.stringify(items));
       return json({ item: item });
     }
-    return new Response('Not Found', { status: 404 });
-  } catch (e) { return json({ error: e.message || String(e) }, 500); }
+
+    return new Response('Not Found', { status: 404, headers: SEC });
+  } catch (e) {
+    return json({ error: '服务暂时不可用' }, 500);
+  }
 }

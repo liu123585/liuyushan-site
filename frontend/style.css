@@ -277,17 +277,6 @@ body::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#0055A3,#D4AF37)
   font-size:18px;color:var(--white);margin-bottom:6px;
 }
 .timeline-item p{font-size:14px;color:rgba(21,35,61,.72)}
-.timeline-item .checklist{
-  list-style:none;margin-top:10px;font-size:13px;
-}
-.timeline-item .checklist li{
-  padding:4px 0;color:rgba(21,35,61,.82);
-}
-.timeline-item .checklist li::before{
-  content:'';display:inline-block;width:14px;height:14px;
-  margin-right:8px;border:1.5px solid var(--gold);border-radius:3px;
-  vertical-align:middle;
-}
 
 /* Timeline items with links */
 .timeline-link{display:block;text-decoration:none;color:inherit;cursor:pointer;border-radius:12px;transition:transform .3s,background .3s}
@@ -880,15 +869,17 @@ a.game-btn{display:block;text-decoration:none;text-align:center}
 .longxiang-feature p{color:rgba(255,235,220,.9);font-size:14px;line-height:1.8;margin:0 0 12px}
 .longxiang-feature .lx-tags{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px}
 .longxiang-feature .lx-tags .tag{background:rgba(255,255,255,.14);border-color:rgba(255,200,150,.3);color:#ffe6c2}
-.longxiang-feature .lx-list{list-style:none;margin:0 0 10px;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:6px 14px}
-.longxiang-feature .lx-list li{font-size:13px;color:rgba(255,235,220,.9);line-height:1.6}
 .longxiang-feature .lx-emoji{font-size:40px;line-height:1.5;text-align:center;letter-spacing:4px;
   filter:drop-shadow(0 6px 14px rgba(0,0,0,.35));user-select:none}
 .longxiang-feature .card-link-text{color:#ffd9b0}
+/* 龙翔街是深橙底，数字 chip 要用浅色版，否则蓝字看不清 */
+.longxiang-feature .stat-chip{background:rgba(0,0,0,.22);border-color:rgba(255,200,150,.32)}
+.longxiang-feature .stat-chip b{color:#ffe6c2}
+.longxiang-feature .stat-chip i{color:rgba(255,225,200,.72)}
+.longxiang-feature .ico-row span{background:rgba(255,255,255,.12);border-color:rgba(255,200,150,.28);color:#ffe6c2}
 @media(max-width:860px){
   .longxiang-feature .lx-main{grid-template-columns:1fr}
   .longxiang-feature .lx-emoji{font-size:34px;margin-top:6px}
-  .longxiang-feature .lx-list{grid-template-columns:1fr}
 }
 
 /* ===== 弹幕 ===== */
@@ -1167,4 +1158,113 @@ ul.lug-list{margin-top:6px}
   /* 播放器在窄屏不溢出 */
   .music-player{max-width:calc(100vw - 24px)}
   .music-player .mp-fold{width:28px;height:28px}
+}
+
+/* ---------- 弹幕发送失败提示 ---------- */
+.dm-tip{
+  position:fixed;left:50%;bottom:96px;transform:translate(-50%,10px);
+  z-index:9999;max-width:80vw;
+  padding:9px 16px;border-radius:20px;
+  background:rgba(21,35,61,.92);color:#fff;
+  font-size:13px;line-height:1.4;letter-spacing:.2px;
+  box-shadow:0 10px 26px rgba(20,40,80,.28);
+  opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;
+}
+.dm-tip.show{opacity:1;transform:translate(-50%,0)}
+
+/* =========================================================
+   精简阅读组件（2026-10-19）
+   目的：把「一大段文字 + 4 条小字列表」的卡片，
+        换成「大数字 + 关键词标签 + 实拍图」，让人一眼扫完。
+   全部为新增类名，不影响既有卡片/表单/地图样式。
+   ========================================================= */
+
+/* ---- 数字亮点：把长句里的关键数据拎出来单独放大 ---- */
+.stat-chips{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 2px;max-width:100%}
+.stat-chip{
+  display:flex;flex-direction:column;justify-content:center;
+  min-width:0;flex:0 1 auto;max-width:100%;
+  padding:7px 11px;border-radius:10px;
+  background:rgba(0,85,163,.055);border:1px solid var(--hair);
+}
+.stat-chip b{font-size:16px;font-weight:800;color:var(--primary);line-height:1.15;letter-spacing:.2px;white-space:nowrap}
+.stat-chip i{font-style:normal;font-size:11px;color:var(--grey);margin-top:2px}
+
+/* ---- 图标行：一行关键词，替代长列表 ---- */
+.ico-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px;max-width:100%}
+.ico-row span{
+  display:inline-flex;align-items:center;gap:4px;max-width:100%;
+  padding:4px 10px;border-radius:20px;font-size:12.5px;line-height:1.5;
+  background:rgba(0,85,163,.05);color:rgba(21,35,61,.78);
+  border:1px solid rgba(0,85,163,.1);
+  overflow-wrap:anywhere;
+}
+
+/* ---- 实拍图带：横向滑动，替代「文字描述风景/宿舍」 ---- */
+.photo-strip{
+  display:flex;gap:12px;overflow-x:auto;padding:2px 2px 12px;
+  scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;
+  scrollbar-width:thin;
+}
+.photo-strip::-webkit-scrollbar{height:5px}
+.photo-strip::-webkit-scrollbar-thumb{background:rgba(0,85,163,.25);border-radius:3px}
+.photo-item{
+  position:relative;flex:0 0 auto;width:min(250px,62vw);
+  scroll-snap-align:start;border-radius:14px;overflow:hidden;
+  border:1px solid var(--hair);box-shadow:var(--shadow);
+  text-decoration:none;color:inherit;display:block;
+  transition:transform .22s ease,box-shadow .22s ease;
+}
+.photo-item:hover{transform:translateY(-3px);box-shadow:0 16px 36px rgba(20,40,80,.18)}
+.photo-item img{display:block;width:100%;height:168px;object-fit:cover}
+.photo-item .ph-cap{
+  position:absolute;left:0;right:0;bottom:0;
+  padding:24px 12px 10px;
+  background:linear-gradient(transparent,rgba(8,18,34,.8));
+  color:#fff;font-size:13px;font-weight:600;letter-spacing:.4px;
+}
+.photo-item .ph-cap small{display:block;font-size:11.5px;font-weight:400;opacity:.85;margin-top:1px;letter-spacing:.2px}
+
+/* 只有一张卡时（比如图书馆），图片给高一点，别做成一条细缝 */
+.cards:has(> .card:only-child) .card-img{height:230px}
+
+/* 宽屏改成网格铺满，避免右边一大片空白；窄屏仍横滑 */
+@media(min-width:861px){
+  .photo-strip{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+    overflow:visible;padding-bottom:2px;
+  }
+  .photo-item{width:auto}
+  .photo-item img{height:180px}
+}
+
+/* ---- 折叠：默认只露结论，细节想看再点开 ---- */
+.fold{margin-top:10px;border-top:1px dashed var(--hair)}
+.fold > summary{
+  list-style:none;cursor:pointer;display:flex;align-items:center;gap:5px;
+  padding:9px 0 1px;font-size:12.5px;color:var(--primary);
+  letter-spacing:.3px;user-select:none;
+}
+.fold > summary::-webkit-details-marker{display:none}
+.fold > summary::after{content:'▾';font-size:11px;margin-left:4px;transition:transform .2s}
+.fold[open] > summary::after{transform:rotate(180deg)}
+.fold-body{padding-top:8px;font-size:13px;color:rgba(21,35,61,.76);line-height:1.8}
+.fold-body b{color:var(--gold2)}
+
+@media(max-width:768px){
+  .photo-item{width:min(240px,58vw)}
+  .photo-item img{height:150px}
+  .stat-chip{padding:6px 9px}
+  .stat-chip b{font-size:15px}
+  .cards:has(> .card:only-child) .card-img{height:175px}
+}
+
+/* 小屏（手机）：数字块均分三格，避免长数值把卡片撑破 */
+@media(max-width:480px){
+  .stat-chips{gap:6px}
+  .stat-chip{flex:1 1 calc(33.333% - 4px);padding:6px 8px}
+  .stat-chip b{font-size:14px}
+  .stat-chip i{font-size:10.5px;line-height:1.35}
+  .ico-row{gap:5px}
+  .ico-row span{font-size:12px;padding:4px 9px}
 }

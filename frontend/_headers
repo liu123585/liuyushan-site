@@ -1,0 +1,43 @@
+# ============================================================
+#  EdgeOne Pages 响应头配置（Cloudflare Pages 的 _headers 同款语法）
+#  作用：给所有页面加上安全响应头，降低被挂马/被套壳/被扒站的风险。
+#  注意：如果某个头导致页面异常（最常见是高德地图白屏），
+#        把对应那行删掉重新部署即可 —— 其余头互不影响。
+# ============================================================
+
+/*
+  # 禁止浏览器猜类型（防把上传内容当脚本执行）
+  X-Content-Type-Options: nosniff
+  # 不允许别的站点用 iframe 套我们的站（防钓鱼套壳）
+  X-Frame-Options: SAMEORIGIN
+  # 跳转到外站时不泄露完整来源地址
+  Referrer-Policy: strict-origin-when-cross-origin
+  # 关掉本站用不到的硬件权限（麦克风要留给语音输入，所以放 self）
+  Permissions-Policy: geolocation=(), camera=(), microphone=(self), payment=(), usb=()
+  # 一年内只走 HTTPS
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  # 不要用老旧的 XSS 过滤器（现代浏览器已移除，开着反而有副作用）
+  X-XSS-Protection: 0
+  # 内容安全策略：只允许我们自己、three.js 的 CDN、高德地图脚本
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://lib.baomitu.com https://webapi.amap.com; style-src 'self' 'unsafe-inline' https://webapi.amap.com; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://*.amap.com; worker-src 'self' blob:; frame-ancestors 'self'; object-src 'none'; base-uri 'self'; form-action 'self'
+
+# 接口响应不要被任何中间层缓存
+/api/*
+  Cache-Control: no-store
+  X-Robots-Tag: noindex, nofollow
+
+# 静态资源长缓存（文件名带 ?v= 版本号，改版会自动失效）
+/*.js
+  Cache-Control: public, max-age=86400
+
+/*.css
+  Cache-Control: public, max-age=86400
+
+/*.jpg
+  Cache-Control: public, max-age=604800
+
+/*.png
+  Cache-Control: public, max-age=604800
+
+/*.mp3
+  Cache-Control: public, max-age=604800

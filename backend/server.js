@@ -61,9 +61,12 @@ function _grabConst(name) {
 const SYSTEM = (function () {
   const K = _grabConst('KNOWLEDGE');
   const I = _grabConst('IMAGES');
+  const C = _grabConst('CREATOR');
   const S = _grabConst('SYSTEM');
   if (!K || !S) throw new Error('无法从 functions/api/chat.js 提取提示词，请检查那个文件里的写法');
-  return S.split('${KNOWLEDGE}').join(K).split('${IMAGES}').join(I);
+  return S.split('${KNOWLEDGE}').join(K)
+    .split('${CREATOR}').join(C)
+    .split('${IMAGES}').join(I);
 })();
 
 function chatJSON(res, code, obj) {
@@ -117,6 +120,27 @@ function handleChat(req, res) {
       return chatJSON(res, 400, { error: '没有收到有效提问' });
     }
 
+    /* 用户记忆：前端存 localStorage，每次请求带上来 */
+    const memory = Array.isArray(d.memory)
+      ? d.memory.filter(function (x) { return typeof x === 'string' && x.trim(); })
+          .map(function (x) { return String(x).trim().slice(0, 120); }).slice(-20)
+      : [];
+    let sys = SYSTEM;
+    if (memory.length) {
+      sys += '\n\n【关于这位同学（他自己之前告诉你的，可以自然使用）】\n'
+        + memory.map(function (x) { return '- ' + x; }).join('\n');
+    }
+
+    /* 只发图片、没打字：补一句，避免模型反问「你想问什么」 */
+    const last = history[history.length - 1];
+    if (Array.isArray(last.content)) {
+      const hasTxt = last.content.some(function (p) { return p.type === 'text' && p.text; });
+      const hasImg = last.content.some(function (p) { return p.type === 'image_url'; });
+      if (hasImg && !hasTxt) {
+        last.content.unshift({ type: 'text', text: '（我只发了这张图片，没有打字。请直接告诉我你在图里看到了什么。）' });
+      }
+    }
+
     res.writeHead(200, {
       'Content-Type': 'text/event-stream; charset=utf-8',
       'Cache-Control': 'no-cache, no-transform',
@@ -152,14 +176,14 @@ function handleChat(req, res) {
     let errStatus = 0, errCode = '', errMsg = '';
     for (let mi = 0; mi < modelChain.length; mi++) {
       const useModel = modelChain[mi];
-      let res;
+      let up;
       try {
-        res = await fetch(LLM_BASE + '/chat/completions', {
+        up = await fetch(LLM_BASE + '/chat/completions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + LLM_KEY },
           body: JSON.stringify(Object.assign({
             model: useModel,
-            messages: [{ role: 'system', content: SYSTEM }].concat(history),
+            messages: [{ role: 'system', content: sys }].concat(history),
             stream: true,
             temperature: 0.6,
             // 智谱视觉模型 glm-4v-flash 的 max_tokens 上限只有 1024，填 1400 直接 400
@@ -171,16 +195,16 @@ function handleChat(req, res) {
         res.write('data: [DONE]\n\n');
         return res.end();
       }
-      if (res.ok) { upstream = res; break; }
+      if (up.ok) { upstream = up; break; }
       let code = '', detail = '';
       try {
-        const t = await res.text();
+        const t = await up.text();
         try { const j = JSON.parse(t); if (j && j.error) { code = String(j.error.code || ''); detail = j.error.message || ''; } }
         catch (e2) { detail = t.slice(0, 200); }
       } catch (e) { /* ignore */ }
-      const congested = res.status === 429 || code === '1305';
+      const congested = up.status === 429 || code === '1305';
       if (congested && mi < modelChain.length - 1) continue;
-      errStatus = res.status; errCode = code; errMsg = detail;
+      errStatus = up.status; errCode = code; errMsg = detail;
       break;
     }
 

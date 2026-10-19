@@ -10,9 +10,9 @@
 <link rel="icon" type="image/png" href="img/logo.png">
 
 
-<link rel="stylesheet" href="style.css?v=6">
+<link rel="stylesheet" href="style.css?v=8">
 <link rel="stylesheet" href="pages.css?v=2">
-<link rel="stylesheet" href="assistant.css?v=9">
+<link rel="stylesheet" href="assistant.css?v=10">
 </head>
 <body>
 
@@ -177,7 +177,7 @@
 <section class="section" id="countdown" data-page="home">
   <span class="section-eyebrow reveal">COUNTDOWN · 开学倒计时</span>
   <h2 class="section-title reveal">还有几天，<span class="accent">你就到科大了</span></h2>
-  <p class="section-desc reveal">报到、军训、放假这些关键节点都在这儿，每天打开看一眼就不会错过。</p>
+  <p class="section-desc reveal">报到、军训、放假，重要日子一个不漏</p>
   <div class="countdown-box reveal" id="countdownBox"></div>
 </section>
 
@@ -185,7 +185,27 @@
 <section class="section one" id="campus" data-page="campus">
   <span class="section-eyebrow reveal">CAMPUS OVERVIEW · 校区概览</span>
   <h2 class="section-title reveal">开元 · 西苑，<span class="accent">两大校区</span></h2>
-  <p class="section-desc reveal">河南科技大学坐落于"千年帝都、牡丹花城"洛阳，现有开元、西苑两个本科教学校区，占地总面积约4100亩。切换下方标签，看看你将在哪个校区开启大学四年 👇</p>
+  <p class="section-desc reveal">两个校区、4100 亩，先认出你会在哪一个 👇</p>
+
+  <!-- 校园实拍：这几张照片原来只在 AI 配图里用，页面上从没露过面 -->
+  <div class="photo-strip reveal" aria-label="校园实拍">
+    <figure class="photo-item">
+      <img loading="lazy" src="img/bdm.jpg" alt="开元校区北大门">
+      <figcaption class="ph-cap">北大门<small>报到从这里进最顺</small></figcaption>
+    </figure>
+    <figure class="photo-item">
+      <img loading="lazy" src="img/by.jpg" alt="博园明湖畔">
+      <figcaption class="ph-cap">博园<small>明湖畔，散步背书都合适</small></figcaption>
+    </figure>
+    <figure class="photo-item">
+      <img loading="lazy" src="img/ztyc.jpg" alt="开元校区主体育场">
+      <figcaption class="ph-cap">主体育场<small>军训、运动会、夜跑都在这</small></figcaption>
+    </figure>
+    <figure class="photo-item">
+      <img loading="lazy" src="img/flag_plaza.jpg" alt="国旗广场">
+      <figcaption class="ph-cap">国旗广场<small>开学典礼与校区的几何中心</small></figcaption>
+    </figure>
+  </div>
 
   <div class="campus-tabs" id="campusTabs">
     <button class="campus-tab active" data-campus="kaiyuan">开元校区（主校区）</button>
@@ -194,115 +214,83 @@
 
   <!-- 开元面板 -->
   <div class="campus-panel active" id="panel-kaiyuan">
-    <p class="section-desc reveal">开元校区(新校区)位于洛阳市洛龙区开元大道263号，是大多数学院本科生所在的主校区，也是亚洲最大单体图书馆的所在地。</p>
+    <p class="section-desc reveal">新校区 · 开元大道 263 号 · 大多数本科生的主校区</p>
     <div class="cards reveal-stagger">
       <a href="https://mp.weixin.qq.com/s/g9WAn-WSslQs0uYODMq9lg" target="_blank" rel="noopener noreferrer" class="card card-link">
         <img class="card-img" loading="lazy" src="img/tsg.jpg" alt="图书馆">
         <h3>开元校区图书馆</h3>
-        <p>形似洛阳鼎，占地105亩、建筑面积6.9万平方米。豫西最大图书馆，藏书450万册。</p>
-        <ul>
-          <li>二至五层：借阅+自修区</li>
-          <li>向社会读者免费开放</li>
-          <li>每日开馆 8:00-22:30</li>
-          <li>学校吉祥物"鼎鼎"源于此</li>
-        </ul>
+        <p>形似洛阳鼎，豫西最大图书馆</p>
+        <div class="stat-chips">
+          <span class="stat-chip"><b>450万</b><i>藏书（册）</i></span>
+          <span class="stat-chip"><b>6.9万㎡</b><i>建筑面积</i></span>
+          <span class="stat-chip"><b>8:00–22:30</b><i>每日开放</i></span>
+        </div>
+        <div class="ico-row"><span>📚 2–5 层借阅+自修</span><span>🎓 社会读者免费</span><span>🏛️ 吉祥物「鼎鼎」原型</span></div>
         <span class="card-link-text">点击查看详情 →</span>
       </a>
     </div>
     <div class="info-grid reveal-stagger" style="margin-top:16px">
       <div class="info-card" style="--accent:#1565C0">
         <h3>嘉园生活区</h3>
-        <p>开元校区最早建成的宿舍区，12栋公寓楼，毗邻小北门。</p>
-        <div class="info-card-extra"><span class="tag">四人间/六人间</span><span class="tag">独卫阳台</span><span class="tag">嘉园餐厅</span></div>
-        <ul>
-          <li>嘉1超市在嘉3楼下，嘉12楼下韵达快递</li>
-          <li>寝室有暖气和风扇、独立卫生间、阳台</li>
-        </ul>
+        <p>最早建成，12 栋楼，紧邻小北门</p>
+        <div class="info-card-extra"><span class="tag">四/六人间</span><span class="tag">独卫阳台</span><span class="tag">嘉园餐厅</span></div>
+        <div class="ico-row"><span>🛒 嘉 1 超市</span><span>📦 嘉 12 韵达</span><span>🌡️ 暖气+风扇</span></div>
       </div>
       <div class="info-card" style="--accent:#2E7D32">
         <h3>菁园生活区</h3>
-        <p>最具现代化气息，14-16栋楼，分东街西街，楼下商铺众多。</p>
-        <div class="info-card-extra"><span class="tag">四人间/六人间</span><span class="tag">独卫阳台</span><span class="tag">菁11菜鸟驿站</span></div>
-        <ul>
-          <li>菁11楼下菜鸟驿站，菁6楼下申通快递</li>
-          <li>主营医学、农林类专业学生居住</li>
-        </ul>
+        <p>最现代，14–16 栋，分东西街</p>
+        <div class="info-card-extra"><span class="tag">四/六人间</span><span class="tag">独卫阳台</span><span class="tag">菁 11 菜鸟驿站</span></div>
+        <div class="ico-row"><span>📦 菁 11 菜鸟</span><span>📮 菁 6 申通</span><span>🩺 医学/农林居多</span></div>
       </div>
       <div class="info-card" style="--accent:#5D4037">
         <h3>乾园生活区</h3>
-        <p>最新宿舍区，10栋楼六人间，唯一可申请装空调的园区。</p>
+        <p>最新，10 栋六人间，快递集中在这</p>
         <div class="info-card-extra"><span class="tag">六人间</span><span class="tag">可装空调</span><span class="tag">地下商业街</span></div>
-        <ul>
-          <li>大部分快递集中在此，地下商业街一应俱全</li>
-          <li>主营工科类专业学生居住</li>
-        </ul>
+        <div class="ico-row"><span>📦 快递总站</span><span>🛍️ 地下街</span><span>🔧 工科居多</span></div>
       </div>
     </div>
   </div>
 
   <!-- 西苑面板 -->
   <div class="campus-panel" id="panel-xiyuan">
-    <p class="section-desc reveal">西苑校区位于洛阳市涧西区西苑路48号（原洛阳工学院），占地约555亩，是工科传统强院所在地。机电、车辆、软件等学院的新生大多在这里报到。</p>
+    <p class="section-desc reveal">老校区 · 西苑路 48 号 · 机电 / 车辆 / 软件新生多在这里</p>
     <div class="cards reveal-stagger">
       <div class="card card-link" data-goto-map="xiyuan">
         <img class="card-img" loading="lazy" src="img/xiyuan_campus.jpg" alt="西苑校区枫叶路">
         <h3>机电 · 车辆 · 软件学院</h3>
-        <p>西苑是工科重镇：机电工程学院、车辆与交通工程学院、农业装备工程学院、软件学院都在这。</p>
-        <ul>
-          <li>机械装备先进制造协同创新中心</li>
-          <li>省机械设计及传动重点实验室</li>
-          <li>汽车节能与新能源重点实验室</li>
-        </ul>
+        <p>工科重镇，几个老牌工科学院都在这儿</p>
+        <div class="ico-row"><span>🔬 先进制造协同中心</span><span>⚙️ 省机械传动重点实验室</span><span>🚗 新能源汽车实验室</span></div>
         <span class="card-link-text">在地图查看西苑校区 →</span>
       </div>
     </div>
     <div class="info-grid reveal-stagger" style="margin-top:16px">
       <div class="info-card" style="--accent:#5D4037" data-goto-map="xiyuan">
         <h3>中国轴承陈列馆</h3>
-        <p>被称作"轴承黄埔军校"，馆内陈列各类轴承展品，承载学校机械学科的历史记忆。</p>
+        <p>"轴承黄埔军校"，工科底气所在</p>
         <div class="info-card-extra"><span class="tag">工业风</span><span class="tag">历史感</span><span class="tag">必打卡</span></div>
-        <ul>
-          <li>河科大机械学科的底气所在</li>
-          <li>校内最具特色的展馆之一</li>
-        </ul>
       </div>
       <div class="info-card" style="--accent:#2E7D32" data-goto-map="xiyuan">
         <h3>梧桐大道 & 天桥</h3>
-        <p>以西苑路为界分南北两院，梧桐大道四季皆景，连接南北两院的天桥是经典打卡点。</p>
+        <p>南北两院的分界线，秋天红枫最好拍</p>
         <div class="info-card-extra"><span class="tag">梧桐大道</span><span class="tag">红枫秋色</span><span class="tag">天桥</span></div>
-        <ul>
-          <li>古树多、林荫小道古色古香</li>
-          <li>秋天红枫超好拍</li>
-        </ul>
       </div>
       <div class="info-card" style="--accent:#1565C0" data-jump="https://www.sohu.com/a/804716821_121124031">
         <h3>生活 & 上海市场</h3>
-        <p>地处市区繁华地段，紧邻上海市场商圈，公交线路众多，吃喝玩乐下楼就到。</p>
+        <p>就在市区，吃喝玩乐下楼就到</p>
         <div class="info-card-extra"><span class="tag">上海市场</span><span class="tag">体育馆</span><span class="tag">公交便利</span></div>
-        <ul>
-        <li>西苑体育馆评分4.2，人均约34元</li>
-        <li>周边商业配套成熟</li>
-      </ul>
+      </div>
     </div>
     <div class="info-card" style="--accent:#E64A19" data-jump="https://www.sohu.com/a/927083015_121124031">
       <h3>西苑食堂 & 科大饭堂</h3>
-      <p>老校区食堂每天 9000+ 同学吃饭，一层 17 个窗口；科大饭堂做豫湘川家常菜，麻辣香锅、刀削面、台湾卤肉饭一应俱全。</p>
+      <p>麻辣香锅、刀削面、卤肉饭，老校区烟火气</p>
       <div class="info-card-extra"><span class="tag">西苑食堂</span><span class="tag">科大饭堂</span><span class="tag">南苑饮食广场</span></div>
-      <ul>
-        <li>科大饭堂在西苑路与康滇路口向北100米，400+餐位</li>
-        <li>南苑饮食广场 + 校内奶茶店，烟火气十足</li>
-      </ul>
+      <div class="ico-row"><span>🍚 一层 17 个窗口</span><span>🪑 400+ 餐位</span><span>🍜 豫湘川家常菜</span></div>
     </div>
     <div class="info-card" style="--accent:#6A1B9A" data-goto-map="xiyuan">
       <h3>西苑宿舍</h3>
-      <p>六人间 / 八人间上下铺，部分有独卫，干净整洁。老校区生活气息浓，出门就是市区。</p>
+      <p>六 / 八人间上下铺，部分独卫</p>
       <div class="info-card-extra"><span class="tag">六/八人间</span><span class="tag">上下铺</span><span class="tag">部分独卫</span></div>
-      <ul>
-        <li>临近上海市场，逛吃超方便</li>
-        <li>老校区宿舍，烟火气满满</li>
-      </ul>
     </div>
-  </div>
   </div>
 </section>
 
@@ -310,7 +298,7 @@
 <section class="section" id="campusMap" data-page="campus">
   <span class="section-eyebrow reveal">CAMPUS MAP · 立体校园</span>
   <h2 class="section-title reveal">立体看校园，一键<span class="accent">高德导航到宿舍</span></h2>
-  <p class="section-desc reveal">开元 / 西苑两个校区都能立体俯瞰——可拖动旋转、调整俯仰角看楼块。选好校区后，点下方按钮直接跳转到高德地图导航到校区。</p>
+  <p class="section-desc reveal">拖动可旋转，点按钮直接导航过去</p>
 
   <div class="campus-tabs" id="mapCampusTabs">
     <button class="campus-tab active" data-campus="kaiyuan">开元校区</button>
@@ -335,7 +323,7 @@
     <button id="navigateToCampus" class="route-go route-go-plan route-go-full">🗺️ 用高德导航到当前校区</button>
   </div>
   <div class="gate-info">
-    <p><strong>校门开放提示</strong>：目前 <span class="gate-open">小北门、大北门、西门</span> 可正常进出；<span class="gate-closed">南门</span> 暂不开放，不能进人。新生报到建议优先选择大北门或西门。</p>
+    <p><strong>校门提示：</strong><span class="gate-open">小北门 · 大北门 · 西门</span> 可进出，<span class="gate-closed">南门</span> 暂不开放。报到走大北门或西门最顺。</p>
   </div>
 
 </section>
@@ -344,11 +332,36 @@
 <section class="section" id="dorms" data-page="campus">
   <span class="section-eyebrow reveal">DORMS · 宿舍参考</span>
   <h2 class="section-title reveal">各园区楼栋、<span class="accent">床位与性别</span></h2>
-  <p class="section-desc reveal">下面从历年宿舍分配表整理出开元校区（菁园 / 嘉园 / 乾园）和西苑校区各楼栋的床位类型、住宿性别，方便新生提前了解；专业和学院每年可能调整，因此只保留楼栋信息，<span style="color:var(--gold2)">实际分配以学校当年安排为准</span>。</p>
+  <p class="section-desc reveal">各楼栋床位与性别一览，最终分配以学校安排为准</p>
 
+  <!-- 宿舍实拍：三张一直没上过页面的实拍照，比文字更直观 -->
+  <div class="photo-strip reveal" aria-label="宿舍实拍">
+    <figure class="photo-item">
+      <img loading="lazy" src="img/jiayuan_dorm_real.jpg" alt="嘉园宿舍实拍">
+      <figcaption class="ph-cap">嘉园 · 上床下桌<small>四人间 / 独卫阳台</small></figcaption>
+    </figure>
+    <figure class="photo-item">
+      <img loading="lazy" src="img/jingyuan_dorm_real.jpg" alt="菁园宿舍实拍">
+      <figcaption class="ph-cap">菁园 · 上下铺<small>六人间为主 / 楼下快递点</small></figcaption>
+    </figure>
+    <figure class="photo-item">
+      <img loading="lazy" src="img/qianyuan_dorm_real.png" alt="乾园宿舍实拍">
+      <figcaption class="ph-cap">乾园 · 上床下桌<small>最新宿舍 / 唯一可装空调</small></figcaption>
+    </figure>
+  </div>
+
+  <!-- 原来这段 180 字的解释太长，收成一句结论 + 展开细看 -->
   <div class="dorm-note reveal">
-    <strong>关于“男女混宿”楼栋：</strong>表里标了 <span class="mark">男女混宿</span> 的楼（如菁园1/2/4、嘉园1/9、西苑南院2等），<b>并不是男女生住在同一间或同一层</b>，而是同一栋楼按楼层分区管理——比如男生住某几层、女生住某几层，通常有独立入口或门禁，互不串层、互不影响。具体哪些楼层住男生 / 哪些楼层住女生，以入住时学校分配和宿管安排为准。
-    <div class="dorm-ref">※ 以上宿舍信息（床位类型 / 住宿性别 / 男女混宿分区）整理自历届实拍图与新生攻略，<b>信息仅供参考</b>，请以学校当年实际安排为准。</div>
+    <strong>看到「男女混宿」别误会：</strong>是<b>同一栋楼按楼层分区</b>，不是同一间。
+    <details class="fold">
+      <summary>怎么分区？点开看</summary>
+      <div class="fold-body">
+        标了 <span class="mark">男女混宿</span> 的楼（菁园 1/2/4、嘉园 1/9、西苑南院 2 等），
+        通常是男生住某几层、女生住某几层，各自独立入口或门禁，互不串层。
+        具体楼层以入住时宿管安排为准。
+      </div>
+    </details>
+    <div class="dorm-ref">※ 整理自历届实拍与新生攻略，<b>仅供参考</b>，以学校当年安排为准。</div>
   </div>
 
   <div class="dorm-grid reveal-stagger">
@@ -428,43 +441,33 @@
 <section class="section two" id="life" data-page="life">
   <span class="section-eyebrow reveal">LIFE GUIDE · 生活指南</span>
   <h2 class="section-title reveal">在科大的<span class="accent">日常起居</span></h2>
-  <p class="section-desc reveal">三个宿舍区、三个食堂，加上各种配套设施，让你的大学四年既舒适又有烟火气；别忘了开元小北门正对面的<span style="color:var(--gold2)">龙翔街</span>，是干饭逛吃的第二战场。</p>
+  <p class="section-desc reveal">三个食堂 + 一条龙翔街，吃饭这件大事不用愁</p>
 
   <div class="cards reveal-stagger">
     <a href="https://mp.weixin.qq.com/s/rQOF2vBKelnvxVVcVfFs-g" target="_blank" rel="noopener noreferrer" class="card card-link">
       <img class="card-img" loading="lazy" src="img/jiayuan_canteen_real.jpg" alt="嘉园餐厅">
       <h3>嘉园餐厅</h3>
-      <p>嘉园中部，三层楼，环境装修时尚。招牌：砂锅面、黄焖鸡米饭、口水鸡</p>
-      <ul>
-        <li>一楼大众化、二楼三楼小炒窗口</li>
-        <li>三楼：木桶饭、麻辣香锅、汉堡</li>
-        <li>食堂面积3800平米，200余张餐桌</li>
-        <li>营业时间：早6:30-晚9:30</li>
-      </ul>
+      <p>三层楼，环境最时尚</p>
+      <div class="ico-row"><span>🍲 砂锅面</span><span>🍗 黄焖鸡</span><span>🥘 麻辣香锅</span></div>
+      <div class="stat-chips">
+        <span class="stat-chip"><b>3800㎡</b><i>面积</i></span>
+        <span class="stat-chip"><b>200+</b><i>餐桌</i></span>
+        <span class="stat-chip"><b>6:30–21:30</b><i>营业</i></span>
+      </div>
       <span class="card-link-text">查看食堂详情 →</span>
     </a>
     <a href="https://mp.weixin.qq.com/s/rQOF2vBKelnvxVVcVfFs-g" target="_blank" rel="noopener noreferrer" class="card card-link">
       <img class="card-img" loading="lazy" src="img/jiayuan_canteen_interior.png" alt="菁园餐厅">
       <h3>菁园餐厅</h3>
-      <p>菁园北侧，价格最亲民。招牌：大盘鸡面、倔酱面、鸳鸯馄饨</p>
-      <ul>
-        <li>一楼大众化、二楼小炒窗口</li>
-        <li>蛋包饭外焦内嫩，鸡排酥香</li>
-        <li>菁园二楼接待服务餐厅400平米</li>
-        <li>外卖点约23平米</li>
-      </ul>
+      <p>价格最亲民，学生党首选</p>
+      <div class="ico-row"><span>🍜 大盘鸡面</span><span>🍝 倔酱面</span><span>🥟 鸳鸯馄饨</span><span>🍳 蛋包饭</span></div>
       <span class="card-link-text">查看食堂详情 →</span>
     </a>
     <a href="https://mp.weixin.qq.com/s/rQOF2vBKelnvxVVcVfFs-g" target="_blank" rel="noopener noreferrer" class="card card-link">
       <img class="card-img" loading="lazy" src="img/jiayuan_canteen_area.png" alt="乾园餐厅">
       <h3>乾园餐厅</h3>
-      <p>乾园东侧，文艺范爆棚，被赞为"别人家的食堂"。</p>
-      <ul>
-        <li>招牌：黑椒鸡扒饭、小火锅</li>
-        <li>有空调，二楼饭菜最受欢迎</li>
-        <li>藤蔓、书架、高脚凳，暖黄灯光</li>
-        <li>石锅煲、菠菜油泼面、自助餐</li>
-      </ul>
+      <p>"别人家的食堂"，有空调</p>
+      <div class="ico-row"><span>🍗 黑椒鸡扒饭</span><span>🍲 小火锅</span><span>🍜 菠菜油泼面</span><span>🍱 自助餐</span></div>
       <span class="card-link-text">查看食堂详情 →</span>
     </a>
   </div>
@@ -475,18 +478,18 @@
     <div class="lx-main">
       <div class="lx-text">
         <h3>🐉 龙翔街（龙祥商业街）</h3>
-        <p>河科大学子的"第二食堂"！开元大道对面，一条街串起几代学生的青春。百余家小店摊位，边走边吃才是正确打开方式。傍晚到夜里最热闹，人均 20–50 元吃到撑。</p>
+        <p>河科大学子的"第二食堂"，一条街串起几代人的青春</p>
+        <div class="stat-chips">
+          <span class="stat-chip"><b>100+</b><i>小店摊位</i></span>
+          <span class="stat-chip"><b>¥20–50</b><i>人均</i></span>
+          <span class="stat-chip"><b>傍晚</b><i>最热闹</i></span>
+        </div>
         <div class="lx-tags">
           <span class="tag">烤串炸串</span><span class="tag">桥头麻辣烫</span><span class="tag">不翻汤</span>
           <span class="tag">鸡蛋里脊卷饼</span><span class="tag">常记冰粉</span><span class="tag">螺蛳粉</span>
           <span class="tag">塔斯汀汉堡</span><span class="tag">蜜雪冰城</span>
         </div>
-        <ul class="lx-list">
-          <li>🔥 烤串炸串：焦黄刷秘制酱料，炭火滋啦作响</li>
-          <li>🍜 桥头麻辣烫：1 元/串，骨汤自选加烩面</li>
-          <li>🥣 洛阳不翻汤：本地特色，配油饼一口入魂</li>
-          <li>🧋 常记冰粉 / 蜜雪：夏日续命甜饮</li>
-        </ul>
+        <div class="ico-row"><span>🍢 炭火刷秘制酱</span><span>🍜 麻辣烫 1 元/串</span><span>🥣 不翻汤配油饼</span></div>
         <span class="card-link-text">查龙翔街美食攻略 →</span>
       </div>
       <div class="lx-emoji" aria-hidden="true">🐉🍢🌃<br>🍜🥣🧋</div>
@@ -496,32 +499,20 @@
   <div class="info-grid reveal-stagger" style="margin-top:16px">
     <a href="https://www.showxue.com/huati/8079/topic56.html" target="_blank" rel="noopener noreferrer" class="info-card" style="--accent:#1976D2">
       <h3>快递服务</h3>
-      <p>各区均有快递点，取件备好取件码。</p>
-      <div class="info-card-extra"><span class="tag">嘉园·韵达</span><span class="tag">菁园·菜鸟</span><span class="tag">乾园·集中点</span></div>
-      <ul>
-        <li>嘉园：嘉12楼下韵达、好想来(极兔)</li>
-        <li>菁园：菁11菜鸟驿站(京东顺丰)、菁6申通</li>
-        <li>乾园：大部分其他快递集中在此</li>
-      </ul>
+      <p>三区都有取件点，凭取件码领取</p>
+      <div class="info-card-extra"><span class="tag">嘉 12 · 韵达</span><span class="tag">菁 11 · 菜鸟</span><span class="tag">乾园 · 集中点</span></div>
     </a>
     <a href="https://www.showxue.com/huati/8079/topic56.html" target="_blank" rel="noopener noreferrer" class="info-card" style="--accent:#0097A7">
       <h3>洗浴与浴池</h3>
-      <p>三大宿舍区均有浴池，宿舍内无独立洗浴。</p>
+      <p>三区都有浴池，宿舍内不设独立淋浴</p>
       <div class="info-card-extra"><span class="tag">嘉园浴池</span><span class="tag">菁园浴池</span><span class="tag">乾园浴池</span></div>
-      <ul>
-        <li>开放时间一般到22:00，持校园卡刷卡进入</li>
-        <li>建议错峰：21点后人较少</li>
-      </ul>
+      <div class="ico-row"><span>⏰ 一般到 22:00</span><span>💳 刷校园卡</span><span>🌙 21 点后人少</span></div>
     </a>
     <a href="https://www.showxue.com/huati/8079/topic56.html" target="_blank" rel="noopener noreferrer" class="info-card" style="--accent:#E65100">
       <h3>超市与商业</h3>
-      <p>日常所需校内即可解决，乾园地下街最丰富。</p>
-      <div class="info-card-extra"><span class="tag">嘉1超市</span><span class="tag">菁园商铺</span><span class="tag">乾园地下街</span></div>
-      <ul>
-        <li>嘉园：嘉1超市(嘉3楼下)</li>
-        <li>乾园地下商业街有理发店、打印店、水果店</li>
-        <li>美子的茶(经乾元地街西头)</li>
-      </ul>
+      <p>日常用品校内解决，乾园地下街最全</p>
+      <div class="info-card-extra"><span class="tag">嘉 1 超市</span><span class="tag">菁园商铺</span><span class="tag">乾园地下街</span></div>
+      <div class="ico-row"><span>💇 理发</span><span>🖨️ 打印</span><span>🍉 水果</span></div>
     </a>
   </div>
 </section>
@@ -533,7 +524,7 @@
 <section class="section three" id="prepare" data-page="prepare">
   <span class="section-eyebrow reveal">PREPARATION · 入学准备</span>
   <h2 class="section-title reveal">从录取通知书<span class="accent">到宿舍楼</span></h2>
-  <p class="section-desc reveal">一份时间轴从抵达车站起，把报到全过程拉直给你看。带齐清单，按步操作即可。</p>
+  <p class="section-desc reveal">从下车站到进宿舍，6 步走完报到</p>
 
   <div class="timeline">
     <a href="https://10464.gaokao.haedu.cn/strategy/guide/2025/0326/74317.html" target="_blank" rel="noopener noreferrer" class="timeline-item timeline-link">
@@ -559,21 +550,12 @@
     <div class="timeline-item timeline-link">
       <span class="timeline-step">STEP 05</span>
       <h4>入住宿舍</h4>
-      <p>到所在宿舍区(嘉园/菁园/乾园)楼管阿姨处登记，领取宿舍钥匙，找好床位整理行李。先到的舍友说不定已经帮你占好位置了。</p>
-      <ul class="checklist">
-        <li>物品：录取通知书原件及复印件</li>
-        <li>物品：身份证及正反两面复印件若干</li>
-        <li>物品：高中纸质档案(切勿拆封)</li>
-        <li>物品：党团组织关系介绍信</li>
-        <li>物品：一寸、二寸近期免冠照片若干</li>
-        <li>物品：户口迁移证(自愿，农村生源可不迁)</li>
-        <li>物品：银行卡(学校会随通知书寄送工行卡)</li>
-      </ul>
+      <p>到宿舍区找楼管登记、领钥匙、找床位。证件类清单在「工具箱」里有可勾选的完整版。</p>
     </div>
     <a href="https://baike.baidu.com/item/%E5%A4%A7%E5%AD%A6%E7%94%9F%E5%86%9B%E8%AE%AD" target="_blank" rel="noopener noreferrer" class="timeline-item timeline-link">
       <span class="timeline-step">STEP 06</span>
       <h4>军训准备</h4>
-      <p>军训为期2-3周，洛阳8-9月白天较热，必备：迷彩服(发放)、防晒霜SPF50+、舒适鞋垫2双、水杯、湿巾、晕车药、藿香正气水、一字夹。注意补充水分和盐分。</p>
+      <p>2–3 周，洛阳 8–9 月很晒：防晒霜、鞋垫、水杯别忘</p>
     </a>
   </div>
 </section>
@@ -585,7 +567,7 @@
 <section class="section four" id="club" data-page="club">
   <span class="section-eyebrow reveal">ACTIVITIES · 社团与活动</span>
   <h2 class="section-title reveal">不止<span class="accent">读书</span>的大学四年</h2>
-  <p class="section-desc reveal">河科大有数百个学生社团，3大类型校级活动贯穿全年。洛阳本身就是十三朝古都，周边景点和美食足以让四年都逛不完。</p>
+  <p class="section-desc reveal">300+ 社团随便挑，周末还有十三朝古都逛</p>
 
   <div class="grid-items reveal-stagger" style="margin-bottom:40px">
     <a href="https://baike.baidu.com/item/%E6%8C%91%E6%88%98%E6%9D%AF" target="_blank" rel="noopener noreferrer" class="grid-card grid-card-link">
@@ -614,13 +596,13 @@
     </a>
     <a href="https://baike.baidu.com/item/%E5%A4%A7%E5%AD%A6%E7%94%9F%E5%88%9B%E4%B8%9A" target="_blank" rel="noopener noreferrer" class="grid-card grid-card-link">
       <h4>创新创业类</h4>
-      <p>入驻众创空间，对接龙门实验室资源，校级创业孵化器可申请工位和资金。</p>
+      <p>众创空间、龙门实验室资源，可申请工位和资金</p>
       <div class="tags"><span class="tag">众创</span><span class="tag">龙门实验室</span><span class="tag">孵化</span></div>
       <span class="card-link-text">了解创新创业 →</span>
     </a>
     <a href="https://baike.baidu.com/item/%E5%AD%A6%E7%94%9F%E4%BC%9A" target="_blank" rel="noopener noreferrer" class="grid-card grid-card-link">
       <h4>校学生会干事</h4>
-      <p>大一新生通用招新方式：先报名再笔试面试，先做一年干事锻炼组织能力。</p>
+      <p>先报名 → 笔试面试 → 做一年干事</p>
       <div class="tags"><span class="tag">校会</span><span class="tag">院会</span><span class="tag">学生会</span></div>
       <span class="card-link-text">了解学生会 →</span>
     </a>
@@ -669,7 +651,7 @@
 <section class="section" id="toolkit" data-page="toolkit">
   <span class="section-eyebrow reveal">TOOLKIT · 新生工具箱</span>
   <h2 class="section-title reveal">来科大，这几样最<span class="accent">顶用</span></h2>
-  <p class="section-desc reveal">学长把新生最容易懵的几件事做成了工具：军训要带啥、怎么来学校、快递填哪、宿舍啥不能带。都是实打实用得上的 🧰</p>
+  <p class="section-desc reveal">军训带啥、怎么来、快递填哪、啥不能带，一次搞定 🧰</p>
 
   <div class="tool-grid">
 
@@ -696,7 +678,7 @@
     <!-- 行前行李分类清单：证件/床上用品/衣物/生活/数码/应急 -->
     <div class="panel-card reveal" id="cardLuggage">
       <h3>🎒 行前行李分类清单</h3>
-      <p class="hint">照着高德开学指南的分类思路帮你分好类：证件、床上用品、衣物、生活、数码、应急，逐类打勾，出发前不落东西</p>
+      <p class="hint">六大类逐项打勾，出发前不落东西</p>
       <div class="military-count" id="lugCount">已备齐 0 / 0</div>
       <div class="check-bar"><i id="lugBar"></i></div>
       <div class="lug-cat">证件 · 报到必带</div>
@@ -766,10 +748,10 @@
       </div>
       <div class="traffic-card">
         <div class="traffic-from">🧭 自己找路 · 认路小贴士</div>
-        <div class="traffic-main"><b>跟着高德走</b>：到洛阳后打开高德地图搜目的地就能实时公交 / 地铁 / 步行导航——<br>开元校区搜「河南科技大学开元校区」（开元大道 263 号，校门口即大北门）；<br>西苑校区搜「河南科技大学西苑校区」，出 <b>地铁 1 号线长安路站 C 口</b> 步行即达</div>
-        <div class="traffic-route">坐大巴认准「河南科技大学」接站牌；打车请认准正规出租车或网约车平台。高德 App 里的大一新生开学指南也能用，路线实时更新。</div>
+        <div class="traffic-main"><b>跟着高德走</b>：搜校区名就能实时导航<br>开元搜「河南科技大学开元校区」（大北门在开元大道 263 号）<br>西苑搜「河南科技大学西苑校区」，<b>地铁 1 号线长安路站 C 口</b> 出来就到</div>
+        <div class="traffic-route">认准「河南科技大学」接站牌；打车用正规平台。高德里的大一新生开学指南也能用。</div>
       </div>
-      <p class="tool-note">迎新时间 / 接站点位以录取通知书、学院群、学校官微通知为准；独自打车请认准正规出租车或网约车平台。</p>
+      <p class="tool-note">迎新时间与接站点位以学校官方通知为准。</p>
     </div>
 
     <!-- 快递 & 宿舍常识 -->
@@ -780,12 +762,10 @@
         <div class="addr-row"><span class="addr-tag">开元</span><code id="addrKaiyuan">河南省洛阳市洛龙区开元大道263号 河南科技大学开元校区 XX 宿舍楼</code><button class="copy-btn" data-copy="addrKaiyuan" type="button">复制</button></div>
         <div class="addr-row"><span class="addr-tag">西苑</span><code id="addrXiyuan">河南省洛阳市涧西区西苑路48号 河南科技大学西苑校区 XX 宿舍楼</code><button class="copy-btn" data-copy="addrXiyuan" type="button">复制</button></div>
       </div>
-      <ul class="tip-list">
-        <li>取件：校内一般设菜鸟驿站 / 快递柜，凭取件码领取，以学校最新通知为准。</li>
-        <li>一卡通（校园卡）：食堂消费、澡堂热水、宿舍门禁都靠它，到校尽快绑定充值。</li>
-        <li>宿舍限电：电煮锅、电热毯、卷发棒等大功率电器禁用，用多了会跳闸。</li>
-        <li>洗衣机多为扫码支付，自备洗衣液；贵重物品随身带，锁好柜子。</li>
-      </ul>
+      <div class="ico-row">
+        <span>📮 凭取件码取件</span><span>💳 校园卡：吃饭 / 热水 / 门禁</span>
+        <span>⚡ 电煮锅、卷发棒禁用</span><span>🧺 洗衣机扫码</span>
+      </div>
     </div>
 
   </div>
@@ -795,7 +775,7 @@
 <section class="section" id="freshman" data-page="freshman">
   <span class="section-eyebrow reveal">FRESHMAN WALL · 新生墙</span>
   <h2 class="section-title reveal">遇见和你<span class="accent">一样的 TA</span></h2>
-  <p class="section-desc reveal">这是 2026 级新生的专属墙——填上你的学院、专业、家乡和一句宣言，生成你的「新生身份卡」并上墙。看看有没有同专业、同乡、同星座的缘分同学就在你旁边 👀</p>
+  <p class="section-desc reveal">填四格生成身份卡，看看谁跟你同专业、同乡 👀</p>
 
   <div class="wall-form reveal">
     <div class="wall-layout">
@@ -843,7 +823,7 @@
 <section class="section five" id="fun" data-page="fun">
   <span class="section-eyebrow reveal">INTERACTIVE · 互动玩法</span>
   <h2 class="section-title reveal">不止能看，还能<span class="accent">玩</span></h2>
-  <p class="section-desc reveal">学长给新生埋了一整面互动彩蛋墙：运势卡想抽几次抽几次、纠结今天吃啥就摇个食堂盲盒。玩够了再去「新生墙」认领身份卡、把右下角「弹幕」打开给学弟学妹留句话 🎉</p>
+  <p class="section-desc reveal">抽运势、摇食堂盲盒，还有两款自制小游戏</p>
 
   <div class="fun-grid">
 
@@ -875,11 +855,11 @@
     <!-- 闪星勇者：学长另一款独立游戏（网页版，免下载直接玩） -->
     <div class="panel-card reveal" id="cardFlash">
       <h3>闪星勇者 <span class="game-tag">学长第二款游戏</span></h3>
-      <p class="hint">扮演小勇者「闪闪」，闯过 <b>12 大关卡</b>（含三场暗影巨兽 Boss 战）！收集星币进化枪械，<kbd>F</kbd> 星跃向上冲刺躲弹幕，激光栅栏、投弹怪、崩塌台轮番上阵——电脑、安卓都能玩 🎮</p>
+      <p class="hint">扮演小勇者「闪闪」闯 12 关，含 3 场 Boss 战</p>
+      <div class="ico-row"><span>⭐ 星币进化枪械</span><span>⤴️ F 键星跃躲弹幕</span><span>💻 电脑 / 安卓都能玩</span></div>
       <div class="dl-stack">
-        <a class="game-btn dl-win" href="/sparkysquest/" target="_blank" rel="noopener">🎮 在线玩（网页版，电脑 / 安卓都能玩）</a>
+        <a class="game-btn dl-win" href="/sparkysquest/" target="_blank" rel="noopener">🎮 在线玩（免下载）</a>
       </div>
-      <p class="flash-note">不用下载安装！点「在线玩」直接在浏览器开玩，电脑和安卓手机都支持，横屏体验最佳 🎮</p>
     </div>
 
   </div>
@@ -889,15 +869,16 @@
 <section class="section" id="assistant" data-page="assistant">
   <span class="section-eyebrow reveal">AI ASSISTANT · AI 学长</span>
   <h2 class="section-title reveal">有问<span class="accent">必答</span>的学长</h2>
-  <p class="section-desc reveal">报到要带什么、宿舍几人间、快递地址怎么写、哪家食堂好吃——直接问，不用自己一页页翻。</p>
+  <p class="section-desc reveal">报到、宿舍、快递、食堂，问就完事</p>
 
   <div class="ai-shell reveal">
     <div class="ai-head">
       <div class="ai-avatar">AI</div>
       <div class="ai-head-meta">
         <b>科大 AI 学长</b>
-        <span>基于本站内容回答 · 拿不准的会直说</span>
+        <span>校园问题查本站资料 · 也能写代码、记事、看图</span>
       </div>
+      <button class="ai-mem" id="aiMem" type="button" hidden title="AI 记住的关于你的信息，点一下可清空">记忆 0</button>
       <button class="ai-clear" id="aiClear" type="button">清空对话</button>
     </div>
 
@@ -914,7 +895,7 @@
       <button type="button" class="ai-mic-btn" id="aiMicBtn" title="语音输入" aria-label="语音输入">
         <svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"/></svg>
       </button>
-      <textarea id="aiInput" rows="1" maxlength="300" placeholder="想问点什么？比如「宿舍几人间」，也可以粘贴图片"></textarea>
+      <textarea id="aiInput" rows="1" maxlength="300" placeholder="想问点什么？比如「宿舍几人间」；发图片也行，/help 看指令"></textarea>
       <button class="ai-send" id="aiSend" type="submit" aria-label="发送">
         <svg viewBox="0 0 24 24"><path d="M4 11.5 20 4l-7.5 16-2.2-6.3L4 11.5Z"/></svg>
       </button>
@@ -1025,6 +1006,6 @@
 <script src="campus-explorer.js?v=7"></script>
 <script src="freshman-insights.js"></script>
 <script src="freshman-toolkit.js?v=1"></script>
-<script src="assistant.js?v=10"></script>
+<script src="assistant.js?v=11"></script>
 </body>
 </html>

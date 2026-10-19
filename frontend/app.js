@@ -663,8 +663,29 @@ function rafThrottle(fn){var scheduled=false,lastArgs;return function(){lastArgs
   function stop(){on=false;layer.classList.remove('on');btn.textContent='📡 弹幕';bar.classList.remove('show');if(timer)clearInterval(timer);}
   btn.addEventListener('click',function(){on?stop():start();});
   function emitLocal(v){if(!on)start();spawn(v);}
-  function emit(){var v=input.value.trim();if(!v)return;emitLocal(v);input.value='';
-    fetch(API_BASE + '/api/danmaku',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:v})}).catch(function(){});}
+  /* 发失败给个轻提示：以前是静默 .catch，用户以为发出去了其实没有 */
+  var tipTm=null;
+  function dmTip(msg){
+    var t=document.getElementById('dmTipBox');
+    if(!t){t=document.createElement('div');t.id='dmTipBox';t.className='dm-tip';document.body.appendChild(t);}
+    t.textContent=msg;t.classList.add('show');
+    clearTimeout(tipTm);
+    tipTm=setTimeout(function(){t.classList.remove('show');},2600);
+  }
+  function emit(){
+    var v=input.value.trim();if(!v)return;
+    emitLocal(v);input.value='';
+    fetch(API_BASE + '/api/danmaku',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:v})})
+      .then(function(r){
+        if(r.ok)return null;
+        return r.json().then(function(d){
+          var e=(d&&d.error)||'';
+          if(e==='forbidden'||e==='too large')e='这条发不出去，刷新一下页面再试';
+          dmTip(e||'弹幕没发成功');
+        }).catch(function(){dmTip('弹幕没发成功');});
+      })
+      .catch(function(){dmTip('网络断了，弹幕没发出去');});
+  }
   send.addEventListener('click',emit);
   input.addEventListener('keydown',function(e){if(e.key==='Enter')emit();});
   // 拉取已有弹幕 + 轮询新弹幕（跨访客共享）

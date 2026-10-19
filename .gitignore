@@ -23,3 +23,6 @@ frontend/download/
 
 # EdgeOne CLI 本地 token（敏感，不可提交）
 frontend/.edgeone/
+
+# 本次清理出来的死文件（未引用资源，可回滚；不要提交）
+_trash_*/
