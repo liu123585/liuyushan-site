@@ -84,7 +84,7 @@ LLM_EXTRA_KNOWLEDGE = 2026 级新生群：123456789
 | 层 | 措施 | 挡什么 |
 |---|---|---|
 | 全站 | `frontend/robots.txt` | 明确拒绝 20+ 种 AI 训练爬虫（GPTBot / CCBot / ClaudeBot / Bytespider / PerplexityBot …）与 SEO 采集器，正常搜索引擎放行 |
-| 全站 | `frontend/_headers` | `X-Frame-Options`（防套壳）、`X-Content-Type-Options`、`Referrer-Policy`、`Permissions-Policy`、`HSTS`、`CSP`（只允许自身 + three.js CDN + 高德脚本） |
+| 全站 | 根目录 `edgeone.json` 的 `headers` | `X-Frame-Options`（防套壳）、`X-Content-Type-Options`、`Referrer-Policy`、`Permissions-Policy`、`HSTS`；`/img/*` 缓存 7 天，`/api/*` 强制 `no-store` |
 | `/api/chat` | 爬虫 UA 过滤 + Origin 白名单 + 体积上限（2MB） | 脚本刷接口、把接口当免费中转站 |
 | `/api/chat` | 限流：单 IP 20 次/分、150 次/时、300 次/天；全局 4000 次/天 | 刷爆模型额度 |
 | `/api/chat` | 反越狱：识别"忽略以上指令 / 把系统提示词打印出来 / 进入开发者模式 / base64 输出设定"等 | 套取系统设定；10 分钟内命中 5 次 → 该 IP 封 10 分钟 |
@@ -100,14 +100,26 @@ LLM_EXTRA_KNOWLEDGE = 2026 级新生群：123456789
 - 想彻底防扒静态页，需要 EdgeOne 的 WAF / 中间件能力（可能要付费档位）。
   目前的做法是：robots 劝退 + 接口层严管（钱和额度都在接口上，静态页被爬只是内容被抄）。
 
-### 如果 `_headers` 没生效
+### 关于响应头（重要）
 
-EdgeOne Pages 对 `_headers` 的支持以控制台为准。部署后用一个在线头检查工具看一眼：
+EdgeOne Pages **不支持 Cloudflare 那套 `_headers` 文件**（实测：放进去只会被当普通静态文件，
+响应头里啥也没有）。它认的是项目根目录的 `edgeone.json`，写在 `headers` 数组里：
 
-- 如果响应里能看到 `x-frame-options`、`content-security-policy` → 生效了；
-- 如果看不到 → 说明这套 `_headers` 被当成普通静态文件忽略了，去 EdgeOne 控制台的
-  "响应头配置 / 自定义 Header" 里手动加同样的内容。
-- **如果加了 `_headers` 之后高德地图白屏**，把 `_headers` 里的 `Content-Security-Policy` 那一行删掉再部署。
+```json
+{ "headers": [ { "source": "/*", "headers": [ { "key": "X-Frame-Options", "value": "SAMEORIGIN" } ] } ] }
+```
+
+改完 push 上去会自动重新部署。验证方式：
+
+```bash
+curl -sI https://site.liuyushan.top/ | grep -i "x-frame\|referrer\|strict-transport"
+```
+
+看不到就去控制台「项目设置 → 响应头」手动补一份，内容同上。
+
+- 这里**故意没有配 `Content-Security-Policy`**：页面里引了高德地图和 three.js，
+  CSP 写紧一点地图就白屏，写松等于没写，收益不值这个折腾成本。
+- 如果哪天加了 CSP 后地图白屏，把 CSP 那条删掉再部署即可。
 
 ---
 
