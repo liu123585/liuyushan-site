@@ -799,11 +799,16 @@ export async function onRequest(context) {
   }
 
   var modelChain = MODEL_CHAIN;
-  /* 代码类问题换更强的模型优先：glm-4-flash 写代码爱给每行加注释、爱留占位路径，
-     glm-4.5-flash 指令遵循明显更稳。等响应头 18 秒还不回话就自动降级回 4-flash，
-     所以它要是堵住了，用户最多多等一会儿，不会卡死。 */
+  /* 代码类问题换更强的模型优先：glm-4-flash 写代码爱给每行加注释、爱留占位路径、
+     还会编出 pip install 标准库；glm-4.5-flash 指令遵循明显更稳（实测 0 行废话注释、
+     带类型注解、边界处理完整）。等响应头 18 秒还不回话就自动降级回 4-flash，
+     所以它堵住了用户最多多等一会儿，不会卡死。
+     想换回来或换别的型号：环境变量 LLM_CODE_MODEL=模型名。 */
   if (CODE_TASK && providerKey === 'zhipu') {
-    modelChain = ['glm-4.5-flash', 'glm-4-flash-250414'];
+    const codeModel = String(E.LLM_CODE_MODEL || '').trim();
+    modelChain = codeModel
+      ? [codeModel, 'glm-4-flash-250414']
+      : ['glm-4.5-flash', 'glm-4-flash-250414'];
   }
   if (hasImage) {
     var custom = String(E.VISION_MODEL || '').trim();

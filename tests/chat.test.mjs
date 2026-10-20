@@ -282,5 +282,14 @@ console.log('\n[11] 代码类提问降低 temperature');
   ok(calls[0].body.temperature === 0.6, '普通问答 → 0.6', calls[0].body.temperature);
 }
 
+/* ================= 12. 代码类问题用更强的模型 ================= */
+console.log('\n[12] 代码类问题优先 4.5-flash');
+{
+  calls = []; upstreamPlan = [{ sse: 'ok' }];
+  await readAll(await onRequest({ request: makeReq({ messages: [{ role: 'user', content: '帮我写个 Python 脚本' }] }), env: ENV }));
+  ok(calls[0].body.model === 'glm-4.5-flash', '代码类 → 4.5-flash 优先', calls[0].body.model);
+  ok(calls[0].body.thinking && calls[0].body.thinking.type === 'disabled', '4.5-flash 关掉深度思考');
+}
+
 console.log('\n==== 结果: ' + pass + ' 通过, ' + fail + ' 失败 ====');
 process.exit(fail ? 1 : 0);
