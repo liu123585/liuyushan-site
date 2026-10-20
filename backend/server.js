@@ -19,9 +19,9 @@ if (!fs.existsSync(DATA)) fs.mkdirSync(DATA, { recursive: true });
    ========================================================================= */
 const PROVIDERS = {
   deepseek:  { base: 'https://api.deepseek.com/v1',                      model: 'deepseek-chat' },
-  // 智谱：glm-4.5-flash 回答质量最好、会配图，但免费额度约 3/5 成功率（1305 拥堵）；
-  //       所以配了备用模型 glm-4-flash-250414（实测 5/5），堵了自动降级。
-  zhipu:     { base: 'https://open.bigmodel.cn/api/paas/v4',             model: 'glm-4.5-flash', fallback: 'glm-4-flash-250414' },
+  // 智谱：glm-4-flash-250414 是纯对话模型（没有"思考"过程），首字通常 1-2 秒，日常问答用它最快；
+  //       glm-4.5-flash 质量更好但会先想一会儿（实测首字 11 秒起），只当备用。
+  zhipu:     { base: 'https://open.bigmodel.cn/api/paas/v4',             model: 'glm-4-flash-250414', fallback: 'glm-4.5-flash' },
   moonshot:  { base: 'https://api.moonshot.cn/v1',                       model: 'moonshot-v1-8k' },
   dashscope: { base: 'https://dashscope.aliyuncs.com/compatible-mode/v1', model: 'qwen-plus' }
 };
@@ -36,10 +36,16 @@ if (LLM_PRESET && LLM_PRESET.fallback && LLM_PRESET.fallback !== LLM_MODEL) {
   LLM_MODEL_CHAIN.push(LLM_PRESET.fallback);
 }
 
-/* 智谱 GLM-4.5 / 4.7 系列默认开着「深度思考」：内容走 delta.reasoning_content，
+/* 智谱 GLM-4.5 / 4.6 / 4.7 系列默认开着「深度思考」：内容走 delta.reasoning_content，
    delta.content 长时间为空，前端就什么都看不到，max_tokens 还可能被思考吃光。
-   所以走智谱时统一显式关掉；别的服务商不认这个字段，不能乱发。 */
-const LLM_EXTRA = (LLM_PROVIDER_KEY === 'zhipu' || /^glm/i.test(LLM_MODEL)) ? { thinking: { type: 'disabled' } } : {};
+   所以按型号显式关掉。
+   注意：glm-4-flash 这类老模型**不认识** thinking 字段，传了会直接 400，不能一律都加。 */
+function extraFor(model) {
+  const m = String(model || '').toLowerCase();
+  if (!/^glm/i.test(m)) return {};
+  const hasThinking = /^glm-4\.(5|6|7)/.test(m) || m.indexOf('thinking') !== -1;
+  return hasThinking ? { thinking: { type: 'disabled' } } : {};
+}
 
 /** 把上游错误码翻译成用户看得懂的一句话（智谱免费模型常报 1305 拥堵） */
 function friendlyError(code, message) {
@@ -188,7 +194,7 @@ function handleChat(req, res) {
             temperature: 0.6,
             // 智谱视觉模型 glm-4v-flash 的 max_tokens 上限只有 1024，填 1400 直接 400
             max_tokens: /^glm-4v/i.test(useModel) ? 1024 : 1400
-          }, LLM_EXTRA))
+          }, extraFor(useModel)))
         });
       } catch (e) {
         send({ error: '连不上模型服务：' + (e && e.message ? e.message : '网络异常') });

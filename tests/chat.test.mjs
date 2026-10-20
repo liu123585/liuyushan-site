@@ -92,6 +92,23 @@ async function readAll(res) {
   return out;
 }
 
+/** 从 SSE 文本里挑出 error 事件（模型失败现在走流内报错，不再是 JSON 状态码） */
+function pickError(txt) {
+  const lines = String(txt || '').split('\n');
+  for (const line of lines) {
+    const s = line.trim();
+    if (s.indexOf('data:') !== 0) continue;
+    const p = s.slice(5).trim();
+    if (!p || p === '[DONE]') continue;
+    try {
+      const o = JSON.parse(p);
+      if (o && o.error) return o.error;
+    } catch (e) { /* 忽略 */
+    }
+  }
+  return '';
+}
+
 const IMG = 'data:image/jpeg;base64,AAAA';
 
 /* ================= 1. 正常问答 ================= */
@@ -102,8 +119,10 @@ console.log('\n[1] 正常文字问答');
   const text = await readAll(res);
   ok(res.status === 200, '返回 200');
   ok(text.indexOf('"t":"宿舍是四人间"') > -1, 'SSE 有正文');
-  ok(calls.length === 1 && calls[0].body.model === 'glm-4.5-flash', '用主模型 glm-4.5-flash', calls[0] && calls[0].body.model);
+  ok(calls.length === 1 && calls[0].body.model === 'glm-4-flash-250414', '默认用不思考的 glm-4-flash-250414', calls[0] && calls[0].body.model);
   ok(calls[0].body.stream === true, '开启流式');
+  ok(!('thinking' in calls[0].body), 'glm-4-flash 不带 thinking 字段（带了会 400）');
+  ok(text.indexOf(': connected') === 0, '流一开始先发一行 connected，让前端立刻拿到 200');
 }
 
 /* ================= 2. 越狱拦截 ================= */
@@ -169,9 +188,10 @@ console.log('\n[5] 视觉模型全部失败');
     request: makeReq({ messages: [{ role: 'user', content: [{ type: 'image_url', image_url: { url: IMG } }] }] }),
     env: ENV
   });
-  const j = await res.json();
-  ok(res.status === 502, '返回 502', res.status);
-  ok(/识图|这张图/.test(j.error || ''), '报错说的是识图问题', j.error);
+  const txt = await readAll(res);
+  ok(res.status === 200, '先开流返回 200，再在流里报错', res.status);
+  const em = pickError(txt);
+  ok(/识图|这张图/.test(em), '报错说的是识图问题', em);
   const usedModels = calls.map((c) => c.body.model);
   ok(usedModels.every((m) => m === 'glm-4v-flash' || m === 'glm-4.1v-thinking-flash'), '全程只用视觉模型', usedModels);
 }
@@ -233,6 +253,21 @@ console.log('\n[9] 方法限制');
     env: ENV
   });
   ok(res.status === 405, 'GET 返回 405');
+}
+
+/* ================= 10. 拥堵降级：只有会思考的型号才关 thinking ================= */
+console.log('\n[10] 拥堵自动换模型 + thinking 只发给会思考的型号');
+{
+  calls = []; upstreamPlan = [
+    { status: 429, body: { error: { code: '1305', message: 'busy' } } },
+    { sse: '好的' }
+  ];
+  const res = await onRequest({ request: makeReq({ messages: [{ role: 'user', content: '你好' }] }), env: ENV });
+  const txt = await readAll(res);
+  ok(calls.length === 2, '主模型拥堵后自动换备用模型', calls.length);
+  ok(calls[1].body.model === 'glm-4.5-flash', '备用模型是 glm-4.5-flash', calls[1].body.model);
+  ok(calls[1].body.thinking && calls[1].body.thinking.type === 'disabled', 'glm-4.5-flash 显式关掉深度思考');
+  ok(txt.indexOf('好的') > -1, '降级后照常出字');
 }
 
 console.log('\n==== 结果: ' + pass + ' 通过, ' + fail + ' 失败 ====');

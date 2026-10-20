@@ -700,6 +700,19 @@
     node.text.innerHTML = '<span class="ai-dots"><i></i><i></i><i></i></span>';
   }
 
+  /* 等待期间给一句话，别让用户对着三个跳动的点猜是不是卡死了 */
+  function showWaitTip(node, txt) {
+    var dots = node.text.querySelector('.ai-dots');
+    if (!dots) return;
+    var tip = node.text.querySelector('.ai-wait');
+    if (!tip) {
+      tip = document.createElement('span');
+      tip.className = 'ai-wait';
+      node.text.appendChild(tip);
+    }
+    tip.textContent = txt;
+  }
+
   function setBusy(on) {
     busy = on;
     if (!sendBtn) return;
@@ -763,6 +776,12 @@
     var answer = '';
     controller = new AbortController();
 
+    /* 模型偶尔要排队十几秒。分档给个说法，比一直"思考中"强。 */
+    var wait1 = setTimeout(function () { showWaitTip(bot, '正在整理答案…'); }, 4500);
+    var wait2 = setTimeout(function () { showWaitTip(bot, '模型有点忙，还在排队…'); }, 15000);
+    var wait3 = setTimeout(function () { showWaitTip(bot, '还在写，再等一下下…'); }, 28000);
+    function clearWait() { clearTimeout(wait1); clearTimeout(wait2); clearTimeout(wait3); }
+
     fetch(API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -777,12 +796,19 @@
       var ct = (res.headers.get('content-type') || '');
       if (!res.ok || ct.indexOf('text/event-stream') === -1) {
         return res.text().then(function (txt) {
-          var msg = '请求失败（HTTP ' + res.status + '）';
+          var msg = '';
           try { var j = JSON.parse(txt); if (j && j.error) msg = j.error; } catch (e) {}
+          /* 网关超时会给回一整页 HTML，不能把那串 <!DOCTYPE html> 甩给新生看 */
+          if (!msg) {
+            msg = (res.status === 502 || res.status === 504 || res.status === 524)
+              ? '这次等太久了，回答没生成出来。再问一次通常就好；问题大的话可以拆成两步问我'
+              : '请求失败（HTTP ' + res.status + '）';
+          }
           throw new Error(msg);
         });
       }
-      bot.text.textContent = '';
+      /* 注意：这里**不**清掉那三个点 —— 后端现在会立刻返回流、再慢慢连模型，
+         清早了用户就只剩一片空白，反而更像卡死。等第一个字到了再清。 */
 
       var reader = res.body.getReader();
       var dec = new TextDecoder();
@@ -803,6 +829,7 @@
             try { o = JSON.parse(payload); } catch (e) { continue; }
             if (o && o.error) throw new Error(o.error);
             if (o && o.t) {
+              if (!answer) clearWait();   // 第一个字到了，撤掉"排队中"的提示
               answer += o.t;
               renderRich(bot, answer);
               scrollBottom();
@@ -813,6 +840,7 @@
       }
       return pump();
     }).then(function () {
+      clearWait();
       if (!answer) {
         bot.text.textContent = '（这次没生成出内容，换个问法再试试？）';
       } else {
@@ -822,6 +850,7 @@
         if (added.length) micTip('已记住：' + added.join('、'));
       }
     }).catch(function (err) {
+      clearWait();
       if (err && err.name === 'AbortError') {
         // 中断时把已生成的部分也存进上下文（保持 user/assistant 交替，
         // 否则下次会连着两条 user）；但标明它是半截的，免得模型当成完整回答。

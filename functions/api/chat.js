@@ -407,11 +407,18 @@ function maxTokensFor(model) {
   return 1400;
 }
 
+/* 上游等待预算（毫秒）。
+   18 秒还等不到响应头 → 这个模型这会儿太慢，放弃它换下一个，别让用户干等。
+   整段生成 42 秒封顶 → 平台侧大约 30 秒就会掐连接，自己先收尾至少能保住已生成的内容。 */
+const HEAD_TIMEOUT_MS = 18000;
+const GEN_BUDGET_MS = 42000;
+
 const PROVIDERS = {
   deepseek:  { base: 'https://api.deepseek.com/v1',                    model: 'deepseek-chat' },
-  // 智谱：glm-4.5-flash 回答质量最好、会配图，但免费额度约 3/5 成功率（1305 拥堵）；
-  //       所以配了备用模型 glm-4-flash-250414（实测 5/5），堵了自动降级。
-  zhipu:     { base: 'https://open.bigmodel.cn/api/paas/v4',           model: 'glm-4.5-flash', fallback: 'glm-4-flash-250414' },
+  // 智谱：glm-4-flash-250414 是纯对话模型（没有"思考"过程），首字通常 1-2 秒，日常问答用它最快；
+  //       glm-4.5-flash 质量更好但会先想一会儿（实测首字 11 秒起），只当它不可用时的备用。
+  //       顺序以前是反的，结果用户体感就是"一直在思考"，还偶尔被网关超时砍成 504。
+  zhipu:     { base: 'https://open.bigmodel.cn/api/paas/v4',           model: 'glm-4-flash-250414', fallback: 'glm-4.5-flash' },
   moonshot:  { base: 'https://api.moonshot.cn/v1',                     model: 'moonshot-v1-8k' },
   dashscope: { base: 'https://dashscope.aliyuncs.com/compatible-mode/v1', model: 'qwen-plus' }
 };
@@ -580,7 +587,17 @@ export async function onRequest(context) {
   /* 智谱 GLM-4.5 / 4.7 系列默认开着「深度思考」：内容会走 delta.reasoning_content，
      而 delta.content 长时间为空，前端就只能干等，max_tokens 还可能被思考过程吃光。
      这里统一显式关掉。别的服务商不认这个字段，所以只对 GLM 发。 */
-  const extra = (providerKey === 'zhipu' || /^glm/i.test(MODEL)) ? { thinking: { type: 'disabled' } } : {};
+  /* 智谱 GLM-4.5 / 4.6 / 4.7 这类型号默认开着「深度思考」：内容会走 delta.reasoning_content，
+     而 delta.content 长时间为空，前端就只能干等，max_tokens 还可能被思考过程吃光。
+     这里按型号显式关掉。
+     注意：glm-4-flash 这类老模型**不认识** thinking 字段，传了直接 400，
+     所以一定要按型号判断，不能凡是 glm 就加。别的服务商也不认这个字段。 */
+  const extraFor = function (model) {
+    const m = String(model || '').toLowerCase();
+    if (!/^glm/i.test(m)) return {};
+    const hasThinking = /^glm-4\.(5|6|7)/.test(m) || m.indexOf('thinking') !== -1;
+    return hasThinking ? { thinking: { type: 'disabled' } } : {};
+  };
 
   if (!KEY) {
     return json({ error: '后端还没配置模型 Key：请在 EdgeOne 控制台给这个函数加环境变量 LLM_API_KEY（用智谱就再加一个 LLM_PROVIDER=zhipu）' }, 500);
@@ -739,110 +756,145 @@ export async function onRequest(context) {
     modelChain = chain;
   }
 
-  async function postOnce(useModel, msgs) {
-    let res;
-    try {
-      res = await fetch(BASE + '/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + KEY
-        },
-        body: JSON.stringify(Object.assign({
-          model: useModel,
-          messages: msgs,
-          stream: true,
-          temperature: 0.6,
-          max_tokens: maxTokensFor(useModel)
-        }, extra))
-      });
-    } catch (e) {
-      return { netErr: (e && e.message) ? e.message : '网络异常' };
-    }
-    if (res.ok) return { res: res };
+  /* 单次上游请求，带「等响应头」超时。
+     智谱免费模型高峰期首字能拖到 30 秒以上，一直干等会被平台网关砍成一张 504 的
+     HTML 错误页（用户看到的就是那串 <!DOCTYPE html>）。宁可自己早点放弃、换个模型，
+     也比把网关错误页甩给新生强。 */
+  function postOnce(useModel, msgs) {
+    const ac = new AbortController();
+    const timer = setTimeout(function () { try { ac.abort(); } catch (e) { /* ignore */ } }, HEAD_TIMEOUT_MS);
+    return fetch(BASE + '/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + KEY
+      },
+      body: JSON.stringify(Object.assign({
+        model: useModel,
+        messages: msgs,
+        stream: true,
+        temperature: 0.6,
+        max_tokens: maxTokensFor(useModel)
+      }, extraFor(useModel))),
+      signal: ac.signal
+    }).then(function (res) {
+      clearTimeout(timer);
+      if (res.ok) return { res: res };
+      return res.text().then(function (t) {
+        let code = '', detail = '';
+        try {
+          const j = JSON.parse(t);
+          if (j && j.error) { code = String(j.error.code || ''); detail = j.error.message || ''; }
+        } catch (e2) { detail = t.slice(0, 200); }
+        return { status: res.status, code: code, detail: detail };
+      }, function () { return { status: res.status, code: '', detail: '' }; });
+    }, function (e) {
+      clearTimeout(timer);
+      const aborted = e && (e.name === 'AbortError' || /abort/i.test(String(e.message || '')));
+      return { netErr: aborted ? 'timeout' : ((e && e.message) || '网络异常') };
+    });
+  }
 
-    let code = '', detail = '';
-    try {
-      const t = await res.text();
-      try {
-        const j = JSON.parse(t);
-        if (j && j.error) { code = String(j.error.code || ''); detail = j.error.message || ''; }
-      } catch (e2) { detail = t.slice(0, 200); }
-    } catch (e) { /* ignore */ }
-    return { status: res.status, code: code, detail: detail };
+  /* 失败原因 → 用户看得懂的中文 */
+  function explainError(status, code, detail, netErr) {
+    if (netErr === 'timeout') {
+      return '模型这次回得太慢了，超时了。再问一次通常就好了；问题比较长的话可以拆成两步问我';
+    }
+    if (hasImage) {
+      if (status === 401 || status === 402 || status === 403) {
+        return '识图服务这会儿用不了（模型 Key 没权限或额度用完了），先用文字问我吧';
+      }
+      if (status === 429 || code === '1305') return '识图的模型有点忙，等十几秒再发一次图片试试';
+      return '这张图没读成功，换张更清晰的、或者裁小一点再发一次试试';
+    }
+    const hint = status === 401 ? '（Key 无效或没权限）'
+      : status === 402 ? '（账户余额不足）'
+      : status === 429 ? '（请求太频繁）'
+      : status === 400 ? '（这次请求模型没接受，多半是参数受限，换个问法再试）'
+      : '';
+    const msg = status === 400 ? '' : friendlyError(code, detail);
+    return '模型服务返回 ' + status + hint + (msg ? '：' + msg : '');
   }
 
   /* 按降级链逐个试：
      · 有图：每个视觉模型都试「带前缀 → 去前缀」两遍，全失败才换下一个模型；
-     · 无图：拥堵（1305 / 429）换下一个模型，其它错误（Key 无效、余额不足）直接返回。 */
-  let upstream = null;
-  let errStatus = 0, errCode = '', errDetail = '';
+     · 无图：拥堵（1305 / 429）或超时就换下一个模型，其它错误（Key 无效、余额不足）直接返回。 */
+  async function openUpstream() {
+    let errStatus = 0, errCode = '', errDetail = '', errNet = '';
 
-  for (let mi = 0; mi < modelChain.length; mi++) {
-    const useModel = modelChain[mi];
-    const attempts = hasImage ? 2 : 1;
+    for (let mi = 0; mi < modelChain.length; mi++) {
+      const useModel = modelChain[mi];
+      const attempts = hasImage ? 2 : 1;
 
-    for (let ai = 0; ai < attempts; ai++) {
-      const r = await postOnce(useModel, ai === 1 ? messagesStripped() : baseMessages);
+      for (let ai = 0; ai < attempts; ai++) {
+        const r = await postOnce(useModel, ai === 1 ? messagesStripped() : baseMessages);
 
-      if (r.netErr) {
-        return json({ error: '连不上模型服务：' + r.netErr }, 502);
+        if (r.res) return { res: r.res };
+
+        if (r.netErr) {
+          errNet = r.netErr;
+          // 超时/断网：换下一个模型再试；没有下一个就收工
+          if (r.netErr === 'timeout') break;
+          return { fatal: '连不上模型服务：' + r.netErr };
+        }
+
+        errStatus = r.status; errCode = r.code; errDetail = r.detail;
+
+        // 带前缀被 400 打回 → 去掉前缀再试一次（很常见，且几乎不影响延迟）
+        if (hasImage && ai === 0 && r.status === 400) continue;
+        // Key / 余额这类错误重试也没用，直接结束
+        if (r.status === 401 || r.status === 402 || r.status === 403) break;
       }
-      if (r.res) { upstream = r.res; break; }
 
-      errStatus = r.status; errCode = r.code; errDetail = r.detail;
-
-      // 带前缀被 400 打回 → 去掉前缀再试一次（很常见，且几乎不影响延迟）
-      if (hasImage && ai === 0 && r.status === 400) continue;
-
-      // Key / 余额这类错误重试也没用，直接结束
-      if (r.status === 401 || r.status === 402 || r.status === 403) break;
+      if (hasImage && (errStatus === 401 || errStatus === 402 || errStatus === 403)) break;
+      if (!hasImage && errNet !== 'timeout' && errStatus !== 429 && errCode !== '1305') break;
     }
 
-    if (upstream) break;
-    // 401/402/403 之外：换下一个视觉模型继续试；无图时沿用原来的拥堵降级逻辑
-    if (!hasImage && errStatus !== 429 && errCode !== '1305') break;
-    if (hasImage && (errStatus === 401 || errStatus === 402 || errStatus === 403)) break;
+    return { failed: explainError(errStatus, errCode, errDetail, errNet), status: errStatus, code: errCode, detail: errDetail, netErr: errNet };
   }
 
-  if (!upstream) {
-    // 记到函数日志里方便排查，但不把上游原文（内含参数名之类的内部信息）甩给用户
-    try { console.error('[chat] upstream error', errStatus, errCode, errDetail, hasImage ? '(vision)' : ''); } catch (e) { /* ignore */ }
-
-    // 看图失败单独说清楚 —— 别让用户以为"AI 眼瞎了"
-    if (hasImage) {
-      if (errStatus === 401 || errStatus === 402 || errStatus === 403) {
-        return json({ error: '识图服务这会儿用不了（模型 Key 没权限或额度用完了），先用文字问我吧' }, 502);
-      }
-      if (errStatus === 429 || errCode === '1305') {
-        return json({ error: '识图的模型有点忙，等十几秒再发一次图片试试' }, 502);
-      }
-      return json({ error: '这张图没读成功，换张更清晰的、或者裁小一点再发一次试试' }, 502);
-    }
-
-    const hint = errStatus === 401 ? '（Key 无效或没权限）'
-      : errStatus === 402 ? '（账户余额不足）'
-      : errStatus === 429 ? '（请求太频繁）'
-      : errStatus === 400 ? '（这次请求模型没接受，多半是参数受限，换个问法再试）'
-      : '';
-    // 400 这类参数错误不再回显上游原文
-    const msg = errStatus === 400 ? '' : friendlyError(errCode, errDetail);
-    return json({ error: '模型服务返回 ' + errStatus + hint + (msg ? '：' + msg : '') }, 502);
-  }
-
-  // 把上游的 OpenAI 格式 SSE 归一化成 { t: "增量" }
-  const reader = upstream.body.getReader();
-  const decoder = new TextDecoder();
+  /* ---- 关键：先把 SSE 响应头吐给浏览器，再去连上游 ----
+     以前是「等上游返回才开始响应」，模型一慢（10 秒以上）平台就会先返回一张 504 错误页；
+     现在改成先把流开出来（立刻 200 + 一行注释），中间每 6 秒补一个心跳。
+     这样即使模型慢，用户看到的也是"正在思考"，而不是一坨 HTML 报错。 */
   const encoder = new TextEncoder();
+  const reader_holder = { r: null };
 
   const stream = new ReadableStream({
     async start(controller) {
-      let buf = '';
+      let closed = false;
+      function raw(s) {
+        if (closed) return;
+        try { controller.enqueue(encoder.encode(s)); } catch (e) { closed = true; }
+      }
+      function send(obj) { raw('data: ' + JSON.stringify(obj) + '\n\n'); }
+
+      raw(': connected\n\n');
+      const hb = setInterval(function () { raw(': ping\n\n'); }, 6000);
+
       try {
-        /* 先吐一行 SSE 注释，让响应头立刻发出去。
-           有些中间层会攒够一定字节才开始转发，先发这一行能让"开始出字"更快。 */
-        try { controller.enqueue(encoder.encode(': connected\n\n')); } catch (e) { /* ignore */ }
+        const up = await openUpstream();
+
+        if (up.fatal) { send({ error: up.fatal }); raw('data: [DONE]\n\n'); return; }
+
+        if (!up.res) {
+          try { console.error('[chat] upstream error', up.status, up.code, up.detail, up.netErr, hasImage ? '(vision)' : ''); } catch (e) { /* ignore */ }
+          send({ error: up.failed });
+          raw('data: [DONE]\n\n');
+          return;
+        }
+
+        const reader = up.res.body.getReader();
+        reader_holder.r = reader;
+        const decoder = new TextDecoder();
+        let buf = '';
+        const started = Date.now();
+        let cut = false;
+
         for (;;) {
+          // 兜底：整段生成别把函数时间耗光（平台侧大约 30 秒就会掐）
+          if (Date.now() - started > GEN_BUDGET_MS) { cut = true; break; }
+
           const r = await reader.read();
           if (r.done) break;
           buf += decoder.decode(r.value, { stream: true });
@@ -856,28 +908,31 @@ export async function onRequest(context) {
             let o;
             try { o = JSON.parse(payload); } catch (e) { continue; }
             if (o.error) {
-              const em = friendlyError(o.error.code, o.error.message);
-              controller.enqueue(encoder.encode('data: ' + JSON.stringify({ error: em }) + '\n\n'));
+              send({ error: friendlyError(o.error.code, o.error.message) });
               continue;
             }
             const delta = o.choices && o.choices[0] && o.choices[0].delta;
             const t = delta && delta.content;
-            if (t) controller.enqueue(encoder.encode('data: ' + JSON.stringify({ t: t }) + '\n\n'));
+            if (t) send({ t: t });
           }
+          if (cut) break;
         }
-        controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+
+        if (cut) send({ t: '\n\n（这次先写到这儿，要看后半段就说「继续」）' });
+        raw('data: [DONE]\n\n');
       } catch (e) {
-        try {
-          controller.enqueue(encoder.encode('data: ' + JSON.stringify({ error: '生成中断了，再试一次吧' }) + '\n\n'));
-          controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-        } catch (e2) { /* 客户端可能已断开 */ }
+        // 客户端可能已经断开，能发就发
+        send({ error: '生成中断了，再试一次吧' });
+        raw('data: [DONE]\n\n');
       } finally {
+        clearInterval(hb);
+        closed = true;
         try { controller.close(); } catch (e) { /* already closed */ }
-        try { reader.releaseLock(); } catch (e) { /* ignore */ }
+        try { if (reader_holder.r) reader_holder.r.releaseLock(); } catch (e) { /* ignore */ }
       }
     },
     cancel() {
-      try { reader.cancel(); } catch (e) { /* ignore */ }
+      try { if (reader_holder.r) reader_holder.r.cancel(); } catch (e) { /* ignore */ }
     }
   });
 
