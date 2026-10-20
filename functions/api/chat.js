@@ -799,6 +799,12 @@ export async function onRequest(context) {
   }
 
   var modelChain = MODEL_CHAIN;
+  /* 代码类问题换更强的模型优先：glm-4-flash 写代码爱给每行加注释、爱留占位路径，
+     glm-4.5-flash 指令遵循明显更稳。等响应头 18 秒还不回话就自动降级回 4-flash，
+     所以它要是堵住了，用户最多多等一会儿，不会卡死。 */
+  if (CODE_TASK && providerKey === 'zhipu') {
+    modelChain = ['glm-4.5-flash', 'glm-4-flash-250414'];
+  }
   if (hasImage) {
     var custom = String(E.VISION_MODEL || '').trim();
     var defaults = VISION_BY_PROVIDER[providerKey] || [];
