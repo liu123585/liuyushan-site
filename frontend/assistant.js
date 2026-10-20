@@ -562,6 +562,9 @@
      流式过程中末尾如果是半个标记（"[[img:xxx" 还没闭合），先藏起来等后面的 chunk 补齐，
      否则用户会看到一闪而过的原始标记。 */
   function renderRich(node, raw) {
+    /* 模型写完代码还爱补"怎么运行 / 需要装什么 / 这个脚本会……"，
+       在这里一次性清掉（代码块本身不动），见 textclean.js */
+    if (typeof window !== 'undefined' && window.stripCodeNoise) raw = window.stripCodeNoise(raw);
     var text = String(raw == null ? '' : raw);
     var open = text.lastIndexOf('[[');
     if (open > -1 && text.indexOf(']]', open) === -1) text = text.slice(0, open);
