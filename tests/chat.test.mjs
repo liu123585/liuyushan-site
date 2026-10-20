@@ -270,5 +270,17 @@ console.log('\n[10] 拥堵自动换模型 + thinking 只发给会思考的型号
   ok(txt.indexOf('好的') > -1, '降级后照常出字');
 }
 
+/* ================= 11. 代码类提问降低 temperature ================= */
+console.log('\n[11] 代码类提问降低 temperature');
+{
+  calls = []; upstreamPlan = [{ sse: 'ok' }];
+  await readAll(await onRequest({ request: makeReq({ messages: [{ role: 'user', content: '帮我写个 Python 脚本' }] }), env: ENV }));
+  ok(calls[0].body.temperature === 0.3, '代码类 → 0.3', calls[0].body.temperature);
+
+  calls = []; upstreamPlan = [{ sse: 'ok' }];
+  await readAll(await onRequest({ request: makeReq({ messages: [{ role: 'user', content: '宿舍几人间' }] }), env: ENV }));
+  ok(calls[0].body.temperature === 0.6, '普通问答 → 0.6', calls[0].body.temperature);
+}
+
 console.log('\n==== 结果: ' + pass + ' 通过, ' + fail + ' 失败 ====');
 process.exit(fail ? 1 : 0);
